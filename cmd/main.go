@@ -17,6 +17,7 @@ const (
 	upgrade       = "upgrade"
 	configFileEnv = "BD_CONFIG_FILE"
 	appFlag       = "applications"
+	disableFlag   = "disable"
 )
 
 func defaultConfig() string {
@@ -52,6 +53,7 @@ func help(msg string) error {
 	helpLine(false, check, "check for updates")
 	helpLine(false, upgrade, "upgrade packages")
 	helpLine(true, appFlag, "specify a subset of packages (comma delimiter)")
+	helpLine(true, disableFlag, "disable applications (comma delimiter)")
 	fmt.Println()
 	fmt.Printf("configuration file: %s\n", defaultConfig())
 	fmt.Printf("  (override using %s)\n", configFileEnv)
@@ -79,20 +81,37 @@ func run() error {
 		return help(fmt.Sprintf("unknown argument: %s", cmd))
 	}
 	var appSet []string
+	var disableSet []string
 	if len(args) > 2 {
 		set := flag.NewFlagSet("app", flag.ExitOnError)
 		apps := set.String(appFlag, "", "limit application checks")
+		disable := set.String(disableFlag, "", "disable applications")
 		if err := set.Parse(args[2:]); err != nil {
 			return err
 		}
-		appSet = strings.Split(*apps, ",")
+		appSet = commaList(apps)
+		disableSet = commaList(disable)
+		if len(appSet) > 0 && len(disableSet) > 0 {
+			return help("can not limit applications and disable at the same time")
+		}
 	}
 	if !core.PathExists(input) {
 		return fmt.Errorf("config file does not exist: %s", input)
 	}
-	cfg, err := core.LoadConfig(input, dryRun, appSet)
+	cfg, err := core.LoadConfig(input, dryRun, appSet, disableSet)
 	if err != nil {
 		return err
 	}
 	return cfg.Process(fetch.ResourceFetcher{})
+}
+
+func commaList(in *string) []string {
+	if in == nil {
+		return nil
+	}
+	v := strings.TrimSpace(*in)
+	if v == "" {
+		return nil
+	}
+	return strings.Split(v, ",")
 }

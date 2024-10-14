@@ -155,7 +155,7 @@ func (c Configuration) Process(fetcher Fetcher) error {
 }
 
 // LoadConfig will initialize the configuration from a file
-func LoadConfig(input string, dryRun bool, apps []string) (Configuration, error) {
+func LoadConfig(input string, dryRun bool, apps, disable []string) (Configuration, error) {
 	c := Configuration{}
 	c.dryRun = dryRun
 	data, err := os.ReadFile(input)
@@ -165,10 +165,19 @@ func LoadConfig(input string, dryRun bool, apps []string) (Configuration, error)
 	if err := yaml.Unmarshal(data, &c); err != nil {
 		return c, err
 	}
-	if len(apps) > 0 {
+	isDisable := len(disable) > 0
+	if len(apps) > 0 || isDisable {
 		sub := make(map[string]Application)
 		for n, a := range c.Applications {
-			if slices.Contains(apps, n) {
+			allow := false
+			if isDisable {
+				allow = !slices.Contains(disable, n)
+			} else {
+				if slices.Contains(apps, n) {
+					allow = true
+				}
+			}
+			if allow {
 				sub[n] = a
 			}
 		}

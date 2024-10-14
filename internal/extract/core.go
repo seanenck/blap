@@ -2,6 +2,7 @@
 package extract
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"os"
 	"os/exec"
@@ -48,7 +49,12 @@ func (asset *Asset) URL() string {
 
 // SetAppData will set the asset's data for the overall application
 func (asset *Asset) SetAppData(name, workdir string, findDepth bool, extraction []string) error {
-	asset.local.archive = filepath.Join(workdir, asset.file)
+	h := sha256.New()
+	if _, err := fmt.Fprintf(h, "%s%s", asset.file, asset.tag); err != nil {
+		return err
+	}
+	hash := fmt.Sprintf("%x", h.Sum(nil))[0:7]
+	asset.local.archive = filepath.Join(workdir, fmt.Sprintf("%s.%s", hash, asset.file))
 	asset.local.unpack = filepath.Join(workdir, fmt.Sprintf("%s.%s", name, asset.tag))
 	asset.local.extract.command = extraction
 	if len(extraction) == 0 {
