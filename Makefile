@@ -16,7 +16,7 @@ install:
 clean:
 	@rm -rf $(BUILD)
 
-check:
+check: $(TARGET)
 	cat config.yaml | sed "s#~/#$(PWD)/$(BUILD)#g" > $(BUILD)config.yaml
 	mkdir -p $(BUILD)bin $(BUILD)fs
 	cd $(BUILD) && BD_CONFIG_FILE=$(PWD)/$(BUILD)config.yaml ./bd upgrade
