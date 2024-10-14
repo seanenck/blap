@@ -1,0 +1,30 @@
+directory: ~/fs
+applications:
+  go:
+    tagged:
+      repository: "https://github.com/golang/go"
+      download: "https://go.dev/dl/{{ $.Tag }}.linux-amd64.tar.gz"
+      filters: 
+        - "refs/tags/weekly"
+        - "refs/tags/release"
+        - "[0-9]rc[0-9]"
+    binaries:
+      files:
+        - "bin/go"
+      destination: "~/bin"
+  rg:
+    github:
+      project: "BurntSushi/ripgrep"
+      asset: "x86_64-unknown-linux-(.+?).tar.gz$"
+    binaries:
+      files:
+        - "rg"
+      destination: "~/bin"
+  nvim:
+    github:
+      project: "neovim/neovim"
+      asset: "nvim-linux64.tar.gz$"
+    binaries:
+      files:
+        - "bin/nvim"
+      destination: "~/bin"
