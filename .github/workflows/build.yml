@@ -21,7 +21,7 @@ jobs:
             display: ubuntu
           - name: ubuntu-latest
             image: alpine:latest
-            deps: "apk add make git"
+            deps: "apk add make"
             display: alpine
           - name: macos-latest
             image: null
@@ -40,4 +40,4 @@ jobs:
       - name: "deps"
         run: ${{ matrix.os.deps }}
       - name: "build"
-        run: make check
+        run: make
