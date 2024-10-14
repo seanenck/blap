@@ -10,5 +10,8 @@ build: $(TARGET)
 $(TARGET): cmd/main.go internal/**/*.go  go.*
 	go build $(GOFLAGS) -o $@ cmd/main.go
 
+install:
+	install -m755 $(TARGET) $(DESTDIR)/bd
+
 clean:
 	@rm -rf $(BUILD)
