@@ -1,3 +1,4 @@
+// Package fetch gets release/asset information from upstreams
 package fetch
 
 import (
@@ -19,34 +20,41 @@ import (
 	"github.com/seanenck/bd/internal/log"
 )
 
-type ResourceFetcher struct{}
+type (
+	// ResourceFetcher is the default fetcher for resources
+	ResourceFetcher struct{}
 
-type GitHubRelease struct {
-	Assets []struct {
-		DownloadURL string `json:"browser_download_url"`
-	} `json:"assets"`
+	// GitHubRelease is the API definition for github release info
+	GitHubRelease struct {
+		Assets []struct {
+			DownloadURL string `json:"browser_download_url"`
+		} `json:"assets"`
 
-	Tag string `json:"tag_name"`
-}
+		Tag string `json:"tag_name"`
+	}
 
-type GitHubErrorResponse struct {
-	Message       string `json:"message"`
-	Documentation string `json:"documentation_url"`
-}
+	// GitHubErrorResponse is the error from github
+	GitHubErrorResponse struct {
+		Message       string `json:"message"`
+		Documentation string `json:"documentation_url"`
+	}
 
-type FetchError struct {
-	Code   int
-	Status string
-	Body   []byte
-	Url    string
-}
+	// GitHubWrapperError indicates a download error (from github specifically)
+	GitHubWrapperError struct {
+		Code   int
+		Status string
+		Body   []byte
+		URL    string
+	}
+)
 
-func (e *FetchError) Error() string {
+// Error is the interface definition for fetch errors
+func (e *GitHubWrapperError) Error() string {
 	components := make(map[string]string)
 	for k, v := range map[string]string{
 		"code":   fmt.Sprintf("%d", e.Code),
 		"status": e.Status,
-		"url":    e.Url,
+		"url":    e.URL,
 	} {
 		components[k] = v
 	}
@@ -72,7 +80,7 @@ func (e *FetchError) Error() string {
 
 func fetchRepoData[T any](ownerRepo, call string) (T, error) {
 	url := fmt.Sprintf("https://api.github.com/repos/%s/%s", ownerRepo, call)
-	resp, err := Get(url)
+	resp, err := get(url)
 	if err != nil {
 		return *new(T), err
 	}
@@ -84,11 +92,11 @@ func fetchRepoData[T any](ownerRepo, call string) (T, error) {
 		if err != nil {
 			return *new(T), err
 		}
-		return *new(T), &FetchError{
+		return *new(T), &GitHubWrapperError{
 			Status: resp.Status,
 			Code:   resp.StatusCode,
 			Body:   body,
-			Url:    url,
+			URL:    url,
 		}
 	}
 
@@ -103,6 +111,7 @@ func fetchRepoData[T any](ownerRepo, call string) (T, error) {
 	return obj, nil
 }
 
+// Tagged gets a tagged (git tag) release
 func (r ResourceFetcher) Tagged(a core.Remote) (*extract.Asset, error) {
 	up := strings.TrimSpace(a.Upstream)
 	if up == "" {
@@ -168,6 +177,7 @@ func (r ResourceFetcher) Tagged(a core.Remote) (*extract.Asset, error) {
 	return extract.NewAsset(url, filepath.Base(url), tag), nil
 }
 
+// GitHub gets github applications
 func (r ResourceFetcher) GitHub(a core.Remote) (*extract.Asset, error) {
 	if dl := strings.TrimSpace(a.Download); dl != "" {
 		return nil, fmt.Errorf("github mode does not support download URLs: %s", dl)
@@ -209,6 +219,7 @@ func (r ResourceFetcher) GitHub(a core.Remote) (*extract.Asset, error) {
 	return asset, nil
 }
 
+// Download will download an asset
 func (r ResourceFetcher) Download(dryrun bool, url, dest string) (bool, error) {
 	did := false
 	if !core.PathExists(dest) {
@@ -216,7 +227,7 @@ func (r ResourceFetcher) Download(dryrun bool, url, dest string) (bool, error) {
 			return true, nil
 		}
 		log.Write(fmt.Sprintf("downloading asset: %s\n", url))
-		resp, err := Get(url)
+		resp, err := get(url)
 		if err != nil {
 			return false, err
 		}
@@ -247,7 +258,7 @@ func latestRelease(a core.Remote) (string, []string, error) {
 	return release.Tag, assets, nil
 }
 
-func Get(url string) (*http.Response, error) {
+func get(url string) (*http.Response, error) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err

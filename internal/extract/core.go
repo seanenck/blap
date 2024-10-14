@@ -1,3 +1,4 @@
+// Package extract handles asset information for file extraction management
 package extract
 
 import (
@@ -10,6 +11,17 @@ import (
 	"github.com/seanenck/bd/internal/log"
 )
 
+const (
+	inputArg  = "{INPUT}"
+	outputArg = "{OUTPUT}"
+)
+
+var knownExtensions = map[string][]string{
+	".tar.gz": {"tar", "xf", inputArg, "-C", outputArg, "--strip-components=1"},
+	".zip":    {"unzip", "-j", "-d", outputArg, inputArg},
+}
+
+// Asset handles download information and extract for asset managing
 type Asset struct {
 	url   string
 	file  string
@@ -21,11 +33,13 @@ type Asset struct {
 	}
 }
 
+// URL will get the download URL for the asset
 func (asset *Asset) URL() string {
 	return asset.url
 }
 
-func (asset *Asset) SetAppData(name, workdir string, extraction []string) {
+// SetAppData will set the asset's data for the overall application
+func (asset *Asset) SetAppData(name, workdir string, extraction []string) error {
 	asset.local.archive = filepath.Join(workdir, asset.file)
 	asset.local.unpack = filepath.Join(workdir, fmt.Sprintf("%s.%s", name, asset.tag))
 	asset.local.extract = extraction
@@ -37,8 +51,13 @@ func (asset *Asset) SetAppData(name, workdir string, extraction []string) {
 			}
 		}
 	}
+	if len(asset.local.extract) == 0 {
+		return fmt.Errorf("asset missing extractor: %s", name)
+	}
+	return nil
 }
 
+// NewAsset will initialize a new asset
 func NewAsset(url, file, tag string) *Asset {
 	a := &Asset{}
 	a.url = url
@@ -47,27 +66,17 @@ func NewAsset(url, file, tag string) *Asset {
 	return a
 }
 
+// Unpack will get the directory to unpack to
 func (asset *Asset) Unpack() string {
 	return asset.local.unpack
 }
 
+// Archive will get the asset archive name
 func (asset *Asset) Archive() string {
 	return asset.local.archive
 }
 
-const (
-	inputArg  = "{INPUT}"
-	outputArg = "{OUTPUT}"
-)
-
-var knownExtensions = map[string][]string{
-	".tar.gz": {"tar", "xf", inputArg, "-C", outputArg, "--strip-components=1"},
-}
-
-func (asset *Asset) HasExtractor() bool {
-	return len(asset.local.extract) > 0
-}
-
+// Extract will unpack an asset
 func (asset *Asset) Extract() error {
 	log.Write(fmt.Sprintf("extracting: %s\n", asset.file))
 	cmd := asset.local.extract[0]

@@ -1,3 +1,4 @@
+// Package core handles the core configuration/processing
 package core
 
 import (
@@ -12,18 +13,22 @@ import (
 )
 
 type (
+	// Configuration is the overall configuration
 	Configuration struct {
 		dryRun       bool
 		Directory    string
 		Applications map[string]Application `yaml:"applications"`
 	}
+	// Remote is the remote/upstream information for an application
 	Remote struct {
 		Upstream string   `yaml:"upstream"`
 		Download string   `yaml:"download"`
 		Filters  []string `yaml:"filters"`
 		Asset    string   `yaml:"asset"`
 	}
+	// Application defines how an application is downloaded, unpacked, and deployed
 	Application struct {
+		Disable bool   `yaml:"disable"`
 		Mode    string `yaml:"mode"`
 		Remote  Remote `yaml:"remote"`
 		Extract struct {
@@ -35,6 +40,7 @@ type (
 		} `yaml:"binaries"`
 	}
 
+	// Fetcher provides the means to fetch application information
 	Fetcher interface {
 		GitHub(Remote) (*extract.Asset, error)
 		Tagged(Remote) (*extract.Asset, error)
@@ -48,10 +54,6 @@ type (
 
 func (a appError) Error() string {
 	return fmt.Sprintf("application name: %s, error: %v", a.name, a.err)
-}
-
-func (c Configuration) ResolveDirectory() string {
-	return resolveDir(c.Directory)
 }
 
 func resolveDir(dir string) string {
@@ -84,9 +86,8 @@ func (a Application) process(name string, c Configuration, fetcher Fetcher) (boo
 	if asset == nil {
 		return false, fmt.Errorf("no asset found: %v", a)
 	}
-	asset.SetAppData(name, c.ResolveDirectory(), a.Extract.Command)
-	if !asset.HasExtractor() {
-		return false, fmt.Errorf("no asset extractor: %s", asset.Archive())
+	if err := asset.SetAppData(name, resolveDir(c.Directory), a.Extract.Command); err != nil {
+		return false, err
 	}
 
 	did, err := fetcher.Download(c.dryRun, asset.URL(), asset.Archive())
@@ -122,9 +123,14 @@ func (a Application) process(name string, c Configuration, fetcher Fetcher) (boo
 	return did, nil
 }
 
+// Process will process application definitions
 func (c Configuration) Process(fetcher Fetcher) error {
 	var updated []string
 	for name, app := range c.Applications {
+		if app.Disable {
+			fmt.Printf("skipping: %s\n", name)
+			continue
+		}
 		did, err := app.process(name, c, fetcher)
 		if err != nil {
 			return appError{name, err}
@@ -142,6 +148,7 @@ func (c Configuration) Process(fetcher Fetcher) error {
 	return nil
 }
 
+// LoadConfig will initialize the configuration from a file
 func LoadConfig(input string, dryRun bool) (Configuration, error) {
 	c := Configuration{}
 	c.dryRun = dryRun
@@ -155,6 +162,7 @@ func LoadConfig(input string, dryRun bool) (Configuration, error) {
 	return c, nil
 }
 
+// PathExists indicates if a file exists
 func PathExists(path string) bool {
 	_, err := os.Stat(path)
 	return !errors.Is(err, os.ErrNotExist)

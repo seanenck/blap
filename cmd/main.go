@@ -1,3 +1,4 @@
+// Package main is the primary executable
 package main
 
 import (
