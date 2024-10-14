@@ -2,6 +2,7 @@
 package core
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"os"
@@ -133,7 +134,6 @@ func (c Configuration) Process(fetcher Fetcher) error {
 	var updated []string
 	for name, app := range c.Applications {
 		if app.Disable {
-			fmt.Printf("skipping: %s\n", name)
 			continue
 		}
 		did, err := app.process(name, c, fetcher)
@@ -165,7 +165,9 @@ func LoadConfig(input string, dryRun bool, apps, disable []string) (Configuratio
 	if err != nil {
 		return c, err
 	}
-	if err := yaml.Unmarshal(data, &c); err != nil {
+	decoder := yaml.NewDecoder(bytes.NewReader(data))
+	decoder.KnownFields(true)
+	if err := decoder.Decode(&c); err != nil {
 		return c, err
 	}
 	isDisable := len(disable) > 0
