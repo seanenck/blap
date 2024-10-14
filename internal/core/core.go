@@ -17,6 +17,7 @@ type (
 	// Configuration is the overall configuration
 	Configuration struct {
 		dryRun       bool
+		Token        string
 		Directory    string
 		Applications map[string]Application `yaml:"applications"`
 	}
@@ -47,6 +48,7 @@ type (
 		GitHub(Remote) (*extract.Asset, error)
 		Tagged(Remote) (*extract.Asset, error)
 		Download(bool, string, string) (bool, error)
+		SetToken(string)
 	}
 	appError struct {
 		name string
@@ -72,6 +74,7 @@ func resolveDir(dir string) string {
 
 func (a Application) process(name string, c Configuration, fetcher Fetcher) (bool, error) {
 	fmt.Printf("processing: %s\n", name)
+	fetcher.SetToken(resolveDir(c.Token))
 	var asset *extract.Asset
 	var err error
 	switch a.Mode {
@@ -147,7 +150,7 @@ func (c Configuration) Process(fetcher Fetcher) error {
 	}
 	for idx, update := range updated {
 		if idx == 0 {
-			fmt.Printf("updates %s\n", text)
+			fmt.Printf("\nupdates %s\n", text)
 		}
 		fmt.Printf("  -> %s\n", update)
 	}

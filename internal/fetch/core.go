@@ -20,6 +20,14 @@ import (
 	"github.com/seanenck/bd/internal/log"
 )
 
+const (
+	gitHubToken = "GITHUB_TOKEN"
+	bdToken     = "BD_" + gitHubToken
+)
+
+// TokenOptions are the env vars for setting a github token
+var TokenOptions = []string{bdToken, gitHubToken}
+
 type (
 	// ResourceFetcher is the default fetcher for resources
 	ResourceFetcher struct{}
@@ -263,7 +271,44 @@ func get(url string) (*http.Response, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	if err := tokenHeader(req); err != nil {
+		return nil, err
+	}
 	client := &http.Client{}
 	return client.Do(req)
+}
+
+func tokenHeader(req *http.Request) error {
+	var token string
+	if rawToken := getToken(); rawToken != "" {
+		token = rawToken
+		if core.PathExists(rawToken) {
+			b, err := os.ReadFile(rawToken)
+			if err != nil {
+				return err
+			}
+			token = strings.TrimSpace(string(b))
+		}
+	}
+	if token != "" && req.URL.Scheme == "https" && req.Host == "api.github.com" {
+		req.Header.Set("Authorization", fmt.Sprintf("token %s", token))
+	}
+	return nil
+}
+
+// SetToken will set the token for the fetch (if not already set)
+func (r ResourceFetcher) SetToken(token string) {
+	if getToken() == "" {
+		os.Setenv(bdToken, token)
+	}
+}
+
+func getToken() string {
+	for _, env := range TokenOptions {
+		v := strings.TrimSpace(os.Getenv(env))
+		if v != "" {
+			return v
+		}
+	}
+	return ""
 }

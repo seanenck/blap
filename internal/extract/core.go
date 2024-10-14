@@ -17,12 +17,13 @@ const (
 	outputArg    = "{OUTPUT}"
 	tarCommand   = "tar"
 	unzipCommand = "unzip"
+	depthArgs    = "{DEPTH}"
 )
 
 var (
 	knownExtensions = map[string][]string{
-		".tar.gz": {tarCommand, "xf", inputArg, "-C", outputArg},
-		".zip":    {unzipCommand, "-d", outputArg, inputArg},
+		".tar.gz": {tarCommand, "xf", inputArg, "-C", outputArg, depthArgs},
+		".zip":    {unzipCommand, depthArgs, "-d", outputArg, inputArg},
 	}
 	pathSep = string(os.PathSeparator)
 )
@@ -96,15 +97,16 @@ func (asset *Asset) Extract() error {
 	log.Write(fmt.Sprintf("extracting: %s\n", asset.file))
 	cmd := asset.local.extract.command[0]
 	var args []string
+	hasIn := false
+	hasOut := false
+	var depth []string
 	if asset.local.extract.depth {
-		d, err := asset.handleDepth(cmd)
+		var err error
+		depth, err = asset.handleDepth(cmd)
 		if err != nil {
 			return err
 		}
-		args = append(args, d...)
 	}
-	hasIn := false
-	hasOut := false
 	for idx, a := range asset.local.extract.command {
 		if idx == 0 {
 			continue
@@ -117,6 +119,9 @@ func (asset *Asset) Extract() error {
 		case outputArg:
 			hasOut = true
 			use = asset.local.unpack
+		case depthArgs:
+			args = append(args, depth...)
+			continue
 		}
 		args = append(args, use)
 	}

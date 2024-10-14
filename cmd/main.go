@@ -57,6 +57,9 @@ func help(msg string) error {
 	fmt.Println()
 	fmt.Printf("configuration file: %s\n", defaultConfig())
 	fmt.Printf("  (override using %s)\n", configFileEnv)
+	fmt.Println()
+	fmt.Printf("to handle github rate limiting, specify a token in configuration or via env\n")
+	fmt.Printf("  %s (directly or as reference to a file)\n", strings.Join(fetch.TokenOptions, ","))
 	return nil
 }
 
