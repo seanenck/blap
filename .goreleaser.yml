@@ -1,6 +1,6 @@
 # .goreleaser.yml
 # Build customization
-project_name: lockbox
+project_name: bd
 builds:
   - main: cmd/main.go
     env:
