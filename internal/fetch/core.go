@@ -120,17 +120,14 @@ func fetchRepoData[T any](ownerRepo, call string) (T, error) {
 }
 
 // Tagged gets a tagged (git tag) release
-func (r ResourceFetcher) Tagged(a core.Remote) (*extract.Asset, error) {
-	up := strings.TrimSpace(a.Upstream)
+func (r ResourceFetcher) Tagged(a core.TaggedMode) (*extract.Asset, error) {
+	up := strings.TrimSpace(a.Repository)
 	if up == "" {
 		return nil, fmt.Errorf("no upstream for tagged mode: %v", a)
 	}
 	dl := strings.TrimSpace(a.Download)
 	if dl == "" {
 		dl = up
-	}
-	if a := strings.TrimSpace(a.Asset); a != "" {
-		return nil, fmt.Errorf("asset selector not allowed in tagged mode: %s", a)
 	}
 	if len(a.Filters) == 0 {
 		return nil, errors.New("application lacks filters")
@@ -186,16 +183,10 @@ func (r ResourceFetcher) Tagged(a core.Remote) (*extract.Asset, error) {
 }
 
 // GitHub gets github applications
-func (r ResourceFetcher) GitHub(a core.Remote) (*extract.Asset, error) {
-	if dl := strings.TrimSpace(a.Download); dl != "" {
-		return nil, fmt.Errorf("github mode does not support download URLs: %s", dl)
-	}
-	up := strings.TrimSpace(a.Upstream)
+func (r ResourceFetcher) GitHub(a core.GitHubMode) (*extract.Asset, error) {
+	up := strings.TrimSpace(a.Project)
 	if up == "" {
 		return nil, fmt.Errorf("github upstream is unset for: %v", a)
-	}
-	if len(a.Filters) > 0 {
-		return nil, fmt.Errorf("github mode does not support filters: %v", a.Filters)
 	}
 	regex := a.Asset
 	if regex == "" {
@@ -252,8 +243,8 @@ func (r ResourceFetcher) Download(dryrun bool, url, dest string) (bool, error) {
 	return did, nil
 }
 
-func latestRelease(a core.Remote) (string, []string, error) {
-	release, err := fetchRepoData[GitHubRelease](a.Upstream, "releases/latest")
+func latestRelease(a core.GitHubMode) (string, []string, error) {
+	release, err := fetchRepoData[GitHubRelease](a.Project, "releases/latest")
 	if err != nil {
 		return "", nil, err
 	}

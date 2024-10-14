@@ -22,18 +22,22 @@ type (
 		Directory    string
 		Applications map[string]Application `yaml:"applications"`
 	}
-	// Remote is the remote/upstream information for an application
-	Remote struct {
-		Upstream string   `yaml:"upstream"`
-		Download string   `yaml:"download"`
-		Filters  []string `yaml:"filters"`
-		Asset    string   `yaml:"asset"`
+	// GitHubMode indicates processing of a github project for upstreams
+	GitHubMode struct {
+		Project string `yaml:"project"`
+		Asset   string `yaml:"asset"`
+	}
+	// TaggedMode means a repository+download is required to manage
+	TaggedMode struct {
+		Repository string   `yaml:"repository"`
+		Download   string   `yaml:"download"`
+		Filters    []string `yaml:"filters"`
 	}
 	// Application defines how an application is downloaded, unpacked, and deployed
 	Application struct {
-		Disable bool   `yaml:"disable"`
-		Mode    string `yaml:"mode"`
-		Remote  Remote `yaml:"remote"`
+		Disable bool        `yaml:"disable"`
+		GitHub  *GitHubMode `yaml:"github"`
+		Tagged  *TaggedMode `yaml:"tagged"`
 		Extract struct {
 			NoDepth bool     `yaml:"nodepth"`
 			Command []string `yaml:"command"`
@@ -46,8 +50,8 @@ type (
 
 	// Fetcher provides the means to fetch application information
 	Fetcher interface {
-		GitHub(Remote) (*extract.Asset, error)
-		Tagged(Remote) (*extract.Asset, error)
+		GitHub(GitHubMode) (*extract.Asset, error)
+		Tagged(TaggedMode) (*extract.Asset, error)
 		Download(bool, string, string) (bool, error)
 		SetToken(string)
 	}
@@ -76,15 +80,19 @@ func resolveDir(dir string) string {
 func (a Application) process(name string, c Configuration, fetcher Fetcher) (bool, error) {
 	fmt.Printf("processing: %s\n", name)
 	fetcher.SetToken(resolveDir(c.Token))
+	if a.GitHub != nil && a.Tagged != nil {
+		return false, fmt.Errorf("multiple modes enable, only one allowed: %v", a)
+	}
 	var asset *extract.Asset
 	var err error
-	switch a.Mode {
-	case "github":
-		asset, err = fetcher.GitHub(a.Remote)
-	case "tagged":
-		asset, err = fetcher.Tagged(a.Remote)
-	default:
-		return false, fmt.Errorf("unknown mode for binary handling: %s", a.Mode)
+	if a.GitHub != nil {
+		asset, err = fetcher.GitHub(*a.GitHub)
+	} else {
+		if a.Tagged != nil {
+			asset, err = fetcher.Tagged(*a.Tagged)
+		} else {
+			return false, fmt.Errorf("unknown mode: %v", a)
+		}
 	}
 	if err != nil {
 		return false, err
