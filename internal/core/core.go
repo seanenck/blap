@@ -33,6 +33,7 @@ type (
 		Mode    string `yaml:"mode"`
 		Remote  Remote `yaml:"remote"`
 		Extract struct {
+			NoDepth bool     `yaml:"nodepth"`
 			Command []string `yaml:"command"`
 		} `yaml:"extract"`
 		Binaries struct {
@@ -87,7 +88,7 @@ func (a Application) process(name string, c Configuration, fetcher Fetcher) (boo
 	if asset == nil {
 		return false, fmt.Errorf("no asset found: %v", a)
 	}
-	if err := asset.SetAppData(name, resolveDir(c.Directory), a.Extract.Command); err != nil {
+	if err := asset.SetAppData(name, resolveDir(c.Directory), !a.Extract.NoDepth, a.Extract.Command); err != nil {
 		return false, err
 	}
 
@@ -140,9 +141,13 @@ func (c Configuration) Process(fetcher Fetcher) error {
 			updated = append(updated, name)
 		}
 	}
+	text := "found"
+	if !c.dryRun {
+		text = "applied"
+	}
 	for idx, update := range updated {
 		if idx == 0 {
-			fmt.Println("updates found")
+			fmt.Printf("updates %s\n", text)
 		}
 		fmt.Printf("  -> %s\n", update)
 	}

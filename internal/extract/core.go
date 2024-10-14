@@ -12,14 +12,19 @@ import (
 )
 
 const (
-	inputArg  = "{INPUT}"
-	outputArg = "{OUTPUT}"
+	inputArg     = "{INPUT}"
+	outputArg    = "{OUTPUT}"
+	tarCommand   = "tar"
+	unzipCommand = "unzip"
 )
 
-var knownExtensions = map[string][]string{
-	".tar.gz": {"tar", "xf", inputArg, "-C", outputArg, "--strip-components=1"},
-	".zip":    {"unzip", "-j", "-d", outputArg, inputArg},
-}
+var (
+	knownExtensions = map[string][]string{
+		".tar.gz": {tarCommand, "xf", inputArg, "-C", outputArg},
+		".zip":    {unzipCommand, "-d", outputArg, inputArg},
+	}
+	pathSep = string(os.PathSeparator)
+)
 
 // Asset handles download information and extract for asset managing
 type Asset struct {
@@ -29,7 +34,10 @@ type Asset struct {
 	local struct {
 		archive string
 		unpack  string
-		extract []string
+		extract struct {
+			command []string
+			depth   bool
+		}
 	}
 }
 
@@ -39,19 +47,20 @@ func (asset *Asset) URL() string {
 }
 
 // SetAppData will set the asset's data for the overall application
-func (asset *Asset) SetAppData(name, workdir string, extraction []string) error {
+func (asset *Asset) SetAppData(name, workdir string, findDepth bool, extraction []string) error {
 	asset.local.archive = filepath.Join(workdir, asset.file)
 	asset.local.unpack = filepath.Join(workdir, fmt.Sprintf("%s.%s", name, asset.tag))
-	asset.local.extract = extraction
+	asset.local.extract.command = extraction
 	if len(extraction) == 0 {
+		asset.local.extract.depth = findDepth
 		for k, v := range knownExtensions {
 			if strings.HasSuffix(asset.file, k) {
-				asset.local.extract = v
+				asset.local.extract.command = v
 				break
 			}
 		}
 	}
-	if len(asset.local.extract) == 0 {
+	if len(asset.local.extract.command) == 0 {
 		return fmt.Errorf("asset missing extractor: %s", name)
 	}
 	return nil
@@ -79,11 +88,18 @@ func (asset *Asset) Archive() string {
 // Extract will unpack an asset
 func (asset *Asset) Extract() error {
 	log.Write(fmt.Sprintf("extracting: %s\n", asset.file))
-	cmd := asset.local.extract[0]
+	cmd := asset.local.extract.command[0]
 	var args []string
+	if asset.local.extract.depth {
+		d, err := asset.handleDepth(cmd)
+		if err != nil {
+			return err
+		}
+		args = append(args, d...)
+	}
 	hasIn := false
 	hasOut := false
-	for idx, a := range asset.local.extract {
+	for idx, a := range asset.local.extract.command {
 		if idx == 0 {
 			continue
 		}
@@ -108,4 +124,46 @@ func (asset *Asset) Extract() error {
 	c.Stdout = os.Stdout
 	c.Stderr = os.Stderr
 	return c.Run()
+}
+
+func (asset *Asset) handleDepth(cmd string) ([]string, error) {
+	var c string
+	var args []string
+	var result []string
+	switch cmd {
+	case tarCommand:
+		c = "tar"
+		args = []string{"-tf"}
+		result = []string{"--strip-component", "1"}
+	case unzipCommand:
+		c = "zipinfo"
+		args = []string{"-1"}
+		result = []string{"-j"}
+	default:
+		return nil, fmt.Errorf("unable to determine depth for command: %s", cmd)
+	}
+	args = append(args, asset.Archive())
+	out, err := exec.Command(c, args...).Output()
+	if err != nil {
+		return nil, err
+	}
+	m := make(map[string]struct{})
+	for _, line := range strings.Split(string(out), "\n") {
+		t := strings.TrimSpace(line)
+		if t == "" {
+			continue
+		}
+		if !strings.Contains(t, pathSep) {
+			continue
+		}
+		parts := strings.Split(t, pathSep)
+		m[parts[0]] = struct{}{}
+		if len(m) > 1 {
+			return nil, nil
+		}
+	}
+	if len(m) == 0 {
+		return nil, nil
+	}
+	return result, nil
 }
