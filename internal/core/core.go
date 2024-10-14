@@ -10,6 +10,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/seanenck/bd/internal/context"
 	"github.com/seanenck/bd/internal/extract"
 	"gopkg.in/yaml.v3"
 )
@@ -17,7 +18,7 @@ import (
 type (
 	// Configuration is the overall configuration
 	Configuration struct {
-		dryRun       bool
+		context      context.Settings
 		Token        string
 		Directory    string
 		Applications map[string]Application `yaml:"applications"`
@@ -35,13 +36,10 @@ type (
 	}
 	// Application defines how an application is downloaded, unpacked, and deployed
 	Application struct {
-		Disable bool        `yaml:"disable"`
-		GitHub  *GitHubMode `yaml:"github"`
-		Tagged  *TaggedMode `yaml:"tagged"`
-		Extract struct {
-			NoDepth bool     `yaml:"nodepth"`
-			Command []string `yaml:"command"`
-		} `yaml:"extract"`
+		Disable  bool             `yaml:"disable"`
+		GitHub   *GitHubMode      `yaml:"github"`
+		Tagged   *TaggedMode      `yaml:"tagged"`
+		Extract  extract.Settings `yaml:"extract"`
 		Binaries struct {
 			Files       []string `yaml:"files"`
 			Destination string   `yaml:"destination"`
@@ -50,6 +48,7 @@ type (
 
 	// Fetcher provides the means to fetch application information
 	Fetcher interface {
+		SetContext(context.Settings)
 		GitHub(GitHubMode) (*extract.Asset, error)
 		Tagged(TaggedMode) (*extract.Asset, error)
 		Download(bool, string, string) (bool, error)
@@ -78,7 +77,7 @@ func resolveDir(dir string) string {
 }
 
 func (a Application) process(name string, c Configuration, fetcher Fetcher) (bool, error) {
-	fmt.Printf("processing: %s\n", name)
+	c.context.LogInfo(fmt.Sprintf("processing: %s\n", name))
 	fetcher.SetToken(resolveDir(c.Token))
 	if a.GitHub != nil && a.Tagged != nil {
 		return false, fmt.Errorf("multiple modes enable, only one allowed: %v", a)
@@ -100,15 +99,15 @@ func (a Application) process(name string, c Configuration, fetcher Fetcher) (boo
 	if asset == nil {
 		return false, fmt.Errorf("no asset found: %v", a)
 	}
-	if err := asset.SetAppData(name, resolveDir(c.Directory), !a.Extract.NoDepth, a.Extract.Command); err != nil {
+	if err := asset.SetAppData(name, resolveDir(c.Directory), a.Extract, c.context); err != nil {
 		return false, err
 	}
 
-	did, err := fetcher.Download(c.dryRun, asset.URL(), asset.Archive())
+	did, err := fetcher.Download(c.context.DryRun, asset.URL(), asset.Archive())
 	if err != nil {
 		return false, err
 	}
-	if c.dryRun {
+	if c.context.DryRun {
 		return did, nil
 	}
 
@@ -140,6 +139,7 @@ func (a Application) process(name string, c Configuration, fetcher Fetcher) (boo
 // Process will process application definitions
 func (c Configuration) Process(fetcher Fetcher) error {
 	var updated []string
+	fetcher.SetContext(c.context)
 	for name, app := range c.Applications {
 		if app.Disable {
 			continue
@@ -153,22 +153,22 @@ func (c Configuration) Process(fetcher Fetcher) error {
 		}
 	}
 	text := "found"
-	if !c.dryRun {
+	if !c.context.DryRun {
 		text = "applied"
 	}
 	for idx, update := range updated {
 		if idx == 0 {
-			fmt.Printf("\nupdates %s\n", text)
+			c.context.LogCore(fmt.Sprintf("updates %s\n", text))
 		}
-		fmt.Printf("  -> %s\n", update)
+		c.context.LogCore(fmt.Sprintf("  -> %s\n", update))
 	}
 	return nil
 }
 
 // LoadConfig will initialize the configuration from a file
-func LoadConfig(input string, dryRun bool, apps, disable []string) (Configuration, error) {
+func LoadConfig(input string, context context.Settings) (Configuration, error) {
 	c := Configuration{}
-	c.dryRun = dryRun
+	c.context = context
 	data, err := os.ReadFile(input)
 	if err != nil {
 		return c, err
@@ -178,15 +178,15 @@ func LoadConfig(input string, dryRun bool, apps, disable []string) (Configuratio
 	if err := decoder.Decode(&c); err != nil {
 		return c, err
 	}
-	isDisable := len(disable) > 0
-	if len(apps) > 0 || isDisable {
+	isDisable := len(context.Disabled) > 0
+	if len(context.Applications) > 0 || isDisable {
 		sub := make(map[string]Application)
 		for n, a := range c.Applications {
 			allow := false
 			if isDisable {
-				allow = !slices.Contains(disable, n)
+				allow = !slices.Contains(context.Disabled, n)
 			} else {
-				if slices.Contains(apps, n) {
+				if slices.Contains(context.Applications, n) {
 					allow = true
 				}
 			}

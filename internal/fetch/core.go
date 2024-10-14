@@ -15,9 +15,9 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/seanenck/bd/internal/context"
 	"github.com/seanenck/bd/internal/core"
 	"github.com/seanenck/bd/internal/extract"
-	"github.com/seanenck/bd/internal/log"
 )
 
 const (
@@ -30,7 +30,9 @@ var TokenOptions = []string{bdToken, gitHubToken}
 
 type (
 	// ResourceFetcher is the default fetcher for resources
-	ResourceFetcher struct{}
+	ResourceFetcher struct {
+		context context.Settings
+	}
 
 	// GitHubRelease is the API definition for github release info
 	GitHubRelease struct {
@@ -120,7 +122,7 @@ func fetchRepoData[T any](ownerRepo, call string) (T, error) {
 }
 
 // Tagged gets a tagged (git tag) release
-func (r ResourceFetcher) Tagged(a core.TaggedMode) (*extract.Asset, error) {
+func (r *ResourceFetcher) Tagged(a core.TaggedMode) (*extract.Asset, error) {
 	up := strings.TrimSpace(a.Repository)
 	if up == "" {
 		return nil, fmt.Errorf("no upstream for tagged mode: %v", a)
@@ -169,7 +171,7 @@ func (r ResourceFetcher) Tagged(a core.TaggedMode) (*extract.Asset, error) {
 	if tag == "" {
 		return nil, errors.New("no tags matched")
 	}
-	log.Write(fmt.Sprintf("found tag: %s\n", tag))
+	r.context.LogInfoSub(fmt.Sprintf("found tag: %s\n", tag))
 	t, err := template.New("t").Parse(dl)
 	if err != nil {
 		return nil, err
@@ -183,7 +185,7 @@ func (r ResourceFetcher) Tagged(a core.TaggedMode) (*extract.Asset, error) {
 }
 
 // GitHub gets github applications
-func (r ResourceFetcher) GitHub(a core.GitHubMode) (*extract.Asset, error) {
+func (r *ResourceFetcher) GitHub(a core.GitHubMode) (*extract.Asset, error) {
 	up := strings.TrimSpace(a.Project)
 	if up == "" {
 		return nil, fmt.Errorf("github upstream is unset for: %v", a)
@@ -192,7 +194,7 @@ func (r ResourceFetcher) GitHub(a core.GitHubMode) (*extract.Asset, error) {
 	if regex == "" {
 		return nil, fmt.Errorf("github mode requires an asset filter regex: %v", a)
 	}
-	log.Write(fmt.Sprintf("getting github release: %s\n", up))
+	r.context.LogInfoSub(fmt.Sprintf("getting github release: %s\n", up))
 	tag, assets, err := latestRelease(a)
 	if err != nil {
 		return nil, err
@@ -218,14 +220,19 @@ func (r ResourceFetcher) GitHub(a core.GitHubMode) (*extract.Asset, error) {
 	return asset, nil
 }
 
+// SetContext will set the fetcher context for operations
+func (r *ResourceFetcher) SetContext(ctx context.Settings) {
+	r.context = ctx
+}
+
 // Download will download an asset
-func (r ResourceFetcher) Download(dryrun bool, url, dest string) (bool, error) {
+func (r *ResourceFetcher) Download(dryrun bool, url, dest string) (bool, error) {
 	did := false
 	if !core.PathExists(dest) {
 		if dryrun {
 			return true, nil
 		}
-		log.Write(fmt.Sprintf("downloading asset: %s\n", url))
+		r.context.LogInfoSub(fmt.Sprintf("downloading asset: %s\n", url))
 		resp, err := get(url)
 		if err != nil {
 			return false, err
@@ -288,7 +295,7 @@ func tokenHeader(req *http.Request) error {
 }
 
 // SetToken will set the token for the fetch (if not already set)
-func (r ResourceFetcher) SetToken(token string) {
+func (r *ResourceFetcher) SetToken(token string) {
 	if getToken() == "" {
 		os.Setenv(bdToken, token)
 	}

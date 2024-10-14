@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/seanenck/bd/internal/log"
+	"github.com/seanenck/bd/internal/context"
 )
 
 const (
@@ -30,20 +30,28 @@ var (
 	pathSep = string(os.PathSeparator)
 )
 
-// Asset handles download information and extract for asset managing
-type Asset struct {
-	url   string
-	file  string
-	tag   string
-	local struct {
-		archive string
-		unpack  string
-		extract struct {
-			command []string
-			depth   bool
+type (
+	// Asset handles download information and extract for asset managing
+	Asset struct {
+		url     string
+		file    string
+		tag     string
+		context context.Settings
+		local   struct {
+			archive string
+			unpack  string
+			extract struct {
+				command []string
+				depth   bool
+			}
 		}
 	}
-}
+	// Settings are extraction settings
+	Settings struct {
+		NoDepth bool     `yaml:"nodepth"`
+		Command []string `yaml:"command"`
+	}
+)
 
 // URL will get the download URL for the asset
 func (asset *Asset) URL() string {
@@ -51,17 +59,18 @@ func (asset *Asset) URL() string {
 }
 
 // SetAppData will set the asset's data for the overall application
-func (asset *Asset) SetAppData(name, workdir string, findDepth bool, extraction []string) error {
+func (asset *Asset) SetAppData(name, workdir string, settings Settings, context context.Settings) error {
 	h := sha256.New()
 	if _, err := fmt.Fprintf(h, "%s%s", asset.file, asset.tag); err != nil {
 		return err
 	}
 	hash := fmt.Sprintf("%x", h.Sum(nil))[0:7]
+	asset.context = context
 	asset.local.archive = filepath.Join(workdir, fmt.Sprintf("%s.%s", hash, asset.file))
 	asset.local.unpack = filepath.Join(workdir, fmt.Sprintf("%s.%s", name, asset.tag))
-	asset.local.extract.command = extraction
-	if len(extraction) == 0 {
-		asset.local.extract.depth = findDepth
+	asset.local.extract.command = settings.Command
+	if len(settings.Command) == 0 {
+		asset.local.extract.depth = !settings.NoDepth
 		for k, v := range knownExtensions {
 			if strings.HasSuffix(asset.file, k) {
 				asset.local.extract.command = v
@@ -96,7 +105,7 @@ func (asset *Asset) Archive() string {
 
 // Extract will unpack an asset
 func (asset *Asset) Extract() error {
-	log.Write(fmt.Sprintf("extracting: %s\n", asset.file))
+	asset.context.LogInfoSub(fmt.Sprintf("extracting: %s\n", asset.file))
 	cmd := asset.local.extract.command[0]
 	var args []string
 	hasIn := false

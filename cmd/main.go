@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/seanenck/bd/internal/context"
 	"github.com/seanenck/bd/internal/core"
 	"github.com/seanenck/bd/internal/fetch"
 )
@@ -18,6 +19,7 @@ const (
 	configFileEnv = "BD_CONFIG_FILE"
 	appFlag       = "applications"
 	disableFlag   = "disable"
+	verbosityFlag = "verbosity"
 )
 
 func defaultConfig() string {
@@ -115,12 +117,18 @@ complete -F _%s -o bashdefault %s`, exe, exe, exe)
 	}
 	var appSet []string
 	var disableSet []string
+	verbosity := context.InfoVerbosity
 	if len(args) > 2 {
 		set := flag.NewFlagSet("app", flag.ExitOnError)
 		apps := set.String(appFlag, "", "limit application checks")
 		disable := set.String(disableFlag, "", "disable applications")
+		verbose := set.Int(verbosityFlag, context.InfoVerbosity, "set verbosity level")
 		if err := set.Parse(args[2:]); err != nil {
 			return err
+		}
+		verbosity = *verbose
+		if verbosity < 0 {
+			return help("verbosity must be >= 0")
 		}
 		appSet = commaList(apps)
 		disableSet = commaList(disable)
@@ -131,11 +139,17 @@ complete -F _%s -o bashdefault %s`, exe, exe, exe)
 	if !core.PathExists(input) {
 		return fmt.Errorf("config file does not exist: %s", input)
 	}
-	cfg, err := core.LoadConfig(input, dryRun, appSet, disableSet)
+	ctx := context.Settings{
+		DryRun:       dryRun,
+		Applications: appSet,
+		Disabled:     disableSet,
+		Verbosity:    verbosity,
+	}
+	cfg, err := core.LoadConfig(input, ctx)
 	if err != nil {
 		return err
 	}
-	return cfg.Process(fetch.ResourceFetcher{})
+	return cfg.Process(&fetch.ResourceFetcher{})
 }
 
 func commaList(in *string) []string {
