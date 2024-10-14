@@ -13,16 +13,18 @@ import (
 )
 
 const (
-	inputArg     = "{INPUT}"
-	outputArg    = "{OUTPUT}"
+	inputArg     = "{{ $.Input }}"
+	outputArg    = "{{ $.Output }}"
 	tarCommand   = "tar"
 	unzipCommand = "unzip"
-	depthArgs    = "{DEPTH}"
+	depthArgs    = "{{ $.Depth }}"
 )
 
 var (
+	tarExtract      = []string{tarCommand, "xf", inputArg, "-C", outputArg, depthArgs}
 	knownExtensions = map[string][]string{
-		".tar.gz": {tarCommand, "xf", inputArg, "-C", outputArg, depthArgs},
+		".tar.gz": tarExtract,
+		".tar.xz": tarExtract,
 		".zip":    {unzipCommand, depthArgs, "-d", outputArg, inputArg},
 	}
 	pathSep = string(os.PathSeparator)
