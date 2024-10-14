@@ -32,28 +32,35 @@ func main() {
 	}
 }
 
-func helpLine(prefix bool, flag, text string) {
-	f := flag
-	if prefix {
-		f = fmt.Sprintf("-%s", f)
+func helpLine(flag, text string) {
+	fmt.Printf("  %-15s %s\n", flag, text)
+}
+
+func executable() (string, error) {
+	e, err := os.Executable()
+	if err != nil {
+		return "", err
 	}
-	fmt.Printf("  %-15s %s\n", f, text)
+	return filepath.Base(e), nil
+}
+
+func simpleFlag(f string) string {
+	return fmt.Sprintf("-%s", f)
 }
 
 func help(msg string) error {
 	if msg != "" {
 		fmt.Printf("%s\n\n", msg)
 	}
-	exe, err := os.Executable()
+	exe, err := executable()
 	if err != nil {
 		return err
 	}
-	exe = filepath.Base(exe)
 	fmt.Printf("%s\n", exe)
-	helpLine(false, check, "check for updates")
-	helpLine(false, upgrade, "upgrade packages")
-	helpLine(true, appFlag, "specify a subset of packages (comma delimiter)")
-	helpLine(true, disableFlag, "disable applications (comma delimiter)")
+	helpLine(check, "check for updates")
+	helpLine(upgrade, "upgrade packages")
+	helpLine(simpleFlag(appFlag), "specify a subset of packages (comma delimiter)")
+	helpLine(simpleFlag(disableFlag), "disable applications (comma delimiter)")
 	fmt.Println()
 	fmt.Printf("configuration file: %s\n", defaultConfig())
 	fmt.Printf("  (override using %s)\n", configFileEnv)
@@ -75,6 +82,29 @@ func run() error {
 	dryRun := true
 	cmd := args[1]
 	switch cmd {
+	case "bash":
+		exe, err := executable()
+		if err != nil {
+			return err
+		}
+		fmt.Printf(`_%s() {
+  local cur opts
+  cur=${COMP_WORDS[COMP_CWORD]}
+  if [ "$COMP_CWORD" -eq 1 ]; then
+    opts="`+upgrade+" "+check+`"
+  else
+    if [ "$COMP_CWORD" -eq 2 ]; then
+      opts="`+simpleFlag(appFlag)+" "+simpleFlag(disableFlag)+`"
+    fi
+  fi
+  if [ -n "$opts" ]; then
+    # shellcheck disable=SC2207
+    COMPREPLY=($(compgen -W "$opts" -- "$cur"))
+  fi
+}
+
+complete -F _%s -o bashdefault %s`, exe, exe, exe)
+		return nil
 	case "help":
 		return help("")
 	case check:
