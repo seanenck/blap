@@ -16,11 +16,14 @@ import (
 const (
 	check         = "check"
 	upgrade       = "upgrade"
+	vers          = "version"
 	configFileEnv = "BD_CONFIG_FILE"
 	appFlag       = "applications"
 	disableFlag   = "disable"
 	verbosityFlag = "verbosity"
 )
+
+var version = "development"
 
 func defaultConfig() string {
 	home := os.Getenv("HOME")
@@ -61,8 +64,10 @@ func help(msg string) error {
 	fmt.Printf("%s\n", exe)
 	helpLine(check, "check for updates")
 	helpLine(upgrade, "upgrade packages")
+	helpLine(vers, "display version information")
 	helpLine(simpleFlag(appFlag), "specify a subset of packages (comma delimiter)")
 	helpLine(simpleFlag(disableFlag), "disable applications (comma delimiter)")
+	helpLine(simpleFlag(verbosityFlag), "increase/decrease output verbosity")
 	fmt.Println()
 	fmt.Printf("configuration file: %s\n", defaultConfig())
 	fmt.Printf("  (override using %s)\n", configFileEnv)
@@ -110,6 +115,9 @@ complete -F _%s -o bashdefault %s`, exe, exe, exe)
 	case "help":
 		return help("")
 	case check:
+	case vers:
+		fmt.Println(version)
+		return nil
 	case upgrade:
 		dryRun = false
 	default:

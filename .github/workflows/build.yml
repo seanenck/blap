@@ -40,4 +40,4 @@ jobs:
       - name: "deps"
         run: ${{ matrix.os.deps }}
       - name: "build"
-        run: make
+        run: make VERSION=${GITHUB_SHA}

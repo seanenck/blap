@@ -2,13 +2,14 @@ BUILD   := build/
 TARGET  := $(BUILD)bd
 DESTDIR := /usr/local/bin
 GOFLAGS := -trimpath -buildmode=pie -mod=readonly -modcacherw -buildvcs=false
+VERSION ?= $(shell git log -n 1 --format=%h)
 
 all: $(TARGET)
 
 build: $(TARGET)
 
 $(TARGET): cmd/main.go internal/**/*.go  go.*
-	go build $(GOFLAGS) -o $@ cmd/main.go
+	go build $(GOFLAGS) -ldflags "$(LDFLAGS) -X main.version=$(VERSION)" -o $@ cmd/main.go
 
 install:
 	install -m755 $(TARGET) $(DESTDIR)/bd
