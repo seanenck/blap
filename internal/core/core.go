@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/seanenck/bd/internal/extract"
@@ -149,7 +150,7 @@ func (c Configuration) Process(fetcher Fetcher) error {
 }
 
 // LoadConfig will initialize the configuration from a file
-func LoadConfig(input string, dryRun bool) (Configuration, error) {
+func LoadConfig(input string, dryRun bool, apps []string) (Configuration, error) {
 	c := Configuration{}
 	c.dryRun = dryRun
 	data, err := os.ReadFile(input)
@@ -158,6 +159,15 @@ func LoadConfig(input string, dryRun bool) (Configuration, error) {
 	}
 	if err := yaml.Unmarshal(data, &c); err != nil {
 		return c, err
+	}
+	if len(apps) > 0 {
+		sub := make(map[string]Application)
+		for n, a := range c.Applications {
+			if slices.Contains(apps, n) {
+				sub[n] = a
+			}
+		}
+		c.Applications = sub
 	}
 	return c, nil
 }
