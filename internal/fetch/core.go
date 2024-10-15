@@ -140,6 +140,7 @@ func (r *ResourceFetcher) Branch(a core.BranchMode) (*extract.Asset, error) {
 		return nil, err
 	}
 	tag := commit.Sha[0:7]
+	r.context.LogDebug("found sha: %s\n", tag)
 	return extract.NewAsset(fmt.Sprintf("https://github.com/%s/archive/%s.tar.gz", a.Project, a.Branch), fmt.Sprintf("%s-%s.tar.gz", tag, a.Branch), tag), nil
 }
 
