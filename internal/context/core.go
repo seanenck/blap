@@ -15,11 +15,20 @@ type Settings struct {
 	Verbosity    int
 }
 
-// LogInfo logs an informational message
-func (s Settings) LogInfo(msg string) {
-	if s.Verbosity > 1 {
+func (s Settings) log(level int, msg string) {
+	if s.Verbosity > level {
 		fmt.Print(msg)
 	}
+}
+
+// LogDebug handles debug logging
+func (s Settings) LogDebug(msg string) {
+	s.log(4, msg)
+}
+
+// LogInfo logs an informational message
+func (s Settings) LogInfo(msg string) {
+	s.log(1, msg)
 }
 
 // LogInfoSub logs a sub-step info message
@@ -29,7 +38,5 @@ func (s Settings) LogInfoSub(msg string) {
 
 // LogCore logs a core message
 func (s Settings) LogCore(msg string) {
-	if s.Verbosity > 0 {
-		fmt.Print(msg)
-	}
+	s.log(0, msg)
 }

@@ -27,6 +27,7 @@ type (
 		context      context.Settings
 		Token        string
 		Directory    string
+		Include      []string               `yaml:"include"`
 		Applications map[string]Application `yaml:"applications"`
 	}
 	// GitHubMode indicates processing of a github project for upstreams
@@ -263,18 +264,55 @@ func (c Configuration) Process(fetcher Fetcher) error {
 	return nil
 }
 
+func doDecode[T any](in string, o T) error {
+	data, err := os.ReadFile(in)
+	if err != nil {
+		return err
+	}
+	decoder := yaml.NewDecoder(bytes.NewReader(data))
+	decoder.KnownFields(true)
+	if err := decoder.Decode(o); err != nil {
+		return fmt.Errorf("file: %s -> %v", in, err)
+	}
+	return nil
+}
+
 // LoadConfig will initialize the configuration from a file
 func LoadConfig(input string, context context.Settings) (Configuration, error) {
 	c := Configuration{}
 	c.context = context
-	data, err := os.ReadFile(input)
-	if err != nil {
+	c.Applications = make(map[string]Application)
+	if err := doDecode(input, &c); err != nil {
 		return c, err
 	}
-	decoder := yaml.NewDecoder(bytes.NewReader(data))
-	decoder.KnownFields(true)
-	if err := decoder.Decode(&c); err != nil {
-		return c, err
+	if len(c.Include) > 0 {
+		var including []string
+		for _, i := range c.Include {
+			r := resolveDir(i)
+			res := []string{r}
+			c.context.LogDebug(fmt.Sprintf("including: %s\n", i))
+			if strings.Contains(r, "*") {
+				globbed, err := filepath.Glob(r)
+				if err != nil {
+					return c, err
+				}
+				res = globbed
+			}
+			including = append(including, res...)
+		}
+		for _, include := range including {
+			c.context.LogDebug(fmt.Sprintf("loading included: %s\n", include))
+			apps := make(map[string]Application)
+			if err := doDecode(include, &apps); err != nil {
+				return c, err
+			}
+			for k, v := range apps {
+				if _, ok := c.Applications[k]; ok {
+					return c, fmt.Errorf("%s is overwritten by config: %s", k, include)
+				}
+				c.Applications[k] = v
+			}
+		}
 	}
 	isDisable := len(context.Disabled) > 0
 	if len(context.Applications) > 0 || isDisable {
