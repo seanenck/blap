@@ -172,7 +172,7 @@ func (r *ResourceFetcher) Tagged(a core.TaggedMode) (*extract.Asset, error) {
 	if tag == "" {
 		return nil, errors.New("no tags matched")
 	}
-	r.context.LogInfoSub(fmt.Sprintf("found tag: %s\n", tag))
+	r.context.LogInfoSub("found tag: %s\n", tag)
 	t, err := template.New("t").Parse(dl)
 	if err != nil {
 		return nil, err
@@ -196,7 +196,7 @@ func (r *ResourceFetcher) GitHub(a core.GitHubMode) (*extract.Asset, error) {
 		return nil, fmt.Errorf("github mode requires an asset filter regex: %v", a)
 	}
 	tarSource := regex == tarball
-	r.context.LogInfoSub(fmt.Sprintf("getting github release: %s\n", up))
+	r.context.LogInfoSub("getting github release: %s\n", up)
 	tag, assets, err := latestRelease(a, tarSource)
 	if err != nil {
 		return nil, err
@@ -243,7 +243,7 @@ func (r *ResourceFetcher) Download(dryrun bool, url, dest string) (bool, error) 
 		if dryrun {
 			return true, nil
 		}
-		r.context.LogInfoSub(fmt.Sprintf("downloading asset: %s\n", url))
+		r.context.LogInfoSub("downloading asset: %s\n", url)
 		resp, err := get(url)
 		if err != nil {
 			return false, err

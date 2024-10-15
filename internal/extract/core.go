@@ -110,7 +110,7 @@ func (asset *Asset) Archive() string {
 
 // Extract will unpack an asset
 func (asset *Asset) Extract() error {
-	asset.context.LogInfoSub(fmt.Sprintf("extracting: %s\n", asset.file))
+	asset.context.LogInfoSub("extracting: %s\n", asset.file)
 	cmd := asset.local.extract.command[0]
 	var args []string
 	hasIn := false

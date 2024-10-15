@@ -97,7 +97,7 @@ func (a Application) process(name string, c Configuration, fetcher Fetcher, hand
 	Acted(string)
 },
 ) error {
-	c.context.LogInfo(fmt.Sprintf("processing: %s\n", name))
+	c.context.LogInfo("processing: %s\n", name)
 	fetcher.SetToken(resolveDir(c.Token))
 	if a.GitHub != nil && a.Tagged != nil {
 		return fmt.Errorf("multiple modes enable, only one allowed: %v", a)
@@ -243,7 +243,7 @@ func (c Configuration) Process(fetcher Fetcher) error {
 		for _, d := range dirs {
 			name := d.Name()
 			if !slices.Contains(handler.assets, name) {
-				c.context.LogCore(fmt.Sprintf("purging: %s\n", name))
+				c.context.LogCore("purging: %s\n", name)
 				if err := os.RemoveAll(filepath.Join(dir, name)); err != nil {
 					return err
 				}
@@ -257,9 +257,9 @@ func (c Configuration) Process(fetcher Fetcher) error {
 	}
 	for idx, update := range handler.updated {
 		if idx == 0 {
-			c.context.LogCore(fmt.Sprintf("updates %s\n", text))
+			c.context.LogCore("updates %s\n", text)
 		}
-		c.context.LogCore(fmt.Sprintf("  -> %s\n", update))
+		c.context.LogCore("  -> %s\n", update)
 	}
 	return nil
 }
@@ -290,7 +290,7 @@ func LoadConfig(input string, context context.Settings) (Configuration, error) {
 		for _, i := range c.Include {
 			r := resolveDir(i)
 			res := []string{r}
-			c.context.LogDebug(fmt.Sprintf("including: %s\n", i))
+			c.context.LogDebug("including: %s\n", i)
 			if strings.Contains(r, "*") {
 				globbed, err := filepath.Glob(r)
 				if err != nil {
@@ -301,7 +301,7 @@ func LoadConfig(input string, context context.Settings) (Configuration, error) {
 			including = append(including, res...)
 		}
 		for _, include := range including {
-			c.context.LogDebug(fmt.Sprintf("loading included: %s\n", include))
+			c.context.LogDebug("loading included: %s\n", include)
 			apps := make(map[string]Application)
 			if err := doDecode(include, &apps); err != nil {
 				return c, err
