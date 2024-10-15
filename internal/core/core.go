@@ -144,6 +144,9 @@ func (a Application) process(name string, c Configuration, fetcher Fetcher, hand
 			return err
 		}
 	}
+	obj := struct {
+		Tag string
+	}{asset.Tag()}
 	for _, step := range a.BuildSteps {
 		cmd := step.Command
 		if len(cmd) == 0 {
@@ -160,10 +163,6 @@ func (a Application) process(name string, c Configuration, fetcher Fetcher, hand
 			if err != nil {
 				return err
 			}
-			obj := struct {
-				Tag  string
-				Name string
-			}{asset.Tag(), name}
 			var b bytes.Buffer
 			if err := t.Execute(&b, obj); err != nil {
 				return err
