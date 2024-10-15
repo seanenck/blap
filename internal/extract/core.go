@@ -58,6 +58,11 @@ func (asset *Asset) URL() string {
 	return asset.url
 }
 
+// Tag will get the tag for the asset
+func (asset *Asset) Tag() string {
+	return asset.tag
+}
+
 // SetAppData will set the asset's data for the overall application
 func (asset *Asset) SetAppData(name, workdir string, settings Settings, context context.Settings) error {
 	h := sha256.New()
@@ -67,7 +72,7 @@ func (asset *Asset) SetAppData(name, workdir string, settings Settings, context 
 	hash := fmt.Sprintf("%x", h.Sum(nil))[0:7]
 	asset.context = context
 	asset.local.archive = filepath.Join(workdir, fmt.Sprintf("%s.%s", hash, asset.file))
-	asset.local.unpack = filepath.Join(workdir, fmt.Sprintf("%s.%s", name, asset.tag))
+	asset.local.unpack = filepath.Join(workdir, fmt.Sprintf("%s.%s", name, strings.ReplaceAll(asset.tag, "/", "_")))
 	asset.local.extract.command = settings.Command
 	if len(settings.Command) == 0 {
 		asset.local.extract.depth = !settings.NoDepth

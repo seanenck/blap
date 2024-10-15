@@ -6,9 +6,11 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"slices"
 	"strings"
+	"text/template"
 
 	"github.com/seanenck/bd/internal/context"
 	"github.com/seanenck/bd/internal/extract"
@@ -36,10 +38,15 @@ type (
 	}
 	// Application defines how an application is downloaded, unpacked, and deployed
 	Application struct {
-		Disable  bool             `yaml:"disable"`
-		GitHub   *GitHubMode      `yaml:"github"`
-		Tagged   *TaggedMode      `yaml:"tagged"`
-		Extract  extract.Settings `yaml:"extract"`
+		Priority   int              `yaml:"priority"`
+		Disable    bool             `yaml:"disable"`
+		GitHub     *GitHubMode      `yaml:"github"`
+		Tagged     *TaggedMode      `yaml:"tagged"`
+		Extract    extract.Settings `yaml:"extract"`
+		BuildSteps []struct {
+			Directory string   `yaml:"directory"`
+			Command   []string `yaml:"command"`
+		} `yaml:"build"`
 		Binaries struct {
 			Files       []string `yaml:"files"`
 			Destination string   `yaml:"destination"`
@@ -97,7 +104,7 @@ func (a Application) process(name string, c Configuration, fetcher Fetcher) (boo
 		return false, err
 	}
 	if asset == nil {
-		return false, fmt.Errorf("no asset found: %v", a)
+		return false, fmt.Errorf("no asset return: %v", a)
 	}
 	if err := asset.SetAppData(name, resolveDir(c.Directory), a.Extract, c.context); err != nil {
 		return false, err
@@ -114,6 +121,44 @@ func (a Application) process(name string, c Configuration, fetcher Fetcher) (boo
 	dest := asset.Unpack()
 	if !PathExists(dest) {
 		if err := asset.Extract(); err != nil {
+			return false, err
+		}
+	}
+	for _, step := range a.BuildSteps {
+		cmd := step.Command
+		if len(cmd) == 0 {
+			continue
+		}
+		exe := resolveDir(cmd[0])
+		var args []string
+		for idx, a := range cmd {
+			if idx == 0 {
+				continue
+			}
+			res := resolveDir(a)
+			t, err := template.New("t").Parse(res)
+			if err != nil {
+				return false, err
+			}
+			obj := struct {
+				Tag  string
+				Name string
+			}{asset.Tag(), name}
+			var b bytes.Buffer
+			if err := t.Execute(&b, obj); err != nil {
+				return false, err
+			}
+			args = append(args, b.String())
+		}
+		c := exec.Command(exe, args...)
+		c.Stdout = os.Stdout
+		c.Stderr = os.Stderr
+		to := dest
+		if step.Directory != "" {
+			to = filepath.Join(to, step.Directory)
+		}
+		c.Dir = to
+		if err := c.Run(); err != nil {
 			return false, err
 		}
 	}
@@ -140,16 +185,27 @@ func (a Application) process(name string, c Configuration, fetcher Fetcher) (boo
 func (c Configuration) Process(fetcher Fetcher) error {
 	var updated []string
 	fetcher.SetContext(c.context)
+	type apps struct {
+		app  Application
+		name string
+	}
+	var enabled []apps
 	for name, app := range c.Applications {
 		if app.Disable {
 			continue
 		}
-		did, err := app.process(name, c, fetcher)
+		enabled = append(enabled, apps{app, name})
+	}
+	slices.SortFunc(enabled, func(left, right apps) int {
+		return right.app.Priority - left.app.Priority
+	})
+	for _, a := range enabled {
+		did, err := a.app.process(a.name, c, fetcher)
 		if err != nil {
-			return appError{name, err}
+			return appError{a.name, err}
 		}
 		if did {
-			updated = append(updated, name)
+			updated = append(updated, a.name)
 		}
 	}
 	text := "found"

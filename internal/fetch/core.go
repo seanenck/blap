@@ -23,6 +23,7 @@ import (
 const (
 	gitHubToken = "GITHUB_TOKEN"
 	bdToken     = "BD_" + gitHubToken
+	tarball     = "tarball"
 )
 
 // TokenOptions are the env vars for setting a github token
@@ -39,8 +40,8 @@ type (
 		Assets []struct {
 			DownloadURL string `json:"browser_download_url"`
 		} `json:"assets"`
-
-		Tag string `json:"tag_name"`
+		Tarball string `json:"tarball_url"`
+		Tag     string `json:"tag_name"`
 	}
 
 	// GitHubErrorResponse is the error from github
@@ -194,13 +195,17 @@ func (r *ResourceFetcher) GitHub(a core.GitHubMode) (*extract.Asset, error) {
 	if regex == "" {
 		return nil, fmt.Errorf("github mode requires an asset filter regex: %v", a)
 	}
+	tarSource := regex == tarball
 	r.context.LogInfoSub(fmt.Sprintf("getting github release: %s\n", up))
-	tag, assets, err := latestRelease(a)
+	tag, assets, err := latestRelease(a, tarSource)
 	if err != nil {
 		return nil, err
 	}
 	if len(assets) == 0 {
 		return nil, errors.New("no assets found")
+	}
+	if tarSource {
+		regex = ""
 	}
 	re, err := regexp.Compile(regex)
 	if err != nil {
@@ -213,10 +218,16 @@ func (r *ResourceFetcher) GitHub(a core.GitHubMode) (*extract.Asset, error) {
 			if asset != nil {
 				return nil, fmt.Errorf("multiple assets matched: %s (had: %v)", item, asset)
 			}
+			if tarSource {
+				name = fmt.Sprintf("%s.tar.gz", name)
+			}
 			asset = extract.NewAsset(item, name, tag)
 		}
 	}
 
+	if asset == nil {
+		return nil, fmt.Errorf("unable to find asset, choices: %v", assets)
+	}
 	return asset, nil
 }
 
@@ -250,15 +261,19 @@ func (r *ResourceFetcher) Download(dryrun bool, url, dest string) (bool, error) 
 	return did, nil
 }
 
-func latestRelease(a core.GitHubMode) (string, []string, error) {
+func latestRelease(a core.GitHubMode, isTarball bool) (string, []string, error) {
 	release, err := fetchRepoData[GitHubRelease](a.Project, "releases/latest")
 	if err != nil {
 		return "", nil, err
 	}
 
-	assets := make([]string, 0, len(release.Assets))
-	for _, a := range release.Assets {
-		assets = append(assets, a.DownloadURL)
+	var assets []string
+	if isTarball {
+		assets = append(assets, release.Tarball)
+	} else {
+		for _, a := range release.Assets {
+			assets = append(assets, a.DownloadURL)
+		}
 	}
 
 	return release.Tag, assets, nil
