@@ -32,3 +32,13 @@ applications:
       - files:
           - "bin/nvim"
         destination: "~/bin"
+  blap:
+    github:
+      project: "seanenck/blap"
+      asset: "tarball"
+    build:
+      - command: ["make", "VERSION={{ $.Tag }}"]
+    deploy:
+      - files:
+          - "build/blap"
+        destination: "~/.local/bin/development"
