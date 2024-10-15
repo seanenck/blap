@@ -12,6 +12,10 @@ applications:
       files:
         - "bin/go"
       destination: "~/bin"
+  lockbox:
+    branch:
+      project: "seanenck/lockbox"
+      branch: "master"
   rg:
     github:
       project: "BurntSushi/ripgrep"

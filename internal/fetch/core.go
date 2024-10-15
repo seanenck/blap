@@ -35,6 +35,11 @@ type (
 		context context.Settings
 	}
 
+	// GitHubCommit is commit information from github for a repo
+	GitHubCommit struct {
+		Sha string `json:"sha"`
+	}
+
 	// GitHubRelease is the API definition for github release info
 	GitHubRelease struct {
 		Assets []struct {
@@ -120,6 +125,22 @@ func fetchRepoData[T any](ownerRepo, call string) (T, error) {
 		return *new(T), err
 	}
 	return obj, nil
+}
+
+// Branch will get an asset from a branch
+func (r *ResourceFetcher) Branch(a core.BranchMode) (*extract.Asset, error) {
+	if a.Branch == "" {
+		return nil, errors.New("branch required for branch mode")
+	}
+	if a.Project == "" {
+		return nil, errors.New("project required for branch mode")
+	}
+	commit, err := fetchRepoData[GitHubCommit](a.Project, fmt.Sprintf("commits/%s", a.Branch))
+	if err != nil {
+		return nil, err
+	}
+	tag := commit.Sha[0:7]
+	return extract.NewAsset(fmt.Sprintf("https://github.com/%s/archive/%s.tar.gz", a.Project, a.Branch), fmt.Sprintf("%s-%s.tar.gz", tag, a.Branch), tag), nil
 }
 
 // Tagged gets a tagged (git tag) release

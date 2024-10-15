@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
 	"slices"
 	"strings"
 	"text/template"
@@ -41,12 +42,18 @@ type (
 		Download   string   `yaml:"download"`
 		Filters    []string `yaml:"filters"`
 	}
+	// BranchMode will enable a repository+branch to pull a tarball
+	BranchMode struct {
+		Project string
+		Branch  string
+	}
 	// Application defines how an application is downloaded, unpacked, and deployed
 	Application struct {
 		Priority   int              `yaml:"priority"`
 		Disable    bool             `yaml:"disable"`
 		GitHub     *GitHubMode      `yaml:"github"`
 		Tagged     *TaggedMode      `yaml:"tagged"`
+		Branch     *BranchMode      `yaml:"branch"`
 		Extract    extract.Settings `yaml:"extract"`
 		BuildSteps []struct {
 			Directory string   `yaml:"directory"`
@@ -65,6 +72,7 @@ type (
 		Tagged(TaggedMode) (*extract.Asset, error)
 		Download(bool, string, string) (bool, error)
 		SetToken(string)
+		Branch(BranchMode) (*extract.Asset, error)
 	}
 	appError struct {
 		name string
@@ -92,6 +100,22 @@ func resolveDir(dir string) string {
 	return filepath.Join(h, strings.TrimPrefix(dir, isHome))
 }
 
+func isNil(val any) bool {
+	if val == nil {
+		return true
+	}
+
+	v := reflect.ValueOf(val)
+	k := v.Kind()
+	switch k {
+	case reflect.Chan, reflect.Func, reflect.Map, reflect.Pointer,
+		reflect.UnsafePointer, reflect.Interface, reflect.Slice:
+		return v.IsNil()
+	}
+
+	return false
+}
+
 func (a Application) process(name string, c Configuration, fetcher Fetcher, handler interface {
 	AddAsset(*extract.Asset)
 	Acted(string)
@@ -99,8 +123,14 @@ func (a Application) process(name string, c Configuration, fetcher Fetcher, hand
 ) error {
 	c.context.LogInfo("processing: %s\n", name)
 	fetcher.SetToken(resolveDir(c.Token))
-	if a.GitHub != nil && a.Tagged != nil {
-		return fmt.Errorf("multiple modes enable, only one allowed: %v", a)
+	cnt := 0
+	for _, obj := range []interface{}{a.GitHub, a.Tagged, a.Branch} {
+		if !isNil(obj) {
+			cnt++
+			if cnt > 1 {
+				return fmt.Errorf("multiple modes enable, only one allowed: %v", obj)
+			}
+		}
 	}
 	var asset *extract.Asset
 	var err error
@@ -110,7 +140,11 @@ func (a Application) process(name string, c Configuration, fetcher Fetcher, hand
 		if a.Tagged != nil {
 			asset, err = fetcher.Tagged(*a.Tagged)
 		} else {
-			return fmt.Errorf("unknown mode: %v", a)
+			if a.Branch != nil {
+				asset, err = fetcher.Branch(*a.Branch)
+			} else {
+				return fmt.Errorf("unknown mode: %v", a)
+			}
 		}
 	}
 	if err != nil {
@@ -189,7 +223,7 @@ func (a Application) process(name string, c Configuration, fetcher Fetcher, hand
 			return fmt.Errorf("unable to find binary: %s", src)
 		}
 		if PathExists(to) {
-			if err := os.Remove(to); err != nil {
+			if err := os.RemoveAll(to); err != nil {
 				return err
 			}
 		}
