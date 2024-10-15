@@ -11,17 +11,11 @@ import (
 	"github.com/seanenck/bd/internal/context"
 	"github.com/seanenck/bd/internal/core"
 	"github.com/seanenck/bd/internal/fetch"
+	"github.com/seanenck/bd/internal/shell"
 )
 
 const (
-	purge         = "purge"
-	upgrade       = "upgrade"
-	vers          = "version"
 	configFileEnv = "BD_CONFIG_FILE"
-	appFlag       = "applications"
-	disableFlag   = "disable"
-	verbosityFlag = "verbosity"
-	commitFlag    = "confirm"
 )
 
 var version = "development"
@@ -50,10 +44,6 @@ func executable() (string, error) {
 	return filepath.Base(e), nil
 }
 
-func simpleFlag(f string) string {
-	return fmt.Sprintf("-%s", f)
-}
-
 func help(msg string) error {
 	if msg != "" {
 		fmt.Printf("%s\n\n", msg)
@@ -63,13 +53,13 @@ func help(msg string) error {
 		return err
 	}
 	fmt.Printf("%s\n", exe)
-	helpLine(upgrade, "upgrade packages")
-	helpLine(vers, "display version information")
-	helpLine(purge, "purge old versions")
-	helpLine(simpleFlag(appFlag), "specify a subset of packages (comma delimiter)")
-	helpLine(simpleFlag(disableFlag), "disable applications (comma delimiter)")
-	helpLine(simpleFlag(verbosityFlag), "increase/decrease output verbosity")
-	helpLine(simpleFlag(commitFlag), "confirm and commit changes for actions")
+	helpLine(shell.UpgradeCommand, "upgrade packages")
+	helpLine(shell.VersionCommand, "display version information")
+	helpLine(shell.PurgeCommand, "purge old versions")
+	helpLine(shell.DisplayApplicationsFlag, "specify a subset of packages (comma delimiter)")
+	helpLine(shell.DisplayDisableFlag, "disable applications (comma delimiter)")
+	helpLine(shell.DisplayVerbosityFlag, "increase/decrease output verbosity")
+	helpLine(shell.DisplayCommitFlag, "confirm and commit changes for actions")
 	fmt.Println()
 	fmt.Printf("configuration file: %s\n", defaultConfig())
 	fmt.Printf("  (override using %s)\n", configFileEnv)
@@ -91,43 +81,16 @@ func run() error {
 	purging := false
 	cmd := args[1]
 	switch cmd {
-	case "bash":
-		exe, err := executable()
-		if err != nil {
-			return err
-		}
-		fmt.Printf(`_%s() {
-  local cur opts
-  cur=${COMP_WORDS[COMP_CWORD]}
-  if [ "$COMP_CWORD" -eq 1 ]; then
-    opts="`+upgrade+" "+" "+purge+`"
-  else
-    if [ "$COMP_CWORD" -eq 2 ]; then
-      opts="`+simpleFlag(appFlag)+" "+simpleFlag(commitFlag)+" "+simpleFlag(disableFlag)+`"
-    else
-      if [ "$COMP_CWORD" -eq 3 ]; then
-        if [ "$cur" != "`+simpleFlag(commitFlag)+`" ]; then
-          opts="`+simpleFlag(commitFlag)+`"
-        fi
-      fi
-    fi
-  fi
-  if [ -n "$opts" ]; then
-    # shellcheck disable=SC2207
-    COMPREPLY=($(compgen -W "$opts" -- "$cur"))
-  fi
-}
-
-complete -F _%s -o bashdefault %s`, exe, exe, exe)
-		return nil
+	case shell.BashCommand:
+		return shell.BashCompletions()
 	case "help":
 		return help("")
-	case purge:
+	case shell.PurgeCommand:
 		purging = true
-	case vers:
+	case shell.VersionCommand:
 		fmt.Println(version)
 		return nil
-	case upgrade:
+	case shell.UpgradeCommand:
 	default:
 		return help(fmt.Sprintf("unknown argument: %s", cmd))
 	}
@@ -137,10 +100,14 @@ complete -F _%s -o bashdefault %s`, exe, exe, exe)
 	verbosity := context.InfoVerbosity
 	if len(args) > 2 {
 		set := flag.NewFlagSet("app", flag.ExitOnError)
-		apps := set.String(appFlag, "", "limit application checks")
-		disable := set.String(disableFlag, "", "disable applications")
-		verbose := set.Int(verbosityFlag, context.InfoVerbosity, "set verbosity level")
-		commit := set.Bool(commitFlag, false, "confirm and commit changes")
+		var apps *string
+		var disable *string
+		if !purging {
+			apps = set.String(shell.ApplicationsFlag, "", "limit application checks")
+			disable = set.String(shell.DisableFlag, "", "disable applications")
+		}
+		verbose := set.Int(shell.VerbosityFlag, context.InfoVerbosity, "set verbosity level")
+		commit := set.Bool(shell.CommitFlag, false, "confirm and commit changes")
 		if err := set.Parse(args[2:]); err != nil {
 			return err
 		}
@@ -148,10 +115,12 @@ complete -F _%s -o bashdefault %s`, exe, exe, exe)
 		if verbosity < 0 {
 			return help("verbosity must be >= 0")
 		}
-		appSet = commaList(apps)
-		disableSet = commaList(disable)
-		if len(appSet) > 0 && len(disableSet) > 0 {
-			return help("can not limit applications and disable at the same time")
+		if !purging {
+			appSet = commaList(apps)
+			disableSet = commaList(disable)
+			if len(appSet) > 0 && len(disableSet) > 0 {
+				return help("can not limit applications and disable at the same time")
+			}
 		}
 		dryRun = !*commit
 	}
