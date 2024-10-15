@@ -19,7 +19,7 @@ const (
 	// CompletionsCommand generates completions
 	CompletionsCommand = "completions"
 	// CommitFlag confirms and therefore commits changes
-	CommitFlag = "confirm"
+	CommitFlag = "commit"
 	// VerbosityFlag changes logging output
 	VerbosityFlag = "verbosity"
 	// ApplicationsFlag enables selected applications
