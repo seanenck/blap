@@ -31,11 +31,6 @@ func (s Settings) LogInfo(msg string, a ...any) {
 	s.log(1, msg, a...)
 }
 
-// LogInfoSub logs a sub-step info message
-func (s Settings) LogInfoSub(msg string, a ...any) {
-	s.LogInfo("  "+msg, a...)
-}
-
 // LogCore logs a core message
 func (s Settings) LogCore(msg string, a ...any) {
 	s.log(0, msg, a...)
