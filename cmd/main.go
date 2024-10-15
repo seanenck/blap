@@ -14,6 +14,7 @@ import (
 )
 
 const (
+	purge         = "purge"
 	check         = "check"
 	upgrade       = "upgrade"
 	vers          = "version"
@@ -65,6 +66,7 @@ func help(msg string) error {
 	helpLine(check, "check for updates")
 	helpLine(upgrade, "upgrade packages")
 	helpLine(vers, "display version information")
+	helpLine(purge, "purge old versions")
 	helpLine(simpleFlag(appFlag), "specify a subset of packages (comma delimiter)")
 	helpLine(simpleFlag(disableFlag), "disable applications (comma delimiter)")
 	helpLine(simpleFlag(verbosityFlag), "increase/decrease output verbosity")
@@ -87,6 +89,7 @@ func run() error {
 		input = defaultConfig()
 	}
 	dryRun := true
+	purging := false
 	cmd := args[1]
 	switch cmd {
 	case "bash":
@@ -98,7 +101,7 @@ func run() error {
   local cur opts
   cur=${COMP_WORDS[COMP_CWORD]}
   if [ "$COMP_CWORD" -eq 1 ]; then
-    opts="`+upgrade+" "+check+`"
+    opts="`+upgrade+" "+" "+purge+" "+check+`"
   else
     if [ "$COMP_CWORD" -eq 2 ]; then
       opts="`+simpleFlag(appFlag)+" "+simpleFlag(disableFlag)+`"
@@ -115,6 +118,9 @@ complete -F _%s -o bashdefault %s`, exe, exe, exe)
 	case "help":
 		return help("")
 	case check:
+	case purge:
+		dryRun = false
+		purging = true
 	case vers:
 		fmt.Println(version)
 		return nil
@@ -152,6 +158,7 @@ complete -F _%s -o bashdefault %s`, exe, exe, exe)
 		Applications: appSet,
 		Disabled:     disableSet,
 		Verbosity:    verbosity,
+		Purge:        purging,
 	}
 	cfg, err := core.LoadConfig(input, ctx)
 	if err != nil {

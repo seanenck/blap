@@ -9,6 +9,7 @@ const InfoVerbosity = 2
 // Settings are the core settings
 type Settings struct {
 	DryRun       bool
+	Purge        bool
 	Applications []string
 	Disabled     []string
 	Verbosity    int

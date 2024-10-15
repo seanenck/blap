@@ -18,6 +18,10 @@ import (
 )
 
 type (
+	processHandler struct {
+		assets  []string
+		updated []string
+	}
 	// Configuration is the overall configuration
 	Configuration struct {
 		context      context.Settings
@@ -71,6 +75,10 @@ func (a appError) Error() string {
 	return fmt.Sprintf("application name: %s, error: %v", a.name, a.err)
 }
 
+func (c Configuration) resolveDir() string {
+	return resolveDir(c.Directory)
+}
+
 func resolveDir(dir string) string {
 	isHome := fmt.Sprintf("~%c", os.PathSeparator)
 	if !strings.HasPrefix(dir, isHome) {
@@ -83,11 +91,15 @@ func resolveDir(dir string) string {
 	return filepath.Join(h, strings.TrimPrefix(dir, isHome))
 }
 
-func (a Application) process(name string, c Configuration, fetcher Fetcher) (bool, error) {
+func (a Application) process(name string, c Configuration, fetcher Fetcher, handler interface {
+	AddAsset(*extract.Asset)
+	Acted(string)
+},
+) error {
 	c.context.LogInfo(fmt.Sprintf("processing: %s\n", name))
 	fetcher.SetToken(resolveDir(c.Token))
 	if a.GitHub != nil && a.Tagged != nil {
-		return false, fmt.Errorf("multiple modes enable, only one allowed: %v", a)
+		return fmt.Errorf("multiple modes enable, only one allowed: %v", a)
 	}
 	var asset *extract.Asset
 	var err error
@@ -97,31 +109,38 @@ func (a Application) process(name string, c Configuration, fetcher Fetcher) (boo
 		if a.Tagged != nil {
 			asset, err = fetcher.Tagged(*a.Tagged)
 		} else {
-			return false, fmt.Errorf("unknown mode: %v", a)
+			return fmt.Errorf("unknown mode: %v", a)
 		}
 	}
 	if err != nil {
-		return false, err
+		return err
 	}
 	if asset == nil {
-		return false, fmt.Errorf("no asset return: %v", a)
+		return fmt.Errorf("no asset return: %v", a)
 	}
-	if err := asset.SetAppData(name, resolveDir(c.Directory), a.Extract, c.context); err != nil {
-		return false, err
+	if err := asset.SetAppData(name, c.resolveDir(), a.Extract, c.context); err != nil {
+		return err
+	}
+	handler.AddAsset(asset)
+	if c.context.Purge {
+		return nil
 	}
 
 	did, err := fetcher.Download(c.context.DryRun, asset.URL(), asset.Archive())
 	if err != nil {
-		return false, err
+		return err
+	}
+	if did {
+		handler.Acted(name)
 	}
 	if c.context.DryRun {
-		return did, nil
+		return nil
 	}
 
 	dest := asset.Unpack()
 	if !PathExists(dest) {
 		if err := asset.Extract(); err != nil {
-			return false, err
+			return err
 		}
 	}
 	for _, step := range a.BuildSteps {
@@ -138,7 +157,7 @@ func (a Application) process(name string, c Configuration, fetcher Fetcher) (boo
 			res := resolveDir(a)
 			t, err := template.New("t").Parse(res)
 			if err != nil {
-				return false, err
+				return err
 			}
 			obj := struct {
 				Tag  string
@@ -146,7 +165,7 @@ func (a Application) process(name string, c Configuration, fetcher Fetcher) (boo
 			}{asset.Tag(), name}
 			var b bytes.Buffer
 			if err := t.Execute(&b, obj); err != nil {
-				return false, err
+				return err
 			}
 			args = append(args, b.String())
 		}
@@ -159,7 +178,7 @@ func (a Application) process(name string, c Configuration, fetcher Fetcher) (boo
 		}
 		c.Dir = to
 		if err := c.Run(); err != nil {
-			return false, err
+			return err
 		}
 	}
 	dir := resolveDir(a.Binaries.Destination)
@@ -167,23 +186,32 @@ func (a Application) process(name string, c Configuration, fetcher Fetcher) (boo
 		to := filepath.Join(dir, filepath.Base(b))
 		src := filepath.Join(asset.Unpack(), b)
 		if !PathExists(src) {
-			return false, fmt.Errorf("unable to find binary: %s", src)
+			return fmt.Errorf("unable to find binary: %s", src)
 		}
 		if PathExists(to) {
 			if err := os.Remove(to); err != nil {
-				return false, err
+				return err
 			}
 		}
 		if err := os.Symlink(src, to); err != nil {
-			return false, err
+			return err
 		}
 	}
-	return did, nil
+	return nil
+}
+
+func (h *processHandler) Acted(name string) {
+	h.updated = append(h.updated, name)
+}
+
+func (h *processHandler) AddAsset(a *extract.Asset) {
+	for _, f := range []string{a.Unpack(), a.Archive()} {
+		h.assets = append(h.assets, filepath.Base(f))
+	}
 }
 
 // Process will process application definitions
 func (c Configuration) Process(fetcher Fetcher) error {
-	var updated []string
 	fetcher.SetContext(c.context)
 	type apps struct {
 		app  Application
@@ -199,20 +227,34 @@ func (c Configuration) Process(fetcher Fetcher) error {
 	slices.SortFunc(enabled, func(left, right apps) int {
 		return right.app.Priority - left.app.Priority
 	})
+	handler := &processHandler{}
 	for _, a := range enabled {
-		did, err := a.app.process(a.name, c, fetcher)
-		if err != nil {
+		if err := a.app.process(a.name, c, fetcher, handler); err != nil {
 			return appError{a.name, err}
 		}
-		if did {
-			updated = append(updated, a.name)
+	}
+	if c.context.Purge {
+		dir := c.resolveDir()
+		dirs, err := os.ReadDir(dir)
+		if err != nil {
+			return err
 		}
+		for _, d := range dirs {
+			name := d.Name()
+			if !slices.Contains(handler.assets, name) {
+				c.context.LogCore(fmt.Sprintf("purging: %s\n", name))
+				if err := os.RemoveAll(filepath.Join(dir, name)); err != nil {
+					return err
+				}
+			}
+		}
+		return nil
 	}
 	text := "found"
 	if !c.context.DryRun {
 		text = "applied"
 	}
-	for idx, update := range updated {
+	for idx, update := range handler.updated {
 		if idx == 0 {
 			c.context.LogCore(fmt.Sprintf("updates %s\n", text))
 		}
