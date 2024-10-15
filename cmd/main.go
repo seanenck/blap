@@ -15,13 +15,13 @@ import (
 
 const (
 	purge         = "purge"
-	check         = "check"
 	upgrade       = "upgrade"
 	vers          = "version"
 	configFileEnv = "BD_CONFIG_FILE"
 	appFlag       = "applications"
 	disableFlag   = "disable"
 	verbosityFlag = "verbosity"
+	commitFlag    = "confirm"
 )
 
 var version = "development"
@@ -63,13 +63,13 @@ func help(msg string) error {
 		return err
 	}
 	fmt.Printf("%s\n", exe)
-	helpLine(check, "check for updates")
 	helpLine(upgrade, "upgrade packages")
 	helpLine(vers, "display version information")
 	helpLine(purge, "purge old versions")
 	helpLine(simpleFlag(appFlag), "specify a subset of packages (comma delimiter)")
 	helpLine(simpleFlag(disableFlag), "disable applications (comma delimiter)")
 	helpLine(simpleFlag(verbosityFlag), "increase/decrease output verbosity")
+	helpLine(simpleFlag(commitFlag), "confirm and commit changes for actions")
 	fmt.Println()
 	fmt.Printf("configuration file: %s\n", defaultConfig())
 	fmt.Printf("  (override using %s)\n", configFileEnv)
@@ -88,7 +88,6 @@ func run() error {
 	if input == "" {
 		input = defaultConfig()
 	}
-	dryRun := true
 	purging := false
 	cmd := args[1]
 	switch cmd {
@@ -101,10 +100,16 @@ func run() error {
   local cur opts
   cur=${COMP_WORDS[COMP_CWORD]}
   if [ "$COMP_CWORD" -eq 1 ]; then
-    opts="`+upgrade+" "+" "+purge+" "+check+`"
+    opts="`+upgrade+" "+" "+purge+`"
   else
     if [ "$COMP_CWORD" -eq 2 ]; then
-      opts="`+simpleFlag(appFlag)+" "+simpleFlag(disableFlag)+`"
+      opts="`+simpleFlag(appFlag)+" "+simpleFlag(commitFlag)+" "+simpleFlag(disableFlag)+`"
+    else
+      if [ "$COMP_CWORD" -eq 3 ]; then
+        if [ "$cur" != "`+simpleFlag(commitFlag)+`" ]; then
+          opts="`+simpleFlag(commitFlag)+`"
+        fi
+      fi
     fi
   fi
   if [ -n "$opts" ]; then
@@ -117,26 +122,25 @@ complete -F _%s -o bashdefault %s`, exe, exe, exe)
 		return nil
 	case "help":
 		return help("")
-	case check:
 	case purge:
-		dryRun = false
 		purging = true
 	case vers:
 		fmt.Println(version)
 		return nil
 	case upgrade:
-		dryRun = false
 	default:
 		return help(fmt.Sprintf("unknown argument: %s", cmd))
 	}
 	var appSet []string
 	var disableSet []string
+	dryRun := true
 	verbosity := context.InfoVerbosity
 	if len(args) > 2 {
 		set := flag.NewFlagSet("app", flag.ExitOnError)
 		apps := set.String(appFlag, "", "limit application checks")
 		disable := set.String(disableFlag, "", "disable applications")
 		verbose := set.Int(verbosityFlag, context.InfoVerbosity, "set verbosity level")
+		commit := set.Bool(commitFlag, false, "confirm and commit changes")
 		if err := set.Parse(args[2:]); err != nil {
 			return err
 		}
@@ -149,6 +153,7 @@ complete -F _%s -o bashdefault %s`, exe, exe, exe)
 		if len(appSet) > 0 && len(disableSet) > 0 {
 			return help("can not limit applications and disable at the same time")
 		}
+		dryRun = !*commit
 	}
 	if !core.PathExists(input) {
 		return fmt.Errorf("config file does not exist: %s", input)

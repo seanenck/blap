@@ -243,22 +243,23 @@ func (c Configuration) Process(fetcher Fetcher) error {
 			name := d.Name()
 			if !slices.Contains(handler.assets, name) {
 				c.context.LogCore("purging: %s\n", name)
-				if err := os.RemoveAll(filepath.Join(dir, name)); err != nil {
-					return err
+				if !c.context.DryRun {
+					if err := os.RemoveAll(filepath.Join(dir, name)); err != nil {
+						return err
+					}
 				}
 			}
 		}
-		return nil
-	}
-	text := "found"
-	if !c.context.DryRun {
-		text = "applied"
-	}
-	for idx, update := range handler.updated {
-		if idx == 0 {
-			c.context.LogCore("updates %s\n", text)
+	} else {
+		for idx, update := range handler.updated {
+			if idx == 0 {
+				c.context.LogCore("updates\n")
+			}
+			c.context.LogCore("  -> %s\n", update)
 		}
-		c.context.LogCore("  -> %s\n", update)
+	}
+	if c.context.DryRun {
+		c.context.LogCore("\n[DRYRUN] impactful changes were not committed\n")
 	}
 	return nil
 }
