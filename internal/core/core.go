@@ -302,11 +302,18 @@ func LoadConfig(input string, context context.Settings) (Configuration, error) {
 		}
 		for _, include := range including {
 			c.context.LogDebug("loading included: %s\n", include)
-			apps := make(map[string]Application)
+			type included struct {
+				Applications map[string]Application `yaml:"applications"`
+				Disable      bool                   `yaml:"disable"`
+			}
+			var apps included
 			if err := doDecode(include, &apps); err != nil {
 				return c, err
 			}
-			for k, v := range apps {
+			if apps.Disable {
+				continue
+			}
+			for k, v := range apps.Applications {
 				if _, ok := c.Applications[k]; ok {
 					return c, fmt.Errorf("%s is overwritten by config: %s", k, include)
 				}
