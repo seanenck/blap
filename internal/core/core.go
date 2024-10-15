@@ -59,10 +59,10 @@ type (
 			Directory string   `yaml:"directory"`
 			Command   []string `yaml:"command"`
 		} `yaml:"build"`
-		Binaries struct {
+		Deploy []struct {
 			Files       []string `yaml:"files"`
 			Destination string   `yaml:"destination"`
-		} `yaml:"binaries"`
+		} `yaml:"deploy"`
 	}
 
 	// Fetcher provides the means to fetch application information
@@ -215,20 +215,22 @@ func (a Application) process(name string, c Configuration, fetcher Fetcher, hand
 			return err
 		}
 	}
-	dir := resolveDir(a.Binaries.Destination)
-	for _, b := range a.Binaries.Files {
-		to := filepath.Join(dir, filepath.Base(b))
-		src := filepath.Join(asset.Unpack(), b)
-		if !PathExists(src) {
-			return fmt.Errorf("unable to find binary: %s", src)
-		}
-		if PathExists(to) {
-			if err := os.RemoveAll(to); err != nil {
+	for _, deploy := range a.Deploy {
+		dir := resolveDir(deploy.Destination)
+		for _, b := range deploy.Files {
+			to := filepath.Join(dir, filepath.Base(b))
+			src := filepath.Join(asset.Unpack(), b)
+			if !PathExists(src) {
+				return fmt.Errorf("unable to find source file: %s", src)
+			}
+			if PathExists(to) {
+				if err := os.RemoveAll(to); err != nil {
+					return err
+				}
+			}
+			if err := os.Symlink(src, to); err != nil {
 				return err
 			}
-		}
-		if err := os.Symlink(src, to); err != nil {
-			return err
 		}
 	}
 	return nil

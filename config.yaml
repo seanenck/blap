@@ -8,10 +8,10 @@ applications:
         - "refs/tags/weekly"
         - "refs/tags/release"
         - "[0-9]rc[0-9]"
-    binaries:
-      files:
-        - "bin/go"
-      destination: "~/bin"
+    deploy:
+      - files:
+          - "bin/go"
+        destination: "~/bin"
   lockbox:
     branch:
       project: "seanenck/lockbox"
@@ -20,15 +20,15 @@ applications:
     github:
       project: "BurntSushi/ripgrep"
       asset: "x86_64-unknown-linux-(.+?).tar.gz$"
-    binaries:
-      files:
-        - "rg"
-      destination: "~/bin"
+    deploy:
+      - files:
+          - "rg"
+        destination: "~/bin"
   nvim:
     github:
       project: "neovim/neovim"
       asset: "nvim-linux64.tar.gz$"
-    binaries:
-      files:
-        - "bin/nvim"
-      destination: "~/bin"
+    deploy:
+      - files:
+          - "bin/nvim"
+        destination: "~/bin"

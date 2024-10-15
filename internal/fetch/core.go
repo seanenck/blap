@@ -22,7 +22,7 @@ import (
 
 const (
 	gitHubToken = "GITHUB_TOKEN"
-	blapToken     = "BLAP_" + gitHubToken
+	blapToken   = "BLAP_" + gitHubToken
 	tarball     = "tarball"
 )
 
