@@ -15,19 +15,19 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/seanenck/bd/internal/context"
-	"github.com/seanenck/bd/internal/core"
-	"github.com/seanenck/bd/internal/extract"
+	"github.com/seanenck/blap/internal/context"
+	"github.com/seanenck/blap/internal/core"
+	"github.com/seanenck/blap/internal/extract"
 )
 
 const (
 	gitHubToken = "GITHUB_TOKEN"
-	bdToken     = "BD_" + gitHubToken
+	blapToken     = "BLAP_" + gitHubToken
 	tarball     = "tarball"
 )
 
 // TokenOptions are the env vars for setting a github token
-var TokenOptions = []string{bdToken, gitHubToken}
+var TokenOptions = []string{blapToken, gitHubToken}
 
 type (
 	// ResourceFetcher is the default fetcher for resources
@@ -333,7 +333,7 @@ func tokenHeader(req *http.Request) error {
 // SetToken will set the token for the fetch (if not already set)
 func (r *ResourceFetcher) SetToken(token string) {
 	if getToken() == "" {
-		os.Setenv(bdToken, token)
+		os.Setenv(blapToken, token)
 	}
 }
 

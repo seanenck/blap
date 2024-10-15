@@ -51,7 +51,7 @@ type Completion struct {
 	}
 }
 
-//go:embed bd.bash
+//go:embed bash.sh
 var bashShell string
 
 // GenerateCompletions will generate shell completions

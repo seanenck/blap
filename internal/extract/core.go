@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/seanenck/bd/internal/context"
+	"github.com/seanenck/blap/internal/context"
 )
 
 const (

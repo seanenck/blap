@@ -8,19 +8,19 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/seanenck/bd/internal/context"
-	"github.com/seanenck/bd/internal/core"
-	"github.com/seanenck/bd/internal/fetch"
-	"github.com/seanenck/bd/internal/shell"
+	"github.com/seanenck/blap/internal/context"
+	"github.com/seanenck/blap/internal/core"
+	"github.com/seanenck/blap/internal/fetch"
+	"github.com/seanenck/blap/internal/shell"
 )
 
-const configFileEnv = "BD_CONFIG_FILE"
+const configFileEnv = "BLAP_CONFIG_FILE"
 
 var version = "development"
 
 func defaultConfig() string {
 	home := os.Getenv("HOME")
-	return filepath.Join(home, ".config", "bd", "config.yaml")
+	return filepath.Join(home, ".config", "blap", "config.yaml")
 }
 
 func main() {

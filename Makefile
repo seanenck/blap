@@ -1,5 +1,6 @@
 BUILD   := build/
-TARGET  := $(BUILD)bd
+OBJECT  := blap
+TARGET  := $(BUILD)$(OBJECT)
 DESTDIR := /usr/local/bin
 GOFLAGS := -trimpath -buildmode=pie -mod=readonly -modcacherw -buildvcs=false
 VERSION ?= $(shell git log -n 1 --format=%h)
@@ -12,7 +13,7 @@ $(TARGET): cmd/main.go internal/**/*.go  go.*
 	go build $(GOFLAGS) -ldflags "$(LDFLAGS) -X main.version=$(VERSION)" -o $@ cmd/main.go
 
 install:
-	install -m755 $(TARGET) $(DESTDIR)/bd
+	install -m755 $(TARGET) $(DESTDIR)/$(OBJECT)
 
 clean:
 	@rm -rf $(BUILD)
@@ -20,4 +21,4 @@ clean:
 check: $(TARGET)
 	cat config.yaml | sed "s#~/#$(PWD)/$(BUILD)#g" > $(BUILD)config.yaml
 	mkdir -p $(BUILD)bin $(BUILD)fs
-	cd $(BUILD) && BD_CONFIG_FILE=$(PWD)/$(BUILD)config.yaml ./bd upgrade
+	cd $(BUILD) && BLAP_CONFIG_FILE=$(PWD)/$(BUILD)config.yaml ./$(OBJECT) upgrade

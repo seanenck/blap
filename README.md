@@ -1,11 +1,12 @@
 b(inary) d(ownloader)
 ===
 
-A simplistic "manager" of binaries downloaded from github (or other sources).
-This is meant to be a simple, specific (and mostly for personal use) alternative
-to local package management, go/cargo options, or others (e.g. eget).
+A simplistic "manager" of binaries and source downloaded from github (or other sources)
+for local deployment of tooling. This is meant to be a simple, specific (and mostly for personal use) alternative
+to local package management (e.g. via go/cargo directly or tools like
+eget/brew).
 
-[![build](https://github.com/seanenck/bd/actions/workflows/build.yml/badge.svg)](https://github.com/seanenck/bd/actions/workflows/build.yml)
+[![build](https://github.com/seanenck/blap/actions/workflows/build.yml/badge.svg)](https://github.com/seanenck/blap/actions/workflows/build.yml)
 
 # build
 
@@ -21,7 +22,7 @@ make install DESTDIR=~/chosen/path
 
 # usage
 
-Utilize the primitive `help` to see the CLI/config options for `bd`
+Utilize the primitive `help` to see the CLI/config options for `blap`
 
 ## Config
 

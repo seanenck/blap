@@ -13,8 +13,8 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/seanenck/bd/internal/context"
-	"github.com/seanenck/bd/internal/extract"
+	"github.com/seanenck/blap/internal/context"
+	"github.com/seanenck/blap/internal/extract"
 	"gopkg.in/yaml.v3"
 )
 

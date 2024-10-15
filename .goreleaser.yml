@@ -1,11 +1,9 @@
-# .goreleaser.yml
-# Build customization
-project_name: bd
+project_name: blap
 builds:
   - main: cmd/main.go
     env:
       - CGO_ENABLED=0
-    binary: bd
+    binary: blap
     goos:
       - linux
       - darwin

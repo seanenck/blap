@@ -1,4 +1,4 @@
-module github.com/seanenck/bd
+module github.com/seanenck/blap
 
 go 1.23.2
 
