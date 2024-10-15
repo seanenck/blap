@@ -1,4 +1,4 @@
-b(inary) d(ownloader)
+blap
 ===
 
 A simplistic "manager" of binaries and source downloaded from github (or other sources)
