@@ -8,11 +8,13 @@ const InfoVerbosity = 2
 
 // Settings are the core settings
 type Settings struct {
-	DryRun       bool
-	Purge        bool
-	Applications []string
-	Disabled     []string
-	Verbosity    int
+	DryRun bool
+	Purge  bool
+	Filter struct {
+		Negate     bool
+		Expression string
+	}
+	Verbosity int
 }
 
 func (s Settings) log(level int, msg string, a ...any) {

@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"reflect"
+	"regexp"
 	"slices"
 	"strings"
 	"text/template"
@@ -357,19 +358,18 @@ func LoadConfig(input string, context context.Settings) (Configuration, error) {
 			}
 		}
 	}
-	isDisable := len(context.Disabled) > 0
-	if len(context.Applications) > 0 || isDisable {
+	if context.Filter.Expression != "" {
+		re, err := regexp.Compile(context.Filter.Expression)
+		if err != nil {
+			return c, err
+		}
 		sub := make(map[string]Application)
 		for n, a := range c.Applications {
-			allow := false
-			if isDisable {
-				allow = !slices.Contains(context.Disabled, n)
-			} else {
-				if slices.Contains(context.Applications, n) {
-					allow = true
-				}
+			match := re.MatchString(n)
+			if context.Filter.Negate {
+				match = !match
 			}
-			if allow {
+			if match {
 				sub[n] = a
 			}
 		}

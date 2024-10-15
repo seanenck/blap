@@ -46,8 +46,8 @@ func help(msg string) error {
 	helpLine(shell.UpgradeCommand, "upgrade packages")
 	helpLine(shell.VersionCommand, "display version information")
 	helpLine(shell.PurgeCommand, "purge old versions")
-	helpLine(shell.DisplayApplicationsFlag, "specify a subset of packages (comma delimiter)")
-	helpLine(shell.DisplayDisableFlag, "disable applications (comma delimiter)")
+	helpLine(shell.DisplayApplicationsFlag, "specify a subset of packages (regex)")
+	helpLine(shell.DisplayDisableFlag, "disable applications (regex)")
 	helpLine(shell.DisplayVerbosityFlag, "increase/decrease output verbosity")
 	helpLine(shell.DisplayCommitFlag, "confirm and commit changes for actions")
 	fmt.Println()
@@ -84,8 +84,9 @@ func run() error {
 	default:
 		return help(fmt.Sprintf("unknown argument: %s", cmd))
 	}
-	var appSet []string
-	var disableSet []string
+
+	var appFilter string
+	var negateFilter bool
 	dryRun := true
 	verbosity := context.InfoVerbosity
 	if len(args) > 2 {
@@ -106,10 +107,20 @@ func run() error {
 			return help("verbosity must be >= 0")
 		}
 		if !purging {
-			appSet = commaList(apps)
-			disableSet = commaList(disable)
-			if len(appSet) > 0 && len(disableSet) > 0 {
-				return help("can not limit applications and disable at the same time")
+			a := *apps
+			d := *disable
+			lengthApps := len(a)
+			lengthDis := len(d)
+			if lengthApps > 0 || lengthDis > 0 {
+				if len(a) > 0 && len(d) > 0 {
+					return help("can not limit applications and disable at the same time")
+				}
+				if lengthApps > 0 {
+					appFilter = a
+				} else {
+					negateFilter = true
+					appFilter = d
+				}
 			}
 		}
 		dryRun = !*commit
@@ -118,26 +129,17 @@ func run() error {
 		return fmt.Errorf("config file does not exist: %s", input)
 	}
 	ctx := context.Settings{
-		DryRun:       dryRun,
-		Applications: appSet,
-		Disabled:     disableSet,
-		Verbosity:    verbosity,
-		Purge:        purging,
+		DryRun:    dryRun,
+		Verbosity: verbosity,
+		Purge:     purging,
+	}
+	if appFilter != "" {
+		ctx.Filter.Negate = negateFilter
+		ctx.Filter.Expression = appFilter
 	}
 	cfg, err := core.LoadConfig(input, ctx)
 	if err != nil {
 		return err
 	}
 	return cfg.Process(&fetch.ResourceFetcher{})
-}
-
-func commaList(in *string) []string {
-	if in == nil {
-		return nil
-	}
-	v := strings.TrimSpace(*in)
-	if v == "" {
-		return nil
-	}
-	return strings.Split(v, ",")
 }
