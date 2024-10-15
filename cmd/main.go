@@ -14,9 +14,7 @@ import (
 	"github.com/seanenck/bd/internal/shell"
 )
 
-const (
-	configFileEnv = "BD_CONFIG_FILE"
-)
+const configFileEnv = "BD_CONFIG_FILE"
 
 var version = "development"
 
@@ -36,23 +34,15 @@ func helpLine(flag, text string) {
 	fmt.Printf("  %-15s %s\n", flag, text)
 }
 
-func executable() (string, error) {
-	e, err := os.Executable()
-	if err != nil {
-		return "", err
-	}
-	return filepath.Base(e), nil
-}
-
 func help(msg string) error {
 	if msg != "" {
 		fmt.Printf("%s\n\n", msg)
 	}
-	exe, err := executable()
+	exe, err := os.Executable()
 	if err != nil {
 		return err
 	}
-	fmt.Printf("%s\n", exe)
+	fmt.Printf("%s\n", filepath.Base(exe))
 	helpLine(shell.UpgradeCommand, "upgrade packages")
 	helpLine(shell.VersionCommand, "display version information")
 	helpLine(shell.PurgeCommand, "purge old versions")
