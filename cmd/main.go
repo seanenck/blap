@@ -81,8 +81,8 @@ func run() error {
 	purging := false
 	cmd := args[1]
 	switch cmd {
-	case shell.BashCommand:
-		return shell.BashCompletions()
+	case shell.CompletionsCommand:
+		return shell.GenerateCompletions()
 	case "help":
 		return help("")
 	case shell.PurgeCommand:

@@ -3,6 +3,7 @@ package shell
 
 import (
 	_ "embed"
+	"fmt"
 	"os"
 	"path/filepath"
 	"text/template"
@@ -15,8 +16,8 @@ const (
 	UpgradeCommand = "upgrade"
 	// VersionCommand displays version information
 	VersionCommand = "version"
-	// BashCommand generates bash completions
-	BashCommand = "bash"
+	// CompletionsCommand generates completions
+	CompletionsCommand = "completions"
 	// CommitFlag confirms and therefore commits changes
 	CommitFlag = "confirm"
 	// VerbosityFlag changes logging output
@@ -53,8 +54,11 @@ type Completion struct {
 //go:embed bd.bash
 var bashShell string
 
-// BashCompletions generations bash completions
-func BashCompletions() error {
+// GenerateCompletions will generate shell completions
+func GenerateCompletions() error {
+	if shell := filepath.Base(os.Getenv("SHELL")); shell != "bash" {
+		return fmt.Errorf("unable to generate completions for %s", shell)
+	}
 	exe, err := os.Executable()
 	if err != nil {
 		return err
@@ -66,7 +70,7 @@ func BashCompletions() error {
 	comp.Arg.Confirm = DisplayCommitFlag
 	comp.Arg.Applications = DisplayApplicationsFlag
 	comp.Arg.Disable = DisplayDisableFlag
-	t, err := template.New("bash").Parse(bashShell)
+	t, err := template.New("sh").Parse(bashShell)
 	if err != nil {
 		return err
 	}
