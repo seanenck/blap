@@ -1,4 +1,4 @@
-BUILD   := build/
+BUILD   := target/
 OBJECT  := blap
 TARGET  := $(BUILD)$(OBJECT)
 DESTDIR := /usr/local/bin
