@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"slices"
+	"sort"
 
 	"github.com/seanenck/blap/internal/build"
 	"github.com/seanenck/blap/internal/deploy"
@@ -116,16 +117,24 @@ func (c Configuration) Process(executor Executor, fetcher fetch.Retriever, runne
 	if c.handler == nil {
 		return errors.New("configuration not ready")
 	}
-	var enabled []Context
+	var priorities []int
+	prioritySet := make(map[int][]Context)
 	for name, app := range c.Applications {
-		enabled = append(enabled, Context{Name: name, Application: app, Fetcher: fetcher, Runner: runner})
+		has, ok := prioritySet[app.Priority]
+		if !ok {
+			has = []Context{}
+			priorities = append(priorities, app.Priority)
+		}
+		has = append(has, Context{Name: name, Application: app, Fetcher: fetcher, Runner: runner})
+		prioritySet[app.Priority] = has
 	}
-	slices.SortFunc(enabled, func(left, right Context) int {
-		return right.Application.Priority - left.Application.Priority
-	})
-	for _, a := range enabled {
-		if err := executor.Do(a); err != nil {
-			return fmt.Errorf("application '%s' error: %v", a.Name, err)
+	sort.Ints(priorities)
+	slices.Reverse(priorities)
+	for _, p := range priorities {
+		for _, a := range prioritySet[p] {
+			if err := executor.Do(a); err != nil {
+				return fmt.Errorf("application '%s' error: %v", a.Name, err)
+			}
 		}
 	}
 	if c.context.Purge {
