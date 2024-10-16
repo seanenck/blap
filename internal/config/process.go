@@ -7,9 +7,7 @@ import (
 	"path/filepath"
 	"slices"
 
-	"github.com/seanenck/blap/internal/asset"
 	"github.com/seanenck/blap/internal/build"
-	"github.com/seanenck/blap/internal/cli"
 	"github.com/seanenck/blap/internal/deploy"
 	"github.com/seanenck/blap/internal/fetch"
 	"github.com/seanenck/blap/internal/purge"
@@ -20,25 +18,6 @@ type (
 	processHandler struct {
 		assets  []string
 		updated []string
-	}
-	// Configuration is the overall configuration
-	Configuration struct {
-		handler      *processHandler
-		context      cli.Settings
-		Token        string
-		Directory    string
-		Include      []string               `yaml:"include"`
-		Applications map[string]Application `yaml:"applications"`
-	}
-	// Application defines how an application is downloaded, unpacked, and deployed
-	Application struct {
-		Priority   int               `yaml:"priority"`
-		Disable    bool              `yaml:"disable"`
-		GitHub     *fetch.GitHubMode `yaml:"github"`
-		Tagged     *fetch.TaggedMode `yaml:"tagged"`
-		Extract    asset.Settings    `yaml:"extract"`
-		BuildSteps []build.Step      `yaml:"build"`
-		Deploy     []deploy.Artifact `yaml:"deploy"`
 	}
 	// Executor is the process executor
 	Executor interface {
