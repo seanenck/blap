@@ -23,7 +23,7 @@ type (
 	// Executor is the process executor
 	Executor interface {
 		Do(Context) error
-		Purge() error
+		Purge() (bool, error)
 		Updated() []string
 	}
 	// Context allows processing an application (fetch, extract, build, deploy)
@@ -97,7 +97,7 @@ func (c Configuration) Do(ctx Context) error {
 }
 
 // Purge will run a purge operation
-func (c Configuration) Purge() error {
+func (c Configuration) Purge() (bool, error) {
 	return purge.Do(c.resolveDir(), c.handler.assets, c.context)
 }
 
@@ -137,19 +137,23 @@ func (c Configuration) Process(executor Executor, fetcher fetch.Retriever, runne
 			}
 		}
 	}
+	changed := false
 	if c.context.Purge {
-		if err := executor.Purge(); err != nil {
+		purged, err := executor.Purge()
+		if err != nil {
 			return err
 		}
+		changed = purged
 	} else {
 		for idx, update := range executor.Updated() {
 			if idx == 0 {
+				changed = true
 				c.context.LogCore("updates\n")
 			}
 			c.context.LogCore("  -> %s\n", update)
 		}
 	}
-	if c.context.DryRun {
+	if c.context.DryRun && changed {
 		c.context.LogCore("\n[DRYRUN] impactful changes were not committed\n")
 	}
 	return nil

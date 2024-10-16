@@ -19,6 +19,6 @@ clean:
 	@rm -rf $(BUILD)
 
 unittest:
-	go test -v ./...
+	go test ./...
 
 check: $(TARGET) unittest

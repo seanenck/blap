@@ -15,16 +15,18 @@ import (
 )
 
 type mockExecutor struct {
-	mode string
-	name string
-	err  error
-	rsrc *asset.Resource
-	dl   bool
+	mode   string
+	name   string
+	err    error
+	rsrc   *asset.Resource
+	dl     bool
+	purged bool
+	static bool
 }
 
-func (m *mockExecutor) Purge() error {
+func (m *mockExecutor) Purge() (bool, error) {
 	m.mode = "purge"
-	return m.err
+	return m.purged, m.err
 }
 
 func (m *mockExecutor) Do(ctx config.Context) error {
@@ -69,6 +71,9 @@ func (m *mockExecutor) RunIn(string, string, ...string) error {
 }
 
 func (m *mockExecutor) Updated() []string {
+	if m.static {
+		return nil
+	}
 	return []string{"abc", "xyz"}
 }
 
@@ -121,6 +126,23 @@ func TestProcessUpdate(t *testing.T) {
 	if m.name != "nvim" {
 		t.Errorf("last app should be nvim: %s", m.name)
 	}
+	buf = bytes.Buffer{}
+	s.Writer = &buf
+	cfg, _ = config.Load(filepath.Join("examples", "config.yaml"), s)
+	m.static = true
+	if err := cfg.Process(m, m, m); err != nil {
+		t.Errorf("invalid error: %v", err)
+	}
+	if m.mode != "do" {
+		t.Errorf("invalid mode: %s", m.mode)
+	}
+	str = buf.String()
+	if strings.Contains(str, "xyz") || strings.Contains(str, "abc") || strings.Contains(str, "DRYRUN") {
+		t.Errorf("invalid buffer: %s", str)
+	}
+	if m.name != "nvim" {
+		t.Errorf("last app should be nvim: %s", m.name)
+	}
 }
 
 func TestProcessPurge(t *testing.T) {
@@ -139,6 +161,18 @@ func TestProcessPurge(t *testing.T) {
 		t.Errorf("invalid mode: %s", m.mode)
 	}
 	str := buf.String()
+	if strings.Contains(str, "DRYRUN") {
+		t.Errorf("invalid buffer: %s", str)
+	}
+	m.purged = true
+	cfg, _ = config.Load(filepath.Join("examples", "config.yaml"), s)
+	if err := cfg.Process(m, m, m); err != nil {
+		t.Errorf("invalid error: %v", err)
+	}
+	if m.mode != "purge" {
+		t.Errorf("invalid mode: %s", m.mode)
+	}
+	str = buf.String()
 	if !strings.Contains(str, "DRYRUN") {
 		t.Errorf("invalid buffer: %s", str)
 	}
