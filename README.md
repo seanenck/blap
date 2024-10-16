@@ -26,5 +26,4 @@ Utilize the primitive `help` to see the CLI/config options for `blap`
 
 ## Config
 
-Simple configuration for installing `go`, `rg`, and `nvim` locally example is
-[here](internal/config/examples)
+Example configuration files are [here](internal/config/examples)
