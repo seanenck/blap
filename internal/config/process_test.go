@@ -124,7 +124,6 @@ func TestProcessUpdate(t *testing.T) {
 }
 
 func TestProcessPurge(t *testing.T) {
-	cfg := config.Configuration{}
 	m := &mockExecutor{}
 	s := cli.Settings{}
 	s.Purge = true
@@ -132,7 +131,7 @@ func TestProcessPurge(t *testing.T) {
 	s.Verbosity = cli.InfoVerbosity
 	var buf bytes.Buffer
 	s.Writer = &buf
-	cfg, _ = config.Load(filepath.Join("examples", "config.yaml"), s)
+	cfg, _ := config.Load(filepath.Join("examples", "config.yaml"), s)
 	if err := cfg.Process(m, m, m); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
@@ -160,7 +159,6 @@ func TestProcessPurge(t *testing.T) {
 }
 
 func TestProcessDoError(t *testing.T) {
-	cfg := config.Configuration{}
 	m := &mockExecutor{}
 	m.err = errors.New("ERROR")
 	s := cli.Settings{}
@@ -168,7 +166,7 @@ func TestProcessDoError(t *testing.T) {
 	s.Verbosity = cli.InfoVerbosity
 	var buf bytes.Buffer
 	s.Writer = &buf
-	cfg, _ = config.Load(filepath.Join("examples", "config.yaml"), s)
+	cfg, _ := config.Load(filepath.Join("examples", "config.yaml"), s)
 	if err := cfg.Process(m, m, m); err == nil || !strings.Contains(err.Error(), "error: ERROR") {
 		t.Errorf("invalid error: %v", err)
 	}

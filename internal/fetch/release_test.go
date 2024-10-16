@@ -54,9 +54,10 @@ func TestGitHub(t *testing.T) {
 	}
 	if o == nil {
 		t.Error("invalid asset, nil")
-	}
-	if o.Tag != "123" || o.URL != "x/111" || o.File != "111" {
-		t.Errorf("invalid asset: %s %s %s", o.Tag, o.URL, o.File)
+	} else {
+		if o.Tag != "123" || o.URL != "x/111" || o.File != "111" {
+			t.Errorf("invalid asset: %s %s %s", o.Tag, o.URL, o.File)
+		}
 	}
 }
 
@@ -71,8 +72,9 @@ func TestGitHubTarball(t *testing.T) {
 	}
 	if o == nil {
 		t.Error("invalid asset, nil")
-	}
-	if o.Tag != "123a" || o.URL != "afea/ddd" || o.File != "ddd.tar.gz" {
-		t.Errorf("invalid asset: %s %s %s", o.Tag, o.URL, o.File)
+	} else {
+		if o.Tag != "123a" || o.URL != "afea/ddd" || o.File != "ddd.tar.gz" {
+			t.Errorf("invalid asset: %s %s %s", o.Tag, o.URL, o.File)
+		}
 	}
 }

@@ -45,8 +45,9 @@ func TestBranch(t *testing.T) {
 	}
 	if o == nil {
 		t.Error("invalid asset, nil")
-	}
-	if o.Tag != "1234567" || o.File != "1234567-abc.tar.gz" || o.URL != "https://github.com/xyz/archive/abc.tar.gz" {
-		t.Errorf("invalid asset, %v", o)
+	} else {
+		if o.Tag != "1234567" || o.File != "1234567-abc.tar.gz" || o.URL != "https://github.com/xyz/archive/abc.tar.gz" {
+			t.Errorf("invalid asset, %v", o)
+		}
 	}
 }

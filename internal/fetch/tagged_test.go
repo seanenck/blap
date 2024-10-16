@@ -51,12 +51,13 @@ func TestTagged(t *testing.T) {
 	}
 	if o == nil {
 		t.Error("invalid asset")
-	}
-	if o.Tag != "3" {
-		t.Errorf("invalid tag: %s", o.Tag)
-	}
-	if o.URL != "a/xyz" || o.File != "xyz" {
-		t.Errorf("invalid asset: %s %s", o.URL, o.File)
+	} else {
+		if o.Tag != "3" {
+			t.Errorf("invalid tag: %s", o.Tag)
+		}
+		if o.URL != "a/xyz" || o.File != "xyz" {
+			t.Errorf("invalid asset: %s %s", o.URL, o.File)
+		}
 	}
 	client = &mockClient{}
 	client.payload = []byte("TEST\t1\nTEST\t2\nXYZ\t3\nZZZ\t4")
@@ -67,11 +68,12 @@ func TestTagged(t *testing.T) {
 	}
 	if o == nil {
 		t.Error("invalid asset")
-	}
-	if o.Tag != "3" {
-		t.Errorf("invalid tag: %s", o.Tag)
-	}
-	if o.URL != "xx/s" || o.File != "s" {
-		t.Errorf("invalid asset: %s %s", o.URL, o.File)
+	} else {
+		if o.Tag != "3" {
+			t.Errorf("invalid tag: %s", o.Tag)
+		}
+		if o.URL != "xx/s" || o.File != "s" {
+			t.Errorf("invalid asset: %s %s", o.URL, o.File)
+		}
 	}
 }

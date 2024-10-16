@@ -131,7 +131,7 @@ func (c Configuration) Updated() []string {
 
 // Process will process application definitions
 func (c Configuration) Process(executor Executor, fetcher fetch.Retriever, runner util.Runner) error {
-	if c.Applications == nil || len(c.Applications) == 0 {
+	if c.Applications == nil {
 		return nil
 	}
 	if c.handler == nil {
