@@ -14,8 +14,13 @@ import (
 type (
 	// GitHubMode indicates processing of a github project for upstreams
 	GitHubMode struct {
-		Project string `yaml:"project"`
-		Asset   string `yaml:"asset"`
+		Project string             `yaml:"project"`
+		Release *GitHubReleaseMode `yaml:"release"`
+		Branch  *GitHubBranchMode  `yaml:"branch"`
+	}
+	// GitHubReleaseMode are github modes operating on releases
+	GitHubReleaseMode struct {
+		Asset string `yaml:"asset"`
 	}
 	// GitHubRelease is the API definition for github release info
 	GitHubRelease struct {
@@ -27,13 +32,16 @@ type (
 	}
 )
 
-// GitHub gets github applications
-func (r *ResourceFetcher) GitHub(a GitHubMode) (*asset.Resource, error) {
+// GitHubRelease handles GitHub-based releases
+func (r *ResourceFetcher) GitHubRelease(a GitHubMode) (*asset.Resource, error) {
 	up := strings.TrimSpace(a.Project)
 	if up == "" {
 		return nil, errors.New("github mode requires a project")
 	}
-	regex := a.Asset
+	if a.Release == nil {
+		return nil, errors.New("release is not properly set")
+	}
+	regex := a.Release.Asset
 	if regex == "" {
 		return nil, errors.New("github mode requires an asset filter (regex)")
 	}

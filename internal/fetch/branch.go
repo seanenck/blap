@@ -13,22 +13,24 @@ type (
 	GitHubCommit struct {
 		Sha string `json:"sha"`
 	}
-	// BranchMode will enable a repository+branch to pull a tarball
-	BranchMode struct {
-		Project string
-		Branch  string
+	// GitHubBranchMode will enable a repository+branch to pull a tarball
+	GitHubBranchMode struct {
+		Name string `yaml:"name"`
 	}
 )
 
-// Branch will get an asset from a branch
-func (r *ResourceFetcher) Branch(a BranchMode) (*asset.Resource, error) {
-	if a.Branch == "" {
+// GitHubBranch will get an asset from a branch
+func (r *ResourceFetcher) GitHubBranch(a GitHubMode) (*asset.Resource, error) {
+	if a.Branch == nil {
+		return nil, errors.New("branch is not properly set")
+	}
+	if a.Branch.Name == "" {
 		return nil, errors.New("branch required for branch mode")
 	}
 	if a.Project == "" {
 		return nil, errors.New("project required for branch mode")
 	}
-	commit, err := fetchData[GitHubCommit](r, a.Project, fmt.Sprintf("commits/%s", a.Branch))
+	commit, err := fetchData[GitHubCommit](r, a.Project, fmt.Sprintf("commits/%s", a.Branch.Name))
 	if err != nil {
 		return nil, err
 	}
@@ -37,5 +39,5 @@ func (r *ResourceFetcher) Branch(a BranchMode) (*asset.Resource, error) {
 	}
 	tag := commit.Sha[0:7]
 	r.Context.LogDebug("found sha: %s\n", tag)
-	return &asset.Resource{URL: fmt.Sprintf("https://github.com/%s/archive/%s.tar.gz", a.Project, a.Branch), File: fmt.Sprintf("%s-%s.tar.gz", tag, a.Branch), Tag: tag}, nil
+	return &asset.Resource{URL: fmt.Sprintf("https://github.com/%s/archive/%s.tar.gz", a.Project, a.Branch.Name), File: fmt.Sprintf("%s-%s.tar.gz", tag, a.Branch.Name), Tag: tag}, nil
 }

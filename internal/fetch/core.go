@@ -51,23 +51,23 @@ type (
 	}
 	// Backend is the backing way to retrieve specific resources
 	Backend interface {
-		GitHub(GitHubMode) (*asset.Resource, error)
+		GitHubRelease(GitHubMode) (*asset.Resource, error)
 		Tagged(TaggedMode) (*asset.Resource, error)
-		Branch(BranchMode) (*asset.Resource, error)
+		GitHubBranch(GitHubMode) (*asset.Resource, error)
 	}
 	// Retriever provides the means to fetch application information
 	Retriever interface {
 		Backend
 		Download(bool, string, string) (bool, error)
 		SetToken(string)
-		Process(Backend, *GitHubMode, *TaggedMode, *BranchMode) (*asset.Resource, error)
+		Process(Backend, *GitHubMode, *TaggedMode) (*asset.Resource, error)
 	}
 )
 
 // Process will determine the appropriate backend for processing a fetch
-func (r ResourceFetcher) Process(backend Backend, gh *GitHubMode, tag *TaggedMode, branch *BranchMode) (*asset.Resource, error) {
+func (r ResourceFetcher) Process(backend Backend, gh *GitHubMode, tag *TaggedMode) (*asset.Resource, error) {
 	cnt := 0
-	for _, obj := range []interface{}{gh, tag, branch} {
+	for _, obj := range []interface{}{gh, tag} {
 		if !util.IsNil(obj) {
 			cnt++
 			if cnt > 1 {
@@ -76,13 +76,19 @@ func (r ResourceFetcher) Process(backend Backend, gh *GitHubMode, tag *TaggedMod
 		}
 	}
 	if gh != nil {
-		return backend.GitHub(*gh)
+		if gh.Branch != nil && gh.Release != nil {
+			return nil, errors.New("only one github mode is allowed")
+		}
+		if gh.Branch != nil {
+			return backend.GitHubBranch(*gh)
+		}
+		if gh.Release != nil {
+			return backend.GitHubRelease(*gh)
+		}
+		return nil, errors.New("github mode set but not configured")
 	}
 	if tag != nil {
 		return backend.Tagged(*tag)
-	}
-	if branch != nil {
-		return backend.Branch(*branch)
 	}
 	return nil, errors.New("unknown mode for fetch processing")
 }

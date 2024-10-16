@@ -36,7 +36,6 @@ type (
 		Disable    bool              `yaml:"disable"`
 		GitHub     *fetch.GitHubMode `yaml:"github"`
 		Tagged     *fetch.TaggedMode `yaml:"tagged"`
-		Branch     *fetch.BranchMode `yaml:"branch"`
 		Extract    asset.Settings    `yaml:"extract"`
 		BuildSteps []build.Step      `yaml:"build"`
 		Deploy     []deploy.Artifact `yaml:"deploy"`
@@ -73,7 +72,7 @@ func (c Configuration) Do(ctx Context) error {
 	}
 	c.context.LogInfo("processing: %s\n", ctx.Name)
 	ctx.Fetcher.SetToken(c.context.Resolve(c.Token))
-	rsrc, err := ctx.Fetcher.Process(ctx.Fetcher, ctx.Application.GitHub, ctx.Application.Tagged, ctx.Application.Branch)
+	rsrc, err := ctx.Fetcher.Process(ctx.Fetcher, ctx.Application.GitHub, ctx.Application.Tagged)
 	if err != nil {
 		return err
 	}

@@ -26,7 +26,7 @@ type (
 	}
 )
 
-func (f *mockFetcher) GitHub(fetch.GitHubMode) (*asset.Resource, error) {
+func (f *mockFetcher) GitHubRelease(fetch.GitHubMode) (*asset.Resource, error) {
 	f.mode = "gh"
 	return nil, nil
 }
@@ -36,7 +36,7 @@ func (f *mockFetcher) Tagged(fetch.TaggedMode) (*asset.Resource, error) {
 	return nil, nil
 }
 
-func (f *mockFetcher) Branch(fetch.BranchMode) (*asset.Resource, error) {
+func (f *mockFetcher) GitHubBranch(fetch.GitHubMode) (*asset.Resource, error) {
 	f.mode = "branch"
 	return nil, nil
 }
@@ -98,7 +98,7 @@ func TestNotOKStatus(t *testing.T) {
 	client.invalid = true
 	client.payload = []byte(`{"tag_name": "123", "assets": [{"browser_download_url": "x/111"}, {"browser_download_url": "222"}]}`)
 	r.Requestor = client
-	if _, err := r.GitHub(fetch.GitHubMode{Project: "xyz", Asset: "1"}); err == nil || !strings.Contains(err.Error(), "code: 404") {
+	if _, err := r.GitHubRelease(fetch.GitHubMode{Project: "xyz", Release: &fetch.GitHubReleaseMode{Asset: "1"}}); err == nil || !strings.Contains(err.Error(), "code: 404") {
 		t.Errorf("invalid error: %v", err)
 	}
 }
@@ -153,7 +153,7 @@ func TestTokenHandling(t *testing.T) {
 		client := &mockClient{}
 		client.payload = []byte(`{"tag_name": "123", "assets": [{"browser_download_url": "x/111"}, {"browser_download_url": "222"}]}`)
 		r.Requestor = client
-		r.GitHub(fetch.GitHubMode{Project: "xyz", Asset: "1"})
+		r.GitHubRelease(fetch.GitHubMode{Project: "xyz", Release: &fetch.GitHubReleaseMode{Asset: "1"}})
 		h, ok := client.req.Header["Authorization"]
 		if unset {
 			if ok {
@@ -190,26 +190,32 @@ func TestTokenHandling(t *testing.T) {
 
 func TestProcess(t *testing.T) {
 	f := fetch.ResourceFetcher{}
-	if _, err := f.Process(&mockFetcher{}, nil, nil, nil); err == nil || err.Error() != "unknown mode for fetch processing" {
+	if _, err := f.Process(&mockFetcher{}, nil, nil); err == nil || err.Error() != "unknown mode for fetch processing" {
 		t.Errorf("invalid error: %v", err)
 	}
-	if _, err := f.Process(&mockFetcher{}, &fetch.GitHubMode{}, &fetch.TaggedMode{}, nil); err == nil || err.Error() != "multiple modes enabled, only one allowed" {
+	if _, err := f.Process(&mockFetcher{}, &fetch.GitHubMode{}, &fetch.TaggedMode{}); err == nil || err.Error() != "multiple modes enabled, only one allowed" {
 		t.Errorf("invalid error: %v", err)
 	}
 	m := &mockFetcher{}
-	if _, err := f.Process(m, &fetch.GitHubMode{}, nil, nil); err != nil {
+	if _, err := f.Process(m, &fetch.GitHubMode{}, nil); err == nil || err.Error() != "github mode set but not configured" {
 		t.Errorf("invalid error: %v", err)
 	}
-	if m.mode != "gh" {
-		t.Errorf("invalid mode: %s", m.mode)
+	if _, err := f.Process(m, &fetch.GitHubMode{Release: &fetch.GitHubReleaseMode{}, Branch: &fetch.GitHubBranchMode{}}, nil); err == nil || err.Error() != "only one github mode is allowed" {
+		t.Errorf("invalid error: %v", err)
 	}
-	if _, err := f.Process(m, nil, nil, &fetch.BranchMode{}); err != nil {
+	if _, err := f.Process(m, &fetch.GitHubMode{Branch: &fetch.GitHubBranchMode{}}, nil); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	if m.mode != "branch" {
 		t.Errorf("invalid mode: %s", m.mode)
 	}
-	if _, err := f.Process(m, nil, &fetch.TaggedMode{}, nil); err != nil {
+	if _, err := f.Process(m, &fetch.GitHubMode{Release: &fetch.GitHubReleaseMode{}}, nil); err != nil {
+		t.Errorf("invalid error: %v", err)
+	}
+	if m.mode != "gh" {
+		t.Errorf("invalid mode: %s", m.mode)
+	}
+	if _, err := f.Process(m, nil, &fetch.TaggedMode{}); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	if m.mode != "tag" {

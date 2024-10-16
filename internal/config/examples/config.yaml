@@ -8,7 +8,8 @@ applications:
     disable: true
     github:
       project: "neovim/neovim"
-      asset: "nvim-linux64.tar.gz$"
+      release:
+        asset: "nvim-linux64.tar.gz$"
     deploy:
       - files:
           - "bin/nvim"
@@ -17,7 +18,8 @@ applications:
     priority: -100
     github:
       project: "neovim/neovim"
-      asset: "nvim-linux64.tar.gz$"
+      release:
+        asset: "nvim-linux64.tar.gz$"
     deploy:
       - files:
           - "bin/nvim"
@@ -25,7 +27,8 @@ applications:
   blap:
     github:
       project: "seanenck/blap"
-      asset: "tarball"
+      release:
+        asset: "tarball"
     build:
       - command: ["make", "VERSION={{ $.Tag }}"]
     deploy:

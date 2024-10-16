@@ -33,7 +33,7 @@ func (m *mockExecutor) Do(ctx config.Context) error {
 	return m.err
 }
 
-func (m *mockExecutor) GitHub(fetch.GitHubMode) (*asset.Resource, error) {
+func (m *mockExecutor) GitHubRelease(fetch.GitHubMode) (*asset.Resource, error) {
 	return nil, m.err
 }
 
@@ -41,7 +41,7 @@ func (m *mockExecutor) Tagged(fetch.TaggedMode) (*asset.Resource, error) {
 	return nil, m.err
 }
 
-func (m *mockExecutor) Branch(fetch.BranchMode) (*asset.Resource, error) {
+func (m *mockExecutor) GitHubBranch(fetch.GitHubMode) (*asset.Resource, error) {
 	return nil, m.err
 }
 
@@ -52,7 +52,7 @@ func (m *mockExecutor) Download(bool, string, string) (bool, error) {
 func (m *mockExecutor) SetToken(string) {
 }
 
-func (m *mockExecutor) Process(fetch.Backend, *fetch.GitHubMode, *fetch.TaggedMode, *fetch.BranchMode) (*asset.Resource, error) {
+func (m *mockExecutor) Process(fetch.Backend, *fetch.GitHubMode, *fetch.TaggedMode) (*asset.Resource, error) {
 	return m.rsrc, m.err
 }
 

@@ -1,5 +1,6 @@
 applications:
   lockbox:
-    branch:
+    github:
       project: "seanenck/lockbox"
-      branch: "master"
+      branch:
+        name: "master"

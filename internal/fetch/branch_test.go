@@ -8,10 +8,13 @@ import (
 
 func TestBranchValidate(t *testing.T) {
 	r := &fetch.ResourceFetcher{}
-	if _, err := r.Branch(fetch.BranchMode{}); err == nil || err.Error() != "branch required for branch mode" {
+	if _, err := r.GitHubBranch(fetch.GitHubMode{}); err == nil || err.Error() != "branch is not properly set" {
 		t.Errorf("invalid error: %v", err)
 	}
-	if _, err := r.Branch(fetch.BranchMode{Branch: "aa"}); err == nil || err.Error() != "project required for branch mode" {
+	if _, err := r.GitHubBranch(fetch.GitHubMode{Branch: &fetch.GitHubBranchMode{}}); err == nil || err.Error() != "branch required for branch mode" {
+		t.Errorf("invalid error: %v", err)
+	}
+	if _, err := r.GitHubBranch(fetch.GitHubMode{Branch: &fetch.GitHubBranchMode{"aa"}}); err == nil || err.Error() != "project required for branch mode" {
 		t.Errorf("invalid error: %v", err)
 	}
 }
@@ -21,22 +24,22 @@ func TestBranch(t *testing.T) {
 	client := &mockClient{}
 	client.Payload("{}")
 	r.Requestor = client
-	if _, err := r.Branch(fetch.BranchMode{Branch: "abc", Project: "xyz"}); err == nil || err.Error() != "invalid sha detected: " {
+	if _, err := r.GitHubBranch(fetch.GitHubMode{Branch: &fetch.GitHubBranchMode{"abc"}, Project: "xyz"}); err == nil || err.Error() != "invalid sha detected: " {
 		t.Errorf("invalid error: %v", err)
 	}
 	client.Payload(`{"sha": "123456"}`)
 	r.Requestor = client
-	if _, err := r.Branch(fetch.BranchMode{Branch: "abc", Project: "xyz"}); err == nil || err.Error() != "invalid sha detected: 123456" {
+	if _, err := r.GitHubBranch(fetch.GitHubMode{Branch: &fetch.GitHubBranchMode{"abc"}, Project: "xyz"}); err == nil || err.Error() != "invalid sha detected: 123456" {
 		t.Errorf("invalid error: %v", err)
 	}
 	client.Payload(`{"sha": "1234567"}`)
 	r.Requestor = client
-	if _, err := r.Branch(fetch.BranchMode{Branch: "abc", Project: "xyz"}); err != nil {
+	if _, err := r.GitHubBranch(fetch.GitHubMode{Branch: &fetch.GitHubBranchMode{"abc"}, Project: "xyz"}); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	client.Payload(`{"sha": "12345678"}`)
 	r.Requestor = client
-	o, err := r.Branch(fetch.BranchMode{Branch: "abc", Project: "xyz"})
+	o, err := r.GitHubBranch(fetch.GitHubMode{Branch: &fetch.GitHubBranchMode{"abc"}, Project: "xyz"})
 	if err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
