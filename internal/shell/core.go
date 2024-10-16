@@ -4,6 +4,7 @@ package shell
 import (
 	_ "embed"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"text/template"
@@ -55,7 +56,10 @@ type Completion struct {
 var bashShell string
 
 // GenerateCompletions will generate shell completions
-func GenerateCompletions() error {
+func GenerateCompletions(w io.Writer) error {
+	if w == nil {
+		return nil
+	}
 	if shell := filepath.Base(os.Getenv("SHELL")); shell != "bash" {
 		return fmt.Errorf("unable to generate completions for %s", shell)
 	}
@@ -74,5 +78,5 @@ func GenerateCompletions() error {
 	if err != nil {
 		return err
 	}
-	return t.Execute(os.Stdout, comp)
+	return t.Execute(w, comp)
 }

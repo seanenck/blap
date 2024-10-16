@@ -72,7 +72,7 @@ func run() error {
 	cmd := args[1]
 	switch cmd {
 	case shell.CompletionsCommand:
-		return shell.GenerateCompletions()
+		return shell.GenerateCompletions(os.Stdout)
 	case "help":
 		return help("")
 	case shell.PurgeCommand:
