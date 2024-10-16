@@ -1,10 +1,12 @@
-// Package context handles context for all operations
-package context
+// Package cli handles context for all operations
+package cli
 
 import (
 	"fmt"
 	"io"
 	"regexp"
+
+	"github.com/seanenck/blap/internal/util"
 )
 
 // InfoVerbosity is the default info level for outputs
@@ -21,11 +23,27 @@ type Settings struct {
 		regex  *regexp.Regexp
 	}
 	Verbosity int
+	Resolves  map[string]string
 }
 
 // FilterApplications indicates if the
 func (s Settings) FilterApplications() bool {
 	return s.filter.has
+}
+
+// Resolve will cache resolve paths
+func (s Settings) Resolve(dir string) string {
+	if s.Resolves != nil {
+		has, ok := s.Resolves[dir]
+		if ok {
+			return has
+		}
+	}
+	res := util.ResolveDirectory(dir)
+	if s.Resolves != nil {
+		s.Resolves[dir] = res
+	}
+	return res
 }
 
 // AllowApplication indicates if an application is allowed

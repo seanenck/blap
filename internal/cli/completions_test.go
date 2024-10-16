@@ -1,4 +1,4 @@
-package shell_test
+package cli_test
 
 import (
 	"bytes"
@@ -6,22 +6,22 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/seanenck/blap/internal/shell"
+	"github.com/seanenck/blap/internal/cli"
 )
 
 func TestGenerationCompletions(t *testing.T) {
-	if err := shell.GenerateCompletions(nil); err != nil {
+	if err := cli.GenerateCompletions(nil); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	os.Clearenv()
 	var buf bytes.Buffer
 	t.Setenv("SHELL", "x/a")
-	if err := shell.GenerateCompletions(&buf); err == nil || err.Error() != "unable to generate completions for a" {
+	if err := cli.GenerateCompletions(&buf); err == nil || err.Error() != "unable to generate completions for a" {
 		t.Errorf("invalid error: %v", err)
 	}
 	buf = bytes.Buffer{}
 	t.Setenv("SHELL", "bash")
-	if err := shell.GenerateCompletions(&buf); err != nil {
+	if err := cli.GenerateCompletions(&buf); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	b := buf.String()

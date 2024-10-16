@@ -9,7 +9,7 @@ all: $(TARGET)
 
 build: $(TARGET)
 
-$(TARGET): cmd/main.go internal/**/*.go  go.*
+$(TARGET): cmd/main.go internal/**/*.go  go.* internal/cli/*.sh
 	go build $(GOFLAGS) -ldflags "$(LDFLAGS) -X main.version=$(VERSION)" -o $@ cmd/main.go
 
 install:
@@ -21,7 +21,4 @@ clean:
 unittest:
 	go test -v ./...
 
-check: unittest $(TARGET)
-	cat config.yaml | sed "s#~/#$(PWD)/$(BUILD)#g" > $(BUILD)config.yaml
-	mkdir -p $(BUILD)bin $(BUILD)fs
-	cd $(BUILD) && BLAP_CONFIG_FILE=$(PWD)/$(BUILD)config.yaml ./$(OBJECT) upgrade
+check: $(TARGET) unittest

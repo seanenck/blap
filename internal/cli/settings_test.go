@@ -1,14 +1,15 @@
-package context_test
+package cli_test
 
 import (
 	"bytes"
+	"os"
 	"testing"
 
-	"github.com/seanenck/blap/internal/context"
+	"github.com/seanenck/blap/internal/cli"
 )
 
 func TestLogging(t *testing.T) {
-	c := context.Settings{}
+	c := cli.Settings{}
 	c.LogCore("abc")
 	var buf bytes.Buffer
 	c.Writer = &buf
@@ -50,7 +51,7 @@ func TestLogging(t *testing.T) {
 }
 
 func TestCompileFilter(t *testing.T) {
-	c := context.Settings{}
+	c := cli.Settings{}
 	if err := c.CompileApplicationFilter("", false); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
@@ -63,7 +64,7 @@ func TestCompileFilter(t *testing.T) {
 }
 
 func TestFiltered(t *testing.T) {
-	c := context.Settings{}
+	c := cli.Settings{}
 	c.CompileApplicationFilter("", false)
 	if c.FilterApplications() {
 		t.Error("is NOT filtered")
@@ -75,7 +76,7 @@ func TestFiltered(t *testing.T) {
 }
 
 func TestAllowed(t *testing.T) {
-	c := context.Settings{}
+	c := cli.Settings{}
 	c.CompileApplicationFilter("", false)
 	if !c.AllowApplication("ajoa") {
 		t.Error("should be allowed")
@@ -91,5 +92,25 @@ func TestAllowed(t *testing.T) {
 	c.CompileApplicationFilter("a", true)
 	if c.AllowApplication("ajoa") {
 		t.Error("should NOT be allowed")
+	}
+}
+
+func TestResolveDir(t *testing.T) {
+	os.Clearenv()
+	c := cli.Settings{Resolves: make(map[string]string)}
+	if dir := c.Resolve("abc"); dir != "abc" {
+		t.Errorf("invalid dir: %s", dir)
+	}
+	os.Unsetenv("HOME")
+	if dir := c.Resolve("~/abc"); dir != "~/abc" {
+		t.Errorf("invalid dir: %s", dir)
+	}
+	t.Setenv("HOME", "TEST")
+	if dir := c.Resolve("~/abc"); dir != "~/abc" {
+		t.Errorf("invalid dir: %s", dir)
+	}
+	t.Setenv("HOME", "TEST")
+	if dir := c.Resolve("~/ix"); dir != "TEST/ix" {
+		t.Errorf("invalid dir: %s", dir)
 	}
 }

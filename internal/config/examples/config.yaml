@@ -1,0 +1,34 @@
+directory: testdata
+include:
+  - "examples/*.more.yaml"
+  - "examples/other.yaml"
+  - "testdata/test.yaml"
+applications:
+  nvim2:
+    disable: true
+    github:
+      project: "neovim/neovim"
+      asset: "nvim-linux64.tar.gz$"
+    deploy:
+      - files:
+          - "bin/nvim"
+        destination: "~/bin"
+  nvim:
+    priority: -100
+    github:
+      project: "neovim/neovim"
+      asset: "nvim-linux64.tar.gz$"
+    deploy:
+      - files:
+          - "bin/nvim"
+        destination: "~/bin"
+  blap:
+    github:
+      project: "seanenck/blap"
+      asset: "tarball"
+    build:
+      - command: ["make", "VERSION={{ $.Tag }}"]
+    deploy:
+      - files:
+          - "build/blap"
+        destination: "~/.local/bin/development"

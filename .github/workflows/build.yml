@@ -42,4 +42,4 @@ jobs:
       - name: "build"
         run: make VERSION=${GITHUB_SHA}
       - name: "build"
-        run: make unittest VERSION=${GITHUB_SHA}
+        run: make check VERSION=${GITHUB_SHA}

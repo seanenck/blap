@@ -2,51 +2,30 @@
 package fetch
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
-	"os/exec"
-	"path/filepath"
-	"regexp"
+	"sort"
 	"strings"
-	"text/template"
 
-	"github.com/seanenck/blap/internal/context"
-	"github.com/seanenck/blap/internal/core"
-	"github.com/seanenck/blap/internal/extract"
+	"github.com/seanenck/blap/internal/asset"
+	"github.com/seanenck/blap/internal/cli"
+	"github.com/seanenck/blap/internal/util"
 )
 
 const (
-	gitHubToken = "GITHUB_TOKEN"
-	blapToken   = "BLAP_" + gitHubToken
-	tarball     = "tarball"
+	tarball = "tarball"
 )
-
-// TokenOptions are the env vars for setting a github token
-var TokenOptions = []string{blapToken, gitHubToken}
 
 type (
 	// ResourceFetcher is the default fetcher for resources
 	ResourceFetcher struct {
-		context context.Settings
-	}
-
-	// GitHubCommit is commit information from github for a repo
-	GitHubCommit struct {
-		Sha string `json:"sha"`
-	}
-
-	// GitHubRelease is the API definition for github release info
-	GitHubRelease struct {
-		Assets []struct {
-			DownloadURL string `json:"browser_download_url"`
-		} `json:"assets"`
-		Tarball string `json:"tarball_url"`
-		Tag     string `json:"tag_name"`
+		Context   cli.Settings
+		Requestor Requestable
+		Execute   Executable
 	}
 
 	// GitHubErrorResponse is the error from github
@@ -62,7 +41,51 @@ type (
 		Body   []byte
 		URL    string
 	}
+	// Requestable allow for overriding GET requests
+	Requestable interface {
+		Do(*http.Request) (*http.Response, error)
+	}
+	// Executable allows for overriding command execution gathering
+	Executable interface {
+		Output() ([]byte, error)
+	}
+	// Backend is the backing way to retrieve specific resources
+	Backend interface {
+		GitHub(GitHubMode) (*asset.Resource, error)
+		Tagged(TaggedMode) (*asset.Resource, error)
+		Branch(BranchMode) (*asset.Resource, error)
+	}
+	// Retriever provides the means to fetch application information
+	Retriever interface {
+		Backend
+		Download(bool, string, string) (bool, error)
+		SetToken(string)
+		Process(Backend, *GitHubMode, *TaggedMode, *BranchMode) (*asset.Resource, error)
+	}
 )
+
+// Process will determine the appropriate backend for processing a fetch
+func (r ResourceFetcher) Process(backend Backend, gh *GitHubMode, tag *TaggedMode, branch *BranchMode) (*asset.Resource, error) {
+	cnt := 0
+	for _, obj := range []interface{}{gh, tag, branch} {
+		if !util.IsNil(obj) {
+			cnt++
+			if cnt > 1 {
+				return nil, errors.New("multiple modes enabled, only one allowed")
+			}
+		}
+	}
+	if gh != nil {
+		return backend.GitHub(*gh)
+	}
+	if tag != nil {
+		return backend.Tagged(*tag)
+	}
+	if branch != nil {
+		return backend.Branch(*branch)
+	}
+	return nil, errors.New("unknown mode for fetch processing")
+}
 
 // Error is the interface definition for fetch errors
 func (e *GitHubWrapperError) Error() string {
@@ -81,7 +104,7 @@ func (e *GitHubWrapperError) Error() string {
 			components["message"] = resp.Message
 			components["doc"] = resp.Documentation
 		} else {
-			components["unmarshal"] = e.Error()
+			components["unmarshal"] = err.Error()
 		}
 	}
 
@@ -91,12 +114,13 @@ func (e *GitHubWrapperError) Error() string {
 			msg = append(msg, fmt.Sprintf("%s: %s", k, v))
 		}
 	}
+	sort.Strings(msg)
 	return strings.Join(msg, "\n")
 }
 
-func fetchRepoData[T any](ownerRepo, call string) (T, error) {
+func fetchData[T any](r *ResourceFetcher, ownerRepo, call string) (T, error) {
 	url := fmt.Sprintf("https://api.github.com/repos/%s/%s", ownerRepo, call)
-	resp, err := get(url)
+	resp, err := r.get(url)
 	if err != nil {
 		return *new(T), err
 	}
@@ -127,146 +151,18 @@ func fetchRepoData[T any](ownerRepo, call string) (T, error) {
 	return obj, nil
 }
 
-// Branch will get an asset from a branch
-func (r *ResourceFetcher) Branch(a core.BranchMode) (*extract.Asset, error) {
-	if a.Branch == "" {
-		return nil, errors.New("branch required for branch mode")
-	}
-	if a.Project == "" {
-		return nil, errors.New("project required for branch mode")
-	}
-	commit, err := fetchRepoData[GitHubCommit](a.Project, fmt.Sprintf("commits/%s", a.Branch))
-	if err != nil {
-		return nil, err
-	}
-	tag := commit.Sha[0:7]
-	r.context.LogDebug("found sha: %s\n", tag)
-	return extract.NewAsset(fmt.Sprintf("https://github.com/%s/archive/%s.tar.gz", a.Project, a.Branch), fmt.Sprintf("%s-%s.tar.gz", tag, a.Branch), tag), nil
-}
-
-// Tagged gets a tagged (git tag) release
-func (r *ResourceFetcher) Tagged(a core.TaggedMode) (*extract.Asset, error) {
-	up := strings.TrimSpace(a.Repository)
-	if up == "" {
-		return nil, fmt.Errorf("no upstream for tagged mode: %v", a)
-	}
-	dl := strings.TrimSpace(a.Download)
-	if dl == "" {
-		dl = up
-	}
-	if len(a.Filters) == 0 {
-		return nil, errors.New("application lacks filters")
-	}
-	out, err := exec.Command("git", "-c", "versionsort.suffix=-", "ls-remote", "--tags", "--sort=-v:refname", up).Output()
-	if err != nil {
-		return nil, err
-	}
-	var re []*regexp.Regexp
-	for _, r := range a.Filters {
-		c, err := regexp.Compile(r)
-		if err != nil {
-			return nil, err
-		}
-		re = append(re, c)
-	}
-	var tag string
-	for _, line := range strings.Split(string(out), "\n") {
-		t := strings.TrimSpace(line)
-		if t == "" {
-			continue
-		}
-		passed := true
-		for _, r := range re {
-			if r.MatchString(line) {
-				passed = false
-				break
-			}
-		}
-		if passed {
-			parts := strings.Split(line, "\t")
-			if len(parts) != 2 {
-				return nil, fmt.Errorf("matching version line can not be parsed: %s", line)
-			}
-			tag = strings.TrimPrefix(parts[1], "refs/tags/")
-			break
-		}
-	}
-	if tag == "" {
-		return nil, errors.New("no tags matched")
-	}
-	r.context.LogDebug("found tag: %s\n", tag)
-	t, err := template.New("t").Parse(dl)
-	if err != nil {
-		return nil, err
-	}
-	buf := bytes.Buffer{}
-	if err := t.Execute(&buf, struct{ Tag string }{tag}); err != nil {
-		return nil, err
-	}
-	url := strings.TrimSpace(buf.String())
-	return extract.NewAsset(url, filepath.Base(url), tag), nil
-}
-
-// GitHub gets github applications
-func (r *ResourceFetcher) GitHub(a core.GitHubMode) (*extract.Asset, error) {
-	up := strings.TrimSpace(a.Project)
-	if up == "" {
-		return nil, fmt.Errorf("github upstream is unset for: %v", a)
-	}
-	regex := a.Asset
-	if regex == "" {
-		return nil, fmt.Errorf("github mode requires an asset filter regex: %v", a)
-	}
-	tarSource := regex == tarball
-	r.context.LogDebug("getting github release: %s\n", up)
-	tag, assets, err := latestRelease(a, tarSource)
-	if err != nil {
-		return nil, err
-	}
-	if len(assets) == 0 {
-		return nil, errors.New("no assets found")
-	}
-	if tarSource {
-		regex = ""
-	}
-	re, err := regexp.Compile(regex)
-	if err != nil {
-		return nil, err
-	}
-	var asset *extract.Asset
-	for _, item := range assets {
-		name := filepath.Base(item)
-		if re.MatchString(name) {
-			if asset != nil {
-				return nil, fmt.Errorf("multiple assets matched: %s (had: %v)", item, asset)
-			}
-			if tarSource {
-				name = fmt.Sprintf("%s.tar.gz", name)
-			}
-			asset = extract.NewAsset(item, name, tag)
-		}
-	}
-
-	if asset == nil {
-		return nil, fmt.Errorf("unable to find asset, choices: %v", assets)
-	}
-	return asset, nil
-}
-
-// SetContext will set the fetcher context for operations
-func (r *ResourceFetcher) SetContext(ctx context.Settings) {
-	r.context = ctx
-}
-
 // Download will download an asset
 func (r *ResourceFetcher) Download(dryrun bool, url, dest string) (bool, error) {
+	if url == "" || dest == "" {
+		return false, errors.New("source (url) and destination (path) required")
+	}
 	did := false
-	if !core.PathExists(dest) {
+	if !util.PathExists(dest) {
 		if dryrun {
 			return true, nil
 		}
-		r.context.LogDebug("downloading asset: %s\n", url)
-		resp, err := get(url)
+		r.Context.LogDebug("downloading asset: %s\n", url)
+		resp, err := r.get(url)
 		if err != nil {
 			return false, err
 		}
@@ -283,41 +179,26 @@ func (r *ResourceFetcher) Download(dryrun bool, url, dest string) (bool, error) 
 	return did, nil
 }
 
-func latestRelease(a core.GitHubMode, isTarball bool) (string, []string, error) {
-	release, err := fetchRepoData[GitHubRelease](a.Project, "releases/latest")
-	if err != nil {
-		return "", nil, err
+func (r ResourceFetcher) get(url string) (*http.Response, error) {
+	requestor := r.Requestor
+	if r.Requestor == nil {
+		requestor = &http.Client{}
 	}
-
-	var assets []string
-	if isTarball {
-		assets = append(assets, release.Tarball)
-	} else {
-		for _, a := range release.Assets {
-			assets = append(assets, a.DownloadURL)
-		}
-	}
-
-	return release.Tag, assets, nil
-}
-
-func get(url string) (*http.Response, error) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
 	}
-	if err := tokenHeader(req); err != nil {
+	if err := r.tokenHeader(req); err != nil {
 		return nil, err
 	}
-	client := &http.Client{}
-	return client.Do(req)
+	return requestor.Do(req)
 }
 
-func tokenHeader(req *http.Request) error {
+func (r *ResourceFetcher) tokenHeader(req *http.Request) error {
 	var token string
 	if rawToken := getToken(); rawToken != "" {
 		token = rawToken
-		if core.PathExists(rawToken) {
+		if util.PathExists(rawToken) {
 			b, err := os.ReadFile(rawToken)
 			if err != nil {
 				return err
@@ -334,12 +215,12 @@ func tokenHeader(req *http.Request) error {
 // SetToken will set the token for the fetch (if not already set)
 func (r *ResourceFetcher) SetToken(token string) {
 	if getToken() == "" {
-		os.Setenv(blapToken, token)
+		os.Setenv(cli.BlapToken, token)
 	}
 }
 
 func getToken() string {
-	for _, env := range TokenOptions {
+	for _, env := range cli.TokenOptions {
 		v := strings.TrimSpace(os.Getenv(env))
 		if v != "" {
 			return v

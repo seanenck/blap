@@ -1,4 +1,4 @@
-directory: ~/fs
+disable: true
 applications:
   go:
     tagged:
@@ -12,10 +12,6 @@ applications:
       - files:
           - "bin/go"
         destination: "~/bin"
-  lockbox:
-    branch:
-      project: "seanenck/lockbox"
-      branch: "master"
   rg:
     github:
       project: "BurntSushi/ripgrep"
@@ -24,21 +20,3 @@ applications:
       - files:
           - "rg"
         destination: "~/bin"
-  nvim:
-    github:
-      project: "neovim/neovim"
-      asset: "nvim-linux64.tar.gz$"
-    deploy:
-      - files:
-          - "bin/nvim"
-        destination: "~/bin"
-  blap:
-    github:
-      project: "seanenck/blap"
-      asset: "tarball"
-    build:
-      - command: ["make", "VERSION={{ $.Tag }}"]
-    deploy:
-      - files:
-          - "build/blap"
-        destination: "~/.local/bin/development"
