@@ -14,8 +14,8 @@ type (
 	Configuration struct {
 		handler      *processHandler
 		context      cli.Settings
-		Token        string
-		Directory    string
+		Token        string                 `yaml:"token"`
+		Directory    string                 `yaml:"directory"`
 		Include      []string               `yaml:"include"`
 		Applications map[string]Application `yaml:"applications"`
 	}
