@@ -51,7 +51,6 @@ func (c Configuration) Do(ctx Context) error {
 		return errors.New("configuration not setup")
 	}
 	c.context.LogInfo("processing: %s\n", ctx.Name)
-	ctx.Fetcher.SetToken(c.context.Resolve(c.Token))
 	rsrc, err := ctx.Fetcher.Process(ctx.Fetcher, ctx.Application.GitHub, ctx.Application.Tagged)
 	if err != nil {
 		return err
@@ -117,6 +116,7 @@ func (c Configuration) Process(executor Executor, fetcher fetch.Retriever, runne
 	if c.handler == nil {
 		return errors.New("configuration not ready")
 	}
+	fetcher.SetToken(c.context.Resolve(c.Token))
 	var priorities []int
 	prioritySet := make(map[int][]Context)
 	for name, app := range c.Applications {
