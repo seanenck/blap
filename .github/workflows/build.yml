@@ -41,3 +41,5 @@ jobs:
         run: ${{ matrix.os.deps }}
       - name: "build"
         run: make VERSION=${GITHUB_SHA}
+      - name: "build"
+        run: make unittest VERSION=${GITHUB_SHA}

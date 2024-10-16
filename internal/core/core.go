@@ -9,7 +9,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"reflect"
-	"regexp"
 	"slices"
 	"strings"
 	"text/template"
@@ -358,18 +357,10 @@ func LoadConfig(input string, context context.Settings) (Configuration, error) {
 			}
 		}
 	}
-	if context.Filter.Expression != "" {
-		re, err := regexp.Compile(context.Filter.Expression)
-		if err != nil {
-			return c, err
-		}
+	if context.FilterApplications() {
 		sub := make(map[string]Application)
 		for n, a := range c.Applications {
-			match := re.MatchString(n)
-			if context.Filter.Negate {
-				match = !match
-			}
-			if match {
+			if context.AllowApplication(n) {
 				sub[n] = a
 			}
 		}

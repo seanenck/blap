@@ -18,7 +18,10 @@ install:
 clean:
 	@rm -rf $(BUILD)
 
-check: $(TARGET)
+unittest:
+	go test -v ./...
+
+check: unittest $(TARGET)
 	cat config.yaml | sed "s#~/#$(PWD)/$(BUILD)#g" > $(BUILD)config.yaml
 	mkdir -p $(BUILD)bin $(BUILD)fs
 	cd $(BUILD) && BLAP_CONFIG_FILE=$(PWD)/$(BUILD)config.yaml ./$(OBJECT) upgrade

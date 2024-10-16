@@ -128,16 +128,16 @@ func run() error {
 	if !core.PathExists(input) {
 		return fmt.Errorf("config file does not exist: %s", input)
 	}
-	ctx := context.Settings{
+	ctx := &context.Settings{
 		DryRun:    dryRun,
 		Verbosity: verbosity,
 		Purge:     purging,
+		Writer:    os.Stdout,
 	}
-	if appFilter != "" {
-		ctx.Filter.Negate = negateFilter
-		ctx.Filter.Expression = appFilter
+	if err := ctx.CompileApplicationFilter(appFilter, negateFilter); err != nil {
+		return err
 	}
-	cfg, err := core.LoadConfig(input, ctx)
+	cfg, err := core.LoadConfig(input, *ctx)
 	if err != nil {
 		return err
 	}
