@@ -120,7 +120,7 @@ func (asset *Resource) Extract(opts util.Runner) error {
 	if err := os.Mkdir(asset.Paths.Unpack, 0o755); err != nil {
 		return err
 	}
-	return opts.Run(cmd, args...)
+	return opts.RunCommand(cmd, args...)
 }
 
 func (asset *Resource) handleDepth(cmd string, opts util.Runner) ([]string, error) {

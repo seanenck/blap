@@ -13,6 +13,7 @@ import (
 	"github.com/seanenck/blap/internal/config"
 	"github.com/seanenck/blap/internal/config/types"
 	"github.com/seanenck/blap/internal/fetch"
+	"github.com/seanenck/blap/internal/util"
 )
 
 type mockExecutor struct {
@@ -47,7 +48,7 @@ func (m *mockExecutor) Process(fetch.Context, ...any) (*asset.Resource, error) {
 	return m.rsrc, m.err
 }
 
-func (m *mockExecutor) Run(string, ...string) error {
+func (m *mockExecutor) RunCommand(string, ...string) error {
 	return m.err
 }
 
@@ -55,7 +56,7 @@ func (m *mockExecutor) Output(string, ...string) ([]byte, error) {
 	return nil, m.err
 }
 
-func (m *mockExecutor) RunIn(string, string, ...string) error {
+func (m *mockExecutor) Run(util.RunSettings, string, ...string) error {
 	return m.err
 }
 

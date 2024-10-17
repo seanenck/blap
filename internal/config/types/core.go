@@ -28,13 +28,14 @@ type (
 	}
 	// Application defines how an application is downloaded, unpacked, and deployed
 	Application struct {
-		Priority   int         `yaml:"priority"`
-		Disable    bool        `yaml:"disable"`
-		GitHub     *GitHubMode `yaml:"github"`
-		Git        *GitMode    `yaml:"git"`
-		Extract    Extraction  `yaml:"extract"`
-		BuildSteps []Step      `yaml:"build"`
-		Deploy     []Artifact  `yaml:"deploy"`
+		Priority    int              `yaml:"priority"`
+		Disable     bool             `yaml:"disable"`
+		GitHub      *GitHubMode      `yaml:"github"`
+		Git         *GitMode         `yaml:"git"`
+		Extract     Extraction       `yaml:"extract"`
+		BuildSteps  []Step           `yaml:"build"`
+		Deploy      []Artifact       `yaml:"deploy"`
+		Environment BuildEnvironment `yaml:"environment"`
 	}
 	// Artifact are definitions of what to deploy
 	Artifact struct {
@@ -43,8 +44,14 @@ type (
 	}
 	// Step is a build process step
 	Step struct {
-		Directory string   `yaml:"directory"`
-		Command   []string `yaml:"command"`
+		Directory   string           `yaml:"directory"`
+		Command     []string         `yaml:"command"`
+		Environment BuildEnvironment `yaml:"environment"`
+	}
+	// BuildEnvironment are environment configuration settings for build steps
+	BuildEnvironment struct {
+		Clear  bool     `yaml:"clear"`
+		Values []string `yaml:"values"`
 	}
 	// Extraction handles asset extraction
 	Extraction struct {

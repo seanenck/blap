@@ -113,7 +113,7 @@ func (c Configuration) Do(ctx Context) error {
 	step := steps.Context{}
 	step.Resource = e
 	step.Settings = c.context
-	if err := build.Do(ctx.Application.BuildSteps, ctx.Runner, dest, step); err != nil {
+	if err := build.Do(ctx.Application.BuildSteps, ctx.Runner, dest, step, ctx.Application.Environment); err != nil {
 		return err
 	}
 	if err := deploy.Do(rsrc.Paths.Unpack, ctx.Application.Deploy, step); err != nil {

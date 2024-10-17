@@ -8,6 +8,7 @@ import (
 
 	"github.com/seanenck/blap/internal/asset"
 	"github.com/seanenck/blap/internal/config/types"
+	"github.com/seanenck/blap/internal/util"
 )
 
 type mockExtract struct {
@@ -19,18 +20,18 @@ type mockExtract struct {
 func (m *mockExtract) LogDebug(string, ...any) {
 }
 
-func (m *mockExtract) Run(c string, a ...string) error {
+func (m *mockExtract) RunCommand(c string, a ...string) error {
 	m.ran = []string{c}
 	m.ran = append(m.ran, a...)
 	return m.err
 }
 
-func (m *mockExtract) RunIn(string, string, ...string) error {
+func (m *mockExtract) Run(util.RunSettings, string, ...string) error {
 	return nil
 }
 
 func (m *mockExtract) Output(c string, a ...string) ([]byte, error) {
-	return m.payload, m.Run(c, a...)
+	return m.payload, m.RunCommand(c, a...)
 }
 
 func TestSetAppDataErrors(t *testing.T) {

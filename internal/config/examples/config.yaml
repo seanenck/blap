@@ -15,6 +15,9 @@ applications:
           - "bin/nvim"
         destination: "~/bin"
   nvim:
+    environment:
+      clear: true
+      values: ["GOOS=1", "X=1"]
     priority: -100
     github:
       project: "neovim/neovim"
@@ -31,6 +34,9 @@ applications:
         asset: "tarball"
     build:
       - command: ["make", "VERSION={{ $.Vars.Tag }}"]
+        environment:
+          clear: true
+          values: ["GOOS=1", "X=1"]
     deploy:
       - files:
           - "build/blap"

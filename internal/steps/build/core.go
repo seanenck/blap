@@ -11,7 +11,7 @@ import (
 )
 
 // Do will run each build step
-func Do(steps []types.Step, builder util.Runner, destination string, ctx steps.Context) error {
+func Do(steps []types.Step, builder util.Runner, destination string, ctx steps.Context, env types.BuildEnvironment) error {
 	if destination == "" {
 		return errors.New("destination must be set")
 	}
@@ -43,7 +43,14 @@ func Do(steps []types.Step, builder util.Runner, destination string, ctx steps.C
 		if step.Directory != "" {
 			to = filepath.Join(to, step.Directory)
 		}
-		if err := builder.RunIn(to, exe, args...); err != nil {
+		run := util.RunSettings{}
+		run.Dir = to
+		run.Env.Values = env.Values
+		run.Env.Values = append(run.Env.Values, step.Environment.Values...)
+		if step.Environment.Clear || env.Clear {
+			run.Env.Clear = true
+		}
+		if err := builder.Run(run, exe, args...); err != nil {
 			return err
 		}
 	}
