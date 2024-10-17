@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/seanenck/blap/internal/asset"
+	"github.com/seanenck/blap/internal/config/types"
 )
 
 type mockExtract struct {
@@ -34,28 +35,28 @@ func (m *mockExtract) Output(c string, a ...string) ([]byte, error) {
 
 func TestSetAppDataErrors(t *testing.T) {
 	r := &asset.Resource{}
-	if err := r.SetAppData("", "", asset.Settings{}); err == nil || err.Error() != "name and directory are required" {
+	if err := r.SetAppData("", "", types.Extraction{}); err == nil || err.Error() != "name and directory are required" {
 		t.Errorf("invalid error: %v", err)
 	}
-	if err := r.SetAppData("a", "", asset.Settings{}); err == nil || err.Error() != "name and directory are required" {
+	if err := r.SetAppData("a", "", types.Extraction{}); err == nil || err.Error() != "name and directory are required" {
 		t.Errorf("invalid error: %v", err)
 	}
-	if err := r.SetAppData("", "b", asset.Settings{}); err == nil || err.Error() != "name and directory are required" {
+	if err := r.SetAppData("", "b", types.Extraction{}); err == nil || err.Error() != "name and directory are required" {
 		t.Errorf("invalid error: %v", err)
 	}
-	if err := r.SetAppData("a", "b", asset.Settings{}); err == nil || err.Error() != "asset not initialized properly" {
+	if err := r.SetAppData("a", "b", types.Extraction{}); err == nil || err.Error() != "asset not initialized properly" {
 		t.Errorf("invalid error: %v", err)
 	}
 	r.File = "x"
-	if err := r.SetAppData("a", "b", asset.Settings{}); err == nil || err.Error() != "asset not initialized properly" {
+	if err := r.SetAppData("a", "b", types.Extraction{}); err == nil || err.Error() != "asset not initialized properly" {
 		t.Errorf("invalid error: %v", err)
 	}
 	r.Tag = "x"
-	if err := r.SetAppData("a", "b", asset.Settings{}); err == nil || err.Error() != "asset not initialized properly" {
+	if err := r.SetAppData("a", "b", types.Extraction{}); err == nil || err.Error() != "asset not initialized properly" {
 		t.Errorf("invalid error: %v", err)
 	}
 	r.URL = "x"
-	if err := r.SetAppData("a", "b", asset.Settings{}); err != nil {
+	if err := r.SetAppData("a", "b", types.Extraction{}); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 }
@@ -68,19 +69,19 @@ func TestExtractErrors(t *testing.T) {
 	if err := r.Extract(&mockExtract{}); err == nil || err.Error() != "asset not set for extraction" {
 		t.Errorf("invalid error: %v", err)
 	}
-	r.SetAppData("a", "b", asset.Settings{})
+	r.SetAppData("a", "b", types.Extraction{})
 	if err := r.Extract(&mockExtract{}); err == nil || err.Error() != "asset has no extraction command" {
 		t.Errorf("invalid error: %v", err)
 	}
-	r.SetAppData("a", "b", asset.Settings{Command: []string{"xyz"}})
+	r.SetAppData("a", "b", types.Extraction{Command: []string{"xyz"}})
 	if err := r.Extract(&mockExtract{}); err == nil || err.Error() != "missing input/output args for extract command: {{ $.Input }} {{ $.Output }}" {
 		t.Errorf("invalid error: %v", err)
 	}
-	r.SetAppData("a", "b", asset.Settings{Command: []string{"xyz", "{{ $.Output }}"}})
+	r.SetAppData("a", "b", types.Extraction{Command: []string{"xyz", "{{ $.Output }}"}})
 	if err := r.Extract(&mockExtract{}); err == nil || err.Error() != "missing input/output args for extract command: {{ $.Input }} {{ $.Output }}" {
 		t.Errorf("invalid error: %v", err)
 	}
-	r.SetAppData("a", "b", asset.Settings{Command: []string{"xyz", "{{ $.Input }}"}})
+	r.SetAppData("a", "b", types.Extraction{Command: []string{"xyz", "{{ $.Input }}"}})
 	if err := r.Extract(&mockExtract{}); err == nil || err.Error() != "missing input/output args for extract command: {{ $.Input }} {{ $.Output }}" {
 		t.Errorf("invalid error: %v", err)
 	}
@@ -93,7 +94,7 @@ func TestExtract(t *testing.T) {
 	r.File = "file"
 	r.Tag = "tag"
 	r.URL = "url"
-	r.SetAppData("a", "testdata", asset.Settings{Command: []string{"xyz", "{{ $.Output }}", "{{ $.Input }}"}})
+	r.SetAppData("a", "testdata", types.Extraction{Command: []string{"xyz", "{{ $.Output }}", "{{ $.Input }}"}})
 	if err := r.Extract(&mockExtract{}); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
@@ -106,7 +107,7 @@ func TestExtractDepth(t *testing.T) {
 	r.File = "file"
 	r.Tag = "tag"
 	r.URL = "url"
-	r.SetAppData("a", "testdata", asset.Settings{NoDepth: true, Command: []string{"xyz", "{{ $.Output }}", "{{ $.Input }}"}})
+	r.SetAppData("a", "testdata", types.Extraction{NoDepth: true, Command: []string{"xyz", "{{ $.Output }}", "{{ $.Input }}"}})
 	m := &mockExtract{}
 	if err := r.Extract(m); err != nil {
 		t.Errorf("invalid error: %v", err)
@@ -116,7 +117,7 @@ func TestExtractDepth(t *testing.T) {
 	}
 	r.File = "file.tar.xz"
 	r.Tag = "tag2"
-	r.SetAppData("a", "testdata", asset.Settings{})
+	r.SetAppData("a", "testdata", types.Extraction{})
 	m = &mockExtract{}
 	m.payload = []byte("afojea\nafofea\nlafjeha\n")
 	if err := r.Extract(m); err != nil {
@@ -126,7 +127,7 @@ func TestExtractDepth(t *testing.T) {
 		t.Errorf("invalid run: %v", m.ran)
 	}
 	r.Tag = "tag4"
-	r.SetAppData("a", "testdata", asset.Settings{NoDepth: true})
+	r.SetAppData("a", "testdata", types.Extraction{NoDepth: true})
 	m = &mockExtract{}
 	m.payload = []byte("afo/jea\naojfea\nlafjeha\n")
 	if err := r.Extract(m); err != nil {
@@ -136,7 +137,7 @@ func TestExtractDepth(t *testing.T) {
 		t.Errorf("invalid run: %v", m.ran)
 	}
 	r.Tag = "tag5"
-	r.SetAppData("a", "testdata", asset.Settings{})
+	r.SetAppData("a", "testdata", types.Extraction{})
 	m = &mockExtract{}
 	m.payload = []byte("afo/jea\nafo/fea\nlafjeha\n")
 	if err := r.Extract(m); err != nil {
@@ -147,7 +148,7 @@ func TestExtractDepth(t *testing.T) {
 	}
 	r.File = "file.zip"
 	r.Tag = "tag6"
-	r.SetAppData("a", "testdata", asset.Settings{NoDepth: false})
+	r.SetAppData("a", "testdata", types.Extraction{NoDepth: false})
 	m = &mockExtract{}
 	m.payload = []byte("afo/jea\nafo/fea\nlafjeha\n")
 	if err := r.Extract(m); err != nil {
@@ -158,7 +159,7 @@ func TestExtractDepth(t *testing.T) {
 	}
 	r.File = "file.zip"
 	r.Tag = "tag7"
-	r.SetAppData("a", "testdata", asset.Settings{NoDepth: false})
+	r.SetAppData("a", "testdata", types.Extraction{NoDepth: false})
 	m = &mockExtract{}
 	m.payload = []byte("afo/jea\nado/fea\nlafjeha\n")
 	if err := r.Extract(m); err != nil {

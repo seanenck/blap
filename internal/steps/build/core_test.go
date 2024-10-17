@@ -7,6 +7,7 @@ import (
 
 	"github.com/seanenck/blap/internal/asset"
 	"github.com/seanenck/blap/internal/cli"
+	"github.com/seanenck/blap/internal/config/types"
 	"github.com/seanenck/blap/internal/env"
 	"github.com/seanenck/blap/internal/steps"
 	"github.com/seanenck/blap/internal/steps/build"
@@ -38,21 +39,21 @@ func TestDo(t *testing.T) {
 	step := steps.Context{}
 	step.Settings = cli.Settings{}
 	step.Resource = env.Values[*asset.Resource]{}
-	if err := build.Do([]build.Step{}, m, "", step); err == nil || err.Error() != "destination must be set" {
+	if err := build.Do([]types.Step{}, m, "", step); err == nil || err.Error() != "destination must be set" {
 		t.Errorf("invalid error: %v", err)
 	}
-	if err := build.Do([]build.Step{}, m, "a", step); err == nil || err.Error() != "no resource set" {
+	if err := build.Do([]types.Step{}, m, "a", step); err == nil || err.Error() != "no resource set" {
 		t.Errorf("invalid error: %v", err)
 	}
 	step.Resource = env.Values[*asset.Resource]{Vars: &asset.Resource{}}
-	if err := build.Do([]build.Step{}, nil, "a", step); err == nil || err.Error() != "builder is unset" {
+	if err := build.Do([]types.Step{}, nil, "a", step); err == nil || err.Error() != "builder is unset" {
 		t.Errorf("invalid error: %v", err)
 	}
 	os.Clearenv()
 	t.Setenv("HOME", "xyz")
 	e, _ := env.NewValues("a", &asset.Resource{File: "A"})
 	step.Resource = e
-	if err := build.Do([]build.Step{{}, {Directory: "xyz", Command: []string{"~/exe", `~/{{ if eq $.Arch "fakearch" }}{{else}}{{ $.Vars.File }}{{end}}`}}}, m, "a", step); err != nil {
+	if err := build.Do([]types.Step{{}, {Directory: "xyz", Command: []string{"~/exe", `~/{{ if eq $.Arch "fakearch" }}{{else}}{{ $.Vars.File }}{{end}}`}}}, m, "a", step); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	if fmt.Sprintf("%v", m) != "&{a/xyz xyz/exe [xyz/A]}" {
@@ -60,7 +61,7 @@ func TestDo(t *testing.T) {
 	}
 	e, _ = env.NewValues("A", &asset.Resource{})
 	step.Resource = e
-	if err := build.Do([]build.Step{{}, {Command: []string{"~/exe", "~/{{ $.Name }}"}}}, m, "a", step); err != nil {
+	if err := build.Do([]types.Step{{}, {Command: []string{"~/exe", "~/{{ $.Name }}"}}}, m, "a", step); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	if fmt.Sprintf("%v", m) != "&{a xyz/exe [xyz/A]}" {

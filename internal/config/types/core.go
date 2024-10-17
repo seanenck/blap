@@ -1,12 +1,6 @@
 // Package types maintains configuration definitions
 package types
 
-import (
-	"github.com/seanenck/blap/internal/asset"
-	"github.com/seanenck/blap/internal/steps/build"
-	"github.com/seanenck/blap/internal/steps/deploy"
-)
-
 type (
 	// GitTaggedMode means a repository+download is required to manage
 	GitTaggedMode struct {
@@ -34,12 +28,27 @@ type (
 	}
 	// Application defines how an application is downloaded, unpacked, and deployed
 	Application struct {
-		Priority   int               `yaml:"priority"`
-		Disable    bool              `yaml:"disable"`
-		GitHub     *GitHubMode       `yaml:"github"`
-		Git        *GitMode          `yaml:"git"`
-		Extract    asset.Settings    `yaml:"extract"`
-		BuildSteps []build.Step      `yaml:"build"`
-		Deploy     []deploy.Artifact `yaml:"deploy"`
+		Priority   int         `yaml:"priority"`
+		Disable    bool        `yaml:"disable"`
+		GitHub     *GitHubMode `yaml:"github"`
+		Git        *GitMode    `yaml:"git"`
+		Extract    Extraction  `yaml:"extract"`
+		BuildSteps []Step      `yaml:"build"`
+		Deploy     []Artifact  `yaml:"deploy"`
+	}
+	// Artifact are definitions of what to deploy
+	Artifact struct {
+		Files       []string `yaml:"files"`
+		Destination string   `yaml:"destination"`
+	}
+	// Step is a build process step
+	Step struct {
+		Directory string   `yaml:"directory"`
+		Command   []string `yaml:"command"`
+	}
+	// Extraction handles asset extraction
+	Extraction struct {
+		NoDepth bool     `yaml:"nodepth"`
+		Command []string `yaml:"command"`
 	}
 )

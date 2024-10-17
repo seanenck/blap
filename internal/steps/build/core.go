@@ -5,20 +5,13 @@ import (
 	"errors"
 	"path/filepath"
 
+	"github.com/seanenck/blap/internal/config/types"
 	"github.com/seanenck/blap/internal/steps"
 	"github.com/seanenck/blap/internal/util"
 )
 
-type (
-	// Step is a build process step
-	Step struct {
-		Directory string   `yaml:"directory"`
-		Command   []string `yaml:"command"`
-	}
-)
-
 // Do will run each build step
-func Do(steps []Step, builder util.Runner, destination string, ctx steps.Context) error {
+func Do(steps []types.Step, builder util.Runner, destination string, ctx steps.Context) error {
 	if destination == "" {
 		return errors.New("destination must be set")
 	}

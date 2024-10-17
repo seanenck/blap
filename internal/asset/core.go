@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/seanenck/blap/internal/config/types"
 	"github.com/seanenck/blap/internal/util"
 )
 
@@ -41,17 +42,12 @@ type (
 			Archive string
 			Unpack  string
 		}
-		extract Settings
-	}
-	// Settings are extraction settings
-	Settings struct {
-		NoDepth bool     `yaml:"nodepth"`
-		Command []string `yaml:"command"`
+		extract types.Extraction
 	}
 )
 
 // SetAppData will set the asset's data for the overall application
-func (asset *Resource) SetAppData(name, workdir string, settings Settings) error {
+func (asset *Resource) SetAppData(name, workdir string, settings types.Extraction) error {
 	if name == "" || workdir == "" {
 		return errors.New("name and directory are required")
 	}

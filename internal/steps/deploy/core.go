@@ -7,20 +7,13 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/seanenck/blap/internal/config/types"
 	"github.com/seanenck/blap/internal/steps"
 	"github.com/seanenck/blap/internal/util"
 )
 
-type (
-	// Artifact are definitions of what to deploy
-	Artifact struct {
-		Files       []string `yaml:"files"`
-		Destination string   `yaml:"destination"`
-	}
-)
-
 // Do will perform deployments from a source dir
-func Do(src string, deploys []Artifact, ctx steps.Context) error {
+func Do(src string, deploys []types.Artifact, ctx steps.Context) error {
 	if len(deploys) == 0 {
 		return nil
 	}
