@@ -29,38 +29,39 @@ type (
 )
 
 // Process will determine the appropriate backend for processing a fetch
-func (r *ResourceFetcher) Process(ctx fetch.Context, gh *types.GitHubMode, g *types.GitMode) (*asset.Resource, error) {
+func (r *ResourceFetcher) Process(ctx fetch.Context, sources ...any) (*asset.Resource, error) {
 	if ctx.Name == "" {
 		return nil, errors.New("name is required")
 	}
-	cnt := 0
-	for _, obj := range []interface{}{gh, g} {
+	var src any
+	for _, obj := range sources {
 		if !util.IsNil(obj) {
-			cnt++
-			if cnt > 1 {
+			if src != nil {
 				return nil, errors.New("multiple modes enabled, only one allowed")
 			}
+			src = obj
 		}
 	}
-	if gh != nil {
-		if gh.Branch != nil && gh.Release != nil {
+	switch t := src.(type) {
+	case *types.GitHubMode:
+		if t.Branch != nil && t.Release != nil {
 			return nil, errors.New("only one github mode is allowed")
 		}
-		if gh.Branch != nil {
-			return github.Branch(r, ctx, *gh)
+		if t.Branch != nil {
+			return github.Branch(r, ctx, *t)
 		}
-		if gh.Release != nil {
-			return github.Release(r, ctx, *gh)
+		if t.Release != nil {
+			return github.Release(r, ctx, *t)
 		}
 		return nil, errors.New("github mode set but not configured")
-	}
-	if g != nil {
-		if g.Tagged != nil {
-			return git.Tagged(r, ctx, *g)
+	case *types.GitMode:
+		if t.Tagged != nil {
+			return git.Tagged(r, ctx, *t)
 		}
 		return nil, errors.New("unknown git mode for fetch processing")
+	default:
+		return nil, errors.New("unknown mode for fetch processing")
 	}
-	return nil, errors.New("unknown mode for fetch processing")
 }
 
 // GitHubFetch performs a github fetch operations

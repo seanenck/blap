@@ -43,7 +43,7 @@ func (m *mockExecutor) Download(bool, string, string) (bool, error) {
 func (m *mockExecutor) SetToken(string) {
 }
 
-func (m *mockExecutor) Process(fetch.Context, *types.GitHubMode, *types.GitMode) (*asset.Resource, error) {
+func (m *mockExecutor) Process(fetch.Context, ...any) (*asset.Resource, error) {
 	return m.rsrc, m.err
 }
 

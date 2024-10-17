@@ -7,7 +7,6 @@ import (
 	"regexp"
 
 	"github.com/seanenck/blap/internal/asset"
-	"github.com/seanenck/blap/internal/config/types"
 	"github.com/seanenck/blap/internal/env"
 )
 
@@ -25,7 +24,7 @@ type (
 	Retriever interface {
 		Download(bool, string, string) (bool, error)
 		SetToken(string)
-		Process(Context, *types.GitHubMode, *types.GitMode) (*asset.Resource, error)
+		Process(Context, ...any) (*asset.Resource, error)
 		GitHubFetch(ownerRepo, call string, to any) error
 		Debug(string, ...any)
 		ExecuteCommand(cmd string, args ...string) (string, error)
