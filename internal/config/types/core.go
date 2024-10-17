@@ -28,14 +28,18 @@ type (
 	}
 	// Application defines how an application is downloaded, unpacked, and deployed
 	Application struct {
-		Priority    int              `yaml:"priority"`
-		Disable     bool             `yaml:"disable"`
-		GitHub      *GitHubMode      `yaml:"github"`
-		Git         *GitMode         `yaml:"git"`
-		Extract     Extraction       `yaml:"extract"`
-		BuildSteps  []Step           `yaml:"build"`
-		Deploy      []Artifact       `yaml:"deploy"`
-		Environment BuildEnvironment `yaml:"environment"`
+		Priority int         `yaml:"priority"`
+		Disable  bool        `yaml:"disable"`
+		GitHub   *GitHubMode `yaml:"github"`
+		Git      *GitMode    `yaml:"git"`
+		Extract  Extraction  `yaml:"extract"`
+		Build    struct {
+			Environment BuildEnvironment `yaml:"environment"`
+			Steps       []Step           `yaml:"steps"`
+		} `yaml:"build"`
+		Deploy struct {
+			Artifacts []Artifact `yaml:"artifacts"`
+		} `yaml:"deploy"`
 	}
 	// Artifact are definitions of what to deploy
 	Artifact struct {

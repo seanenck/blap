@@ -1,43 +1,73 @@
+# main configuration definition
+# directory to use as a store/cache
+# can be offset from HOME via '~/' as a prefix
 directory: testdata
+# include one (or more) files (can use globs)
+# these will all be combined into a singular application (map) set
 include:
   - "examples/*.more.yaml"
   - "examples/other.yaml"
   - "testdata/test.yaml"
+# parallelization allows running updates in parallel
+# increase > 1 to support parallel jobs (0 == disabled == 1)
+parallelization: 0
+# application settings for deployment
 applications:
+  nvim:
+    # priority can be used to make sure packages are run in a specific order
+    # higher priority goes FIRST
+    priority: -100
+    # github project
+    github:
+      # actual github project
+      project: "neovim/neovim"
+      # select the necessary asset
+      release:
+        asset: "nvim-linux64.tar.gz$"
+    deploy:
+      # deploy the appropriate files
+      artifacts:
+        - files:
+            - "bin/nvim"
+          # offset from home
+          destination: "~/bin"
+  blap:
+    # github release mode
+    github:
+      project: "seanenck/blap"
+      release:
+        # instead of selecting a _binary_ asset, get the tarball of a release
+        # can perform a source build
+        asset: "tarball"
+    build:
+      # setup build environment settings for ALL application build steps
+      environment:
+        # clear environment before each step
+        clear: true
+        # set environment valuues
+        values: ["GOOS=linux", "GOARCH=arm64"]
+      # run specific commands
+      steps:
+        - command: ["make", "VERSION={{ $.Vars.Tag }}"]
+          environment:
+            # set values specifically for this step
+            # can also set clear ON at this level
+            values: ["GOOS=1", "X=1"]
+    deploy:
+      # deploy the built files
+      artifacts:
+        - files:
+            - "build/blap"
+          destination: "~/.local/bin/development"
   nvim2:
+    # this app, specifically, is disabled
     disable: true
     github:
       project: "neovim/neovim"
       release:
         asset: "nvim-linux64.tar.gz$"
     deploy:
-      - files:
-          - "bin/nvim"
-        destination: "~/bin"
-  nvim:
-    environment:
-      clear: true
-      values: ["GOOS=1", "X=1"]
-    priority: -100
-    github:
-      project: "neovim/neovim"
-      release:
-        asset: "nvim-linux64.tar.gz$"
-    deploy:
-      - files:
-          - "bin/nvim"
-        destination: "~/bin"
-  blap:
-    github:
-      project: "seanenck/blap"
-      release:
-        asset: "tarball"
-    build:
-      - command: ["make", "VERSION={{ $.Vars.Tag }}"]
-        environment:
-          clear: true
-          values: ["GOOS=1", "X=1"]
-    deploy:
-      - files:
-          - "build/blap"
-        destination: "~/.local/bin/development"
+      artifacts:
+        - files:
+            - "bin/nvim"
+          destination: "~/bin"
