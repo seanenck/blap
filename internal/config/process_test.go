@@ -11,6 +11,7 @@ import (
 	"github.com/seanenck/blap/internal/asset"
 	"github.com/seanenck/blap/internal/cli"
 	"github.com/seanenck/blap/internal/config"
+	"github.com/seanenck/blap/internal/config/types"
 	"github.com/seanenck/blap/internal/fetch"
 )
 
@@ -35,18 +36,6 @@ func (m *mockExecutor) Do(ctx config.Context) error {
 	return m.err
 }
 
-func (m *mockExecutor) GitHubRelease(fetch.GitHubMode) (*asset.Resource, error) {
-	return nil, m.err
-}
-
-func (m *mockExecutor) Tagged(fetch.TaggedMode) (*asset.Resource, error) {
-	return nil, m.err
-}
-
-func (m *mockExecutor) GitHubBranch(fetch.GitHubMode) (*asset.Resource, error) {
-	return nil, m.err
-}
-
 func (m *mockExecutor) Download(bool, string, string) (bool, error) {
 	return m.dl, m.err
 }
@@ -54,7 +43,7 @@ func (m *mockExecutor) Download(bool, string, string) (bool, error) {
 func (m *mockExecutor) SetToken(string) {
 }
 
-func (m *mockExecutor) Process(fetch.Backend, *fetch.GitHubMode, *fetch.TaggedMode) (*asset.Resource, error) {
+func (m *mockExecutor) Process(fetch.Context, *types.GitHubMode, *types.GitMode) (*asset.Resource, error) {
 	return m.rsrc, m.err
 }
 
@@ -77,6 +66,17 @@ func (m *mockExecutor) Updated() []string {
 	return []string{"abc", "xyz"}
 }
 
+func (m *mockExecutor) Debug(string, ...any) {
+}
+
+func (m *mockExecutor) ExecuteCommand(string, ...string) (string, error) {
+	return "", nil
+}
+
+func (m *mockExecutor) GitHubFetch(string, string, any) error {
+	return nil
+}
+
 func TestProcessUpdate(t *testing.T) {
 	cfg := config.Configuration{}
 	m := &mockExecutor{}
@@ -86,8 +86,8 @@ func TestProcessUpdate(t *testing.T) {
 	if m.mode != "" {
 		t.Errorf("invalid mode: %s", m.mode)
 	}
-	cfg.Applications = make(map[string]config.Application)
-	cfg.Applications["go"] = config.Application{}
+	cfg.Applications = make(map[string]types.Application)
+	cfg.Applications["go"] = types.Application{}
 	if err := cfg.Process(m, m, m); err == nil || err.Error() != "configuration not ready" {
 		t.Errorf("invalid error: %v", err)
 	}

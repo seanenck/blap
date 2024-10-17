@@ -9,7 +9,7 @@ all: $(TARGET)
 
 build: $(TARGET)
 
-$(TARGET): cmd/main.go internal/**/*.go  go.* internal/cli/*.sh
+$(TARGET): cmd/main.go $(shell find internal/ -type f | grep -v testdata)  go.*
 	go build $(GOFLAGS) -ldflags "$(LDFLAGS) -X main.version=$(VERSION)" -o $@ cmd/main.go
 
 install:

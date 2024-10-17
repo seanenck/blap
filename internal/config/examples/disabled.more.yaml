@@ -1,13 +1,14 @@
 disable: true
 applications:
   go:
-    tagged:
+    git:
       repository: "https://github.com/golang/go"
-      download: "https://go.dev/dl/{{ $.Tag }}.linux-amd64.tar.gz"
-      filters: 
-        - "refs/tags/weekly"
-        - "refs/tags/release"
-        - "[0-9]rc[0-9]"
+      tagged:
+        download: "https://go.dev/dl/{{ $.Vars.Tag }}.linux-amd64.tar.gz"
+        filters: 
+          - "refs/tags/weekly"
+          - "refs/tags/release"
+          - "[0-9]rc[0-9]"
     deploy:
       - files:
           - "bin/go"

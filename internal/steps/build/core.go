@@ -2,12 +2,10 @@
 package build
 
 import (
-	"bytes"
 	"errors"
 	"path/filepath"
-	"text/template"
 
-	"github.com/seanenck/blap/internal/cli"
+	"github.com/seanenck/blap/internal/steps"
 	"github.com/seanenck/blap/internal/util"
 )
 
@@ -20,37 +18,33 @@ type (
 )
 
 // Do will run each build step
-func Do(steps []Step, builder util.Runner, destination string, rsrc any, context cli.Settings) error {
+func Do(steps []Step, builder util.Runner, destination string, ctx steps.Context) error {
 	if destination == "" {
 		return errors.New("destination must be set")
 	}
-	if rsrc == nil {
-		return errors.New("resource is unset")
-	}
 	if builder == nil {
 		return errors.New("builder is unset")
+	}
+	if err := ctx.Valid(); err != nil {
+		return err
 	}
 	for _, step := range steps {
 		cmd := step.Command
 		if len(cmd) == 0 {
 			continue
 		}
-		exe := context.Resolve(cmd[0])
+		exe := ctx.Settings.Resolve(cmd[0])
 		var args []string
 		for idx, a := range cmd {
 			if idx == 0 {
 				continue
 			}
-			res := context.Resolve(a)
-			t, err := template.New("t").Parse(res)
+			res := ctx.Settings.Resolve(a)
+			t, err := ctx.Resource.Template(res)
 			if err != nil {
 				return err
 			}
-			var b bytes.Buffer
-			if err := t.Execute(&b, rsrc); err != nil {
-				return err
-			}
-			args = append(args, b.String())
+			args = append(args, t)
 		}
 		to := destination
 		if step.Directory != "" {

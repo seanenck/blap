@@ -9,10 +9,13 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/seanenck/blap/internal/build"
-	"github.com/seanenck/blap/internal/deploy"
+	"github.com/seanenck/blap/internal/config/types"
+	"github.com/seanenck/blap/internal/env"
 	"github.com/seanenck/blap/internal/fetch"
 	"github.com/seanenck/blap/internal/purge"
+	"github.com/seanenck/blap/internal/steps"
+	"github.com/seanenck/blap/internal/steps/build"
+	"github.com/seanenck/blap/internal/steps/deploy"
 	"github.com/seanenck/blap/internal/util"
 )
 
@@ -33,7 +36,7 @@ type (
 	// Context allows processing an application (fetch, extract, build, deploy)
 	Context struct {
 		Name        string
-		Application Application
+		Application types.Application
 		Fetcher     fetch.Retriever
 		Runner      util.Runner
 	}
@@ -64,7 +67,7 @@ func (c Configuration) Do(ctx Context) error {
 		return errors.New("configuration not setup")
 	}
 	c.context.LogInfo("processing: %s\n", ctx.Name)
-	rsrc, err := ctx.Fetcher.Process(ctx.Fetcher, ctx.Application.GitHub, ctx.Application.Tagged)
+	rsrc, err := ctx.Fetcher.Process(fetch.Context{Name: ctx.Name}, ctx.Application.GitHub, ctx.Application.Git)
 	if err != nil {
 		return err
 	}
@@ -103,10 +106,17 @@ func (c Configuration) Do(ctx Context) error {
 			return err
 		}
 	}
-	if err := build.Do(ctx.Application.BuildSteps, ctx.Runner, dest, rsrc, c.context); err != nil {
+	e, err := env.NewValues(ctx.Name, rsrc)
+	if err != nil {
 		return err
 	}
-	if err := deploy.Do(rsrc.Paths.Unpack, ctx.Application.Deploy, c.context); err != nil {
+	step := steps.Context{}
+	step.Resource = e
+	step.Settings = c.context
+	if err := build.Do(ctx.Application.BuildSteps, ctx.Runner, dest, step); err != nil {
+		return err
+	}
+	if err := deploy.Do(rsrc.Paths.Unpack, ctx.Application.Deploy, step); err != nil {
 		return err
 	}
 	return nil

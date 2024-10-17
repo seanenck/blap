@@ -30,7 +30,7 @@ applications:
       release:
         asset: "tarball"
     build:
-      - command: ["make", "VERSION={{ $.Tag }}"]
+      - command: ["make", "VERSION={{ $.Vars.Tag }}"]
     deploy:
       - files:
           - "build/blap"

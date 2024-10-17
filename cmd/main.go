@@ -8,7 +8,7 @@ import (
 
 	"github.com/seanenck/blap/internal/cli"
 	"github.com/seanenck/blap/internal/config"
-	"github.com/seanenck/blap/internal/fetch"
+	"github.com/seanenck/blap/internal/fetch/retriever"
 	"github.com/seanenck/blap/internal/util"
 )
 
@@ -66,5 +66,5 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	return cfg.Process(cfg, &fetch.ResourceFetcher{Context: *ctx}, util.CommandRunner{})
+	return cfg.Process(cfg, &retriever.ResourceFetcher{Context: *ctx}, util.CommandRunner{})
 }

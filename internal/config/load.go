@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/seanenck/blap/internal/cli"
+	"github.com/seanenck/blap/internal/config/types"
 	"gopkg.in/yaml.v3"
 )
 
@@ -30,7 +31,7 @@ func Load(input string, context cli.Settings) (Configuration, error) {
 	c := Configuration{}
 	c.handler = &processHandler{}
 	c.context = context
-	c.Applications = make(map[string]Application)
+	c.Applications = make(map[string]types.Application)
 	if err := doDecode(input, &c); err != nil {
 		return c, err
 	}
@@ -52,8 +53,8 @@ func Load(input string, context cli.Settings) (Configuration, error) {
 		for _, include := range including {
 			c.context.LogDebug("loading included: %s\n", include)
 			type included struct {
-				Applications map[string]Application `yaml:"applications"`
-				Disable      bool                   `yaml:"disable"`
+				Applications map[string]types.Application `yaml:"applications"`
+				Disable      bool                         `yaml:"disable"`
 			}
 			var apps included
 			if err := doDecode(include, &apps); err != nil {
@@ -71,7 +72,7 @@ func Load(input string, context cli.Settings) (Configuration, error) {
 		}
 	}
 	canFilter := context.FilterApplications()
-	sub := make(map[string]Application)
+	sub := make(map[string]types.Application)
 	for n, a := range c.Applications {
 		if a.Disable {
 			continue

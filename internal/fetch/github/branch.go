@@ -1,26 +1,17 @@
-// Package fetch can handle git branch sources
-package fetch
+// Package github can handle git branch sources
+package github
 
 import (
 	"errors"
 	"fmt"
 
 	"github.com/seanenck/blap/internal/asset"
+	"github.com/seanenck/blap/internal/config/types"
+	"github.com/seanenck/blap/internal/fetch"
 )
 
-type (
-	// GitHubCommit is commit information from github for a repo
-	GitHubCommit struct {
-		Sha string `json:"sha"`
-	}
-	// GitHubBranchMode will enable a repository+branch to pull a tarball
-	GitHubBranchMode struct {
-		Name string `yaml:"name"`
-	}
-)
-
-// GitHubBranch will get an asset from a branch
-func (r *ResourceFetcher) GitHubBranch(a GitHubMode) (*asset.Resource, error) {
+// Branch will get an asset from a branch
+func Branch(caller fetch.Retriever, _ fetch.Context, a types.GitHubMode) (*asset.Resource, error) {
 	if a.Branch == nil {
 		return nil, errors.New("branch is not properly set")
 	}
@@ -30,14 +21,17 @@ func (r *ResourceFetcher) GitHubBranch(a GitHubMode) (*asset.Resource, error) {
 	if a.Project == "" {
 		return nil, errors.New("project required for branch mode")
 	}
-	commit, err := fetchData[GitHubCommit](r, a.Project, fmt.Sprintf("commits/%s", a.Branch.Name))
-	if err != nil {
+	type Commit struct {
+		Sha string `json:"sha"`
+	}
+	commit := Commit{}
+	if err := caller.GitHubFetch(a.Project, fmt.Sprintf("commits/%s", a.Branch.Name), &commit); err != nil {
 		return nil, err
 	}
 	if len(commit.Sha) < 7 {
 		return nil, fmt.Errorf("invalid sha detected: %s", commit.Sha)
 	}
 	tag := commit.Sha[0:7]
-	r.Context.LogDebug("found sha: %s\n", tag)
+	caller.Debug("found sha: %s\n", tag)
 	return &asset.Resource{URL: fmt.Sprintf("https://github.com/%s/archive/%s.tar.gz", a.Project, a.Branch.Name), File: fmt.Sprintf("%s-%s.tar.gz", tag, a.Branch.Name), Tag: tag}, nil
 }
