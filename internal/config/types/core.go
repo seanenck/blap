@@ -1,6 +1,11 @@
 // Package types maintains configuration definitions
 package types
 
+import (
+	"iter"
+	"reflect"
+)
+
 type (
 	// GitTaggedMode means a repository+download is required to manage
 	GitTaggedMode struct {
@@ -28,11 +33,10 @@ type (
 	}
 	// Application defines how an application is downloaded, unpacked, and deployed
 	Application struct {
-		Priority int         `yaml:"priority"`
-		Disable  bool        `yaml:"disable"`
-		GitHub   *GitHubMode `yaml:"github"`
-		Git      *GitMode    `yaml:"git"`
-		Extract  Extraction  `yaml:"extract"`
+		Priority int        `yaml:"priority"`
+		Disable  bool       `yaml:"disable"`
+		Source   Source     `yaml:"source"`
+		Extract  Extraction `yaml:"extract"`
 		Build    struct {
 			Environment BuildEnvironment `yaml:"environment"`
 			Steps       []Step           `yaml:"steps"`
@@ -62,4 +66,21 @@ type (
 		NoDepth bool     `yaml:"nodepth"`
 		Command []string `yaml:"command"`
 	}
+	// Source are the available source options
+	Source struct {
+		GitHub *GitHubMode `yaml:"github"`
+		Git    *GitMode    `yaml:"git"`
+	}
 )
+
+// Items will iterate over the available source itmes
+func (s Source) Items() iter.Seq[any] {
+	return func(yield func(any) bool) {
+		v := reflect.ValueOf(s)
+		for i := 0; i < v.NumField(); i++ {
+			if !yield(v.Field(i).Interface()) {
+				return
+			}
+		}
+	}
+}

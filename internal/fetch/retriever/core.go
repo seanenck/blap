@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"iter"
 	"net/http"
 	"os"
 	"os/exec"
@@ -29,12 +30,12 @@ type (
 )
 
 // Process will determine the appropriate backend for processing a fetch
-func (r *ResourceFetcher) Process(ctx fetch.Context, sources ...any) (*asset.Resource, error) {
+func (r *ResourceFetcher) Process(ctx fetch.Context, sources iter.Seq[any]) (*asset.Resource, error) {
 	if ctx.Name == "" {
 		return nil, errors.New("name is required")
 	}
 	var src any
-	for _, obj := range sources {
+	for obj := range sources {
 		if !util.IsNil(obj) {
 			if src != nil {
 				return nil, errors.New("multiple modes enabled, only one allowed")

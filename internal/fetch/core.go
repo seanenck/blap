@@ -3,6 +3,7 @@ package fetch
 
 import (
 	"errors"
+	"iter"
 	"net/http"
 	"regexp"
 
@@ -24,7 +25,7 @@ type (
 	Retriever interface {
 		Download(bool, string, string) (bool, error)
 		SetToken(string)
-		Process(Context, ...any) (*asset.Resource, error)
+		Process(Context, iter.Seq[any]) (*asset.Resource, error)
 		GitHubFetch(ownerRepo, call string, to any) error
 		Debug(string, ...any)
 		ExecuteCommand(cmd string, args ...string) (string, error)
