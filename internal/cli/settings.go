@@ -5,12 +5,15 @@ import (
 	"fmt"
 	"io"
 	"regexp"
+	"sync"
 
 	"github.com/seanenck/blap/internal/util"
 )
 
 // InfoVerbosity is the default info level for outputs
 const InfoVerbosity = 2
+
+var settingsLock = &sync.Mutex{}
 
 // Settings are the core settings
 type Settings struct {
@@ -28,11 +31,15 @@ type Settings struct {
 
 // FilterApplications indicates if the
 func (s Settings) FilterApplications() bool {
+	settingsLock.Lock()
+	defer settingsLock.Unlock()
 	return s.filter.has
 }
 
 // Resolve will cache resolve paths
 func (s Settings) Resolve(dir string) string {
+	settingsLock.Lock()
+	defer settingsLock.Unlock()
 	if s.Resolves != nil {
 		has, ok := s.Resolves[dir]
 		if ok {
@@ -48,6 +55,8 @@ func (s Settings) Resolve(dir string) string {
 
 // AllowApplication indicates if an application is allowed
 func (s Settings) AllowApplication(input string) bool {
+	settingsLock.Lock()
+	defer settingsLock.Unlock()
 	if !s.filter.has {
 		return true
 	}
@@ -60,6 +69,8 @@ func (s Settings) AllowApplication(input string) bool {
 
 // CompileApplicationFilter will compile the necessary app filter
 func (s *Settings) CompileApplicationFilter(filter string, negate bool) error {
+	settingsLock.Lock()
+	defer settingsLock.Unlock()
 	if filter == "" {
 		return nil
 	}
@@ -74,6 +85,8 @@ func (s *Settings) CompileApplicationFilter(filter string, negate bool) error {
 }
 
 func (s Settings) log(level int, msg string, a ...any) {
+	settingsLock.Lock()
+	defer settingsLock.Unlock()
 	if s.Writer != nil && s.Verbosity > level {
 		fmt.Fprintf(s.Writer, msg, a...)
 	}

@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"slices"
 	"sort"
+	"sync"
 
 	"github.com/seanenck/blap/internal/build"
 	"github.com/seanenck/blap/internal/deploy"
@@ -15,7 +16,10 @@ import (
 	"github.com/seanenck/blap/internal/util"
 )
 
+var processLock = &sync.Mutex{}
+
 type (
+	errorList      []error
 	processHandler struct {
 		assets  []string
 		updated []string
@@ -34,6 +38,15 @@ type (
 		Runner      util.Runner
 	}
 )
+
+func (e errorList) add(errs []chan error) errorList {
+	for _, r := range errs {
+		if err := <-r; err != nil {
+			e = append(e, err)
+		}
+	}
+	return e
+}
 
 func (c Configuration) resolveDir() string {
 	return c.context.Resolve(c.Directory)
@@ -62,7 +75,9 @@ func (c Configuration) Do(ctx Context) error {
 		if f == "" {
 			continue
 		}
+		processLock.Lock()
 		c.handler.assets = append(c.handler.assets, filepath.Base(f))
+		processLock.Unlock()
 	}
 	if c.context.Purge {
 		return nil
@@ -73,7 +88,9 @@ func (c Configuration) Do(ctx Context) error {
 		return err
 	}
 	if did {
+		processLock.Lock()
 		c.handler.updated = append(c.handler.updated, ctx.Name)
+		processLock.Unlock()
 	}
 	if c.context.DryRun {
 		return nil
@@ -116,6 +133,9 @@ func (c Configuration) Process(executor Executor, fetcher fetch.Retriever, runne
 	if c.handler == nil {
 		return errors.New("configuration not ready")
 	}
+	if c.Parallelization < 0 {
+		return fmt.Errorf("parallelization must be >= 0 (have: %d)", c.Parallelization)
+	}
 	fetcher.SetToken(c.context.Resolve(c.Token))
 	var priorities []int
 	prioritySet := make(map[int][]Context)
@@ -131,10 +151,26 @@ func (c Configuration) Process(executor Executor, fetcher fetch.Retriever, runne
 	sort.Ints(priorities)
 	slices.Reverse(priorities)
 	for _, p := range priorities {
+		var errs []chan error
+		var errorSet errorList
 		for _, a := range prioritySet[p] {
-			if err := executor.Do(a); err != nil {
-				return fmt.Errorf("application '%s' error: %v", a.Name, err)
+			for len(errs) > c.Parallelization {
+				errorSet = errorSet.add(errs)
+				errs = []chan error{}
 			}
+			chn := make(chan error)
+			go func(ctx Context, e chan error) {
+				var cErr error
+				if err := executor.Do(ctx); err != nil {
+					cErr = fmt.Errorf("application '%s' error: %v", ctx.Name, err)
+				}
+				e <- cErr
+			}(a, chn)
+			errs = append(errs, chn)
+		}
+		errorSet = errorSet.add(errs)
+		if len(errorSet) > 0 {
+			return errors.Join(errorSet...)
 		}
 	}
 	changed := false

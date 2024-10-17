@@ -12,12 +12,13 @@ import (
 type (
 	// Configuration is the overall configuration
 	Configuration struct {
-		handler      *processHandler
-		context      cli.Settings
-		Token        string                 `yaml:"token"`
-		Directory    string                 `yaml:"directory"`
-		Include      []string               `yaml:"include"`
-		Applications map[string]Application `yaml:"applications"`
+		handler         *processHandler
+		context         cli.Settings
+		Token           string                 `yaml:"token"`
+		Directory       string                 `yaml:"directory"`
+		Include         []string               `yaml:"include"`
+		Applications    map[string]Application `yaml:"applications"`
+		Parallelization int                    `yaml:"parallelization"`
 	}
 	// Application defines how an application is downloaded, unpacked, and deployed
 	Application struct {

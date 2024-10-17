@@ -99,6 +99,11 @@ func TestProcessUpdate(t *testing.T) {
 	var buf bytes.Buffer
 	s.Writer = &buf
 	cfg, _ = config.Load(filepath.Join("examples", "config.yaml"), s)
+	cfg.Parallelization = -1
+	if err := cfg.Process(m, m, m); err == nil || err.Error() != "parallelization must be >= 0 (have: -1)" {
+		t.Errorf("invalid error: %v", err)
+	}
+	cfg.Parallelization = 4
 	if err := cfg.Process(m, m, m); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
