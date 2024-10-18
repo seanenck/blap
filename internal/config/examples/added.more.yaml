@@ -1,4 +1,8 @@
 # included file, define applications
+# items can also be pinned in included files
+pinned:
+  - "another2"
+# along with more applications
 applications:
   go:
     source:

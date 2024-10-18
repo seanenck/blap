@@ -53,8 +53,9 @@ func Load(input string, context cli.Settings) (Configuration, error) {
 		for _, include := range including {
 			c.context.LogDebug("loading included: %s\n", include)
 			type included struct {
-				Applications map[string]types.Application `yaml:"applications"`
-				Disable      bool                         `yaml:"disable"`
+				Applications types.AppSet `yaml:"applications"`
+				Disable      bool         `yaml:"disable"`
+				Pinned       types.Pinned `yaml:"pinned"`
 			}
 			var apps included
 			if err := doDecode(include, &apps); err != nil {
@@ -63,6 +64,7 @@ func Load(input string, context cli.Settings) (Configuration, error) {
 			if apps.Disable {
 				continue
 			}
+			c.Pinned = append(c.Pinned, apps.Pinned...)
 			for k, v := range apps.Applications {
 				if _, ok := c.Applications[k]; ok {
 					return c, fmt.Errorf("%s is overwritten by config: %s", k, include)

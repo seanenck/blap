@@ -40,6 +40,9 @@ func TestLoad(t *testing.T) {
 	if len(c.Applications) != 5 {
 		t.Errorf("invalid apps: %d", len(c.Applications))
 	}
+	if len(c.Pinned) != 3 {
+		t.Errorf("invalid pins: %d", len(c.Pinned))
+	}
 }
 
 func TestLoadFilter(t *testing.T) {

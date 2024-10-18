@@ -71,6 +71,10 @@ type (
 		GitHub *GitHubMode `yaml:"github"`
 		Git    *GitMode    `yaml:"git"`
 	}
+	// Pinned are pinned names (for regex use)
+	Pinned []string
+	// AppSet are a name->app pair
+	AppSet map[string]Application
 )
 
 // Items will iterate over the available source itmes

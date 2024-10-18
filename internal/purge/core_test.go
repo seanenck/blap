@@ -10,12 +10,12 @@ import (
 )
 
 func TestDo(t *testing.T) {
-	if ok, err := purge.Do("", nil, cli.Settings{}); err == nil || err.Error() != "directory must be set" || ok {
+	if ok, err := purge.Do("", nil, nil, cli.Settings{}); err == nil || err.Error() != "directory must be set" || ok {
 		t.Errorf("invalid error: %v|purge", err)
 	}
 	os.RemoveAll("testdata")
 	os.Mkdir("testdata", 0o755)
-	if ok, err := purge.Do("testdata", nil, cli.Settings{}); err != nil || ok {
+	if ok, err := purge.Do("testdata", nil, nil, cli.Settings{}); err != nil || ok {
 		t.Errorf("invalid error: %v|purge", err)
 	}
 	if d, _ := os.ReadDir("testdata"); len(d) != 0 {
@@ -23,13 +23,19 @@ func TestDo(t *testing.T) {
 	}
 	os.Mkdir(filepath.Join("testdata", "abc"), 0o755)
 	os.Mkdir(filepath.Join("testdata", "xyz"), 0o755)
-	if ok, err := purge.Do("testdata", []string{"abc"}, cli.Settings{DryRun: true}); err != nil || !ok {
+	if ok, err := purge.Do("testdata", []string{"abc"}, nil, cli.Settings{DryRun: true}); err != nil || !ok {
 		t.Errorf("invalid error: %v|purge", err)
 	}
 	if d, _ := os.ReadDir("testdata"); len(d) != 2 {
 		t.Errorf("invalid dirs: %v", d)
 	}
-	if ok, err := purge.Do("testdata", []string{"abc"}, cli.Settings{}); err != nil || !ok {
+	if ok, err := purge.Do("testdata", []string{"abc"}, []string{"xyz"}, cli.Settings{}); err != nil || ok {
+		t.Errorf("invalid error: %v|purge", err)
+	}
+	if d, _ := os.ReadDir("testdata"); len(d) != 2 {
+		t.Errorf("invalid dirs: %v", d)
+	}
+	if ok, err := purge.Do("testdata", []string{"abc"}, nil, cli.Settings{}); err != nil || !ok {
 		t.Errorf("invalid error: %v|purge", err)
 	}
 	if d, _ := os.ReadDir("testdata"); len(d) != 1 {

@@ -124,7 +124,7 @@ func (c Configuration) Do(ctx Context) error {
 
 // Purge will run a purge operation
 func (c Configuration) Purge() (bool, error) {
-	return purge.Do(c.resolveDir(), c.handler.assets, c.context)
+	return purge.Do(c.resolveDir(), c.handler.assets, c.Pinned, c.context)
 }
 
 // Updated gets the list of updated components
