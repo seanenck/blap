@@ -12,12 +12,7 @@ eget/brew).
 
 clone repository and:
 ```
-make
-```
-
-to install
-```
-make install DESTDIR=~/chosen/path
+just
 ```
 
 # usage
