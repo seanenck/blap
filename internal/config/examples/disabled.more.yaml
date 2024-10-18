@@ -2,6 +2,8 @@
 # this _whole file_ is disable BUT allows generic includes without opting files in/out
 # given that this file is duplicative of others, it is best it is disabled (apps can't be duplicated)
 disable: true
+pinned:
+  - "123"
 applications:
   go:
     source:
