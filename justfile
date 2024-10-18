@@ -15,3 +15,5 @@ check: build
 
 clean:
   rm -f "{{object}}"
+  find internal -type f -wholename "*testdata*" -delete
+  find internal -type d -empty -delete
