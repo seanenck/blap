@@ -20,6 +20,9 @@ func DefaultConfigs() []string {
 		"XDG_CONFIG_HOME": "",
 	} {
 		p := os.Getenv(k)
+		if p == "" {
+			continue
+		}
 		if v != "" {
 			p = filepath.Join(p, v)
 		}

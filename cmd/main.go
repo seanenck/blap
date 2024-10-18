@@ -59,8 +59,8 @@ func run() error {
 			}
 		}
 	}
-	if !util.PathExists(input) {
-		return fmt.Errorf("config file does not exist: %s", input)
+	if input == "" || !util.PathExists(input) {
+		return fmt.Errorf("config file not set or does not exist: %s", input)
 	}
 	cfg, err := config.Load(input, *ctx)
 	if err != nil {

@@ -47,9 +47,9 @@ func help(w io.Writer) error {
 	for _, c := range DefaultConfigs() {
 		fmt.Fprintf(w, "- %s\n", c)
 	}
-	fmt.Fprintf(w, "  (override using %s)\n", ConfigFileEnv)
+	fmt.Fprintf(w, "(override using %s)\n", ConfigFileEnv)
 	fmt.Fprintln(w)
-	fmt.Fprintf(w, "to handle github rate limiting, specify a token in configuration or via env\n")
-	fmt.Fprintf(w, "  %s (directly or as reference to a file)\n", strings.Join(types.GitHubSettings{}.Env(), ","))
+	fmt.Fprintf(w, "to handle github rate limiting, specify a token in configuration or via env:\n")
+	fmt.Fprintf(w, "- %s\n", strings.Join(types.GitHubSettings{}.Env(), "\n- "))
 	return nil
 }
