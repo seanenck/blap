@@ -24,8 +24,8 @@ jobs:
             deps: "apk add just"
             display: alpine
           - name: macos-latest
-            image: "brew install just"
-            deps: "echo no deps"
+            deps: "brew install just"
+            image: null
             display: macos
     runs-on: ${{ matrix.os.name }}
     name: ${{ matrix.os.display }}
