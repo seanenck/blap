@@ -8,6 +8,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/seanenck/blap/internal/config/types"
 )
 
 func helpLine(w io.Writer, flag, text string) {
@@ -48,6 +50,6 @@ func help(w io.Writer) error {
 	fmt.Fprintf(w, "  (override using %s)\n", ConfigFileEnv)
 	fmt.Fprintln(w)
 	fmt.Fprintf(w, "to handle github rate limiting, specify a token in configuration or via env\n")
-	fmt.Fprintf(w, "  %s (directly or as reference to a file)\n", strings.Join(TokenOptions, ","))
+	fmt.Fprintf(w, "  %s (directly or as reference to a file)\n", strings.Join(types.GitHubSettings{}.Env(), ","))
 	return nil
 }

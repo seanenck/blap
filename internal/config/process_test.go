@@ -42,7 +42,7 @@ func (m *mockExecutor) Download(bool, string, string) (bool, error) {
 	return m.dl, m.err
 }
 
-func (m *mockExecutor) SetToken(string) {
+func (m *mockExecutor) SetConnections(types.Connections) {
 }
 
 func (m *mockExecutor) Process(fetch.Context, iter.Seq[any]) (*asset.Resource, error) {

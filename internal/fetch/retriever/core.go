@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
-	"strings"
 
 	"github.com/seanenck/blap/internal/asset"
 	"github.com/seanenck/blap/internal/cli"
@@ -24,8 +23,9 @@ import (
 type (
 	// ResourceFetcher is the default fetcher for resources
 	ResourceFetcher struct {
-		Context cli.Settings
-		Backend fetch.Backend
+		Context     cli.Settings
+		Backend     fetch.Backend
+		Connections types.Connections
 	}
 )
 
@@ -147,18 +147,11 @@ func (r ResourceFetcher) get(url string) (*http.Response, error) {
 }
 
 func (r *ResourceFetcher) tokenHeader(req *http.Request) error {
-	var token string
-	if rawToken := getToken(); rawToken != "" {
-		token = rawToken
-		if util.PathExists(rawToken) {
-			b, err := os.ReadFile(rawToken)
-			if err != nil {
-				return err
-			}
-			token = strings.TrimSpace(string(b))
-		}
+	token, err := types.ParseToken(r.Connections.GitHub)
+	if err != nil {
+		return err
 	}
-	if token != "" && req.URL.Scheme == "https" && req.Host == "api.github.com" {
+	if token != "" {
 		req.Header.Set("Authorization", fmt.Sprintf("token %s", token))
 	}
 	return nil
@@ -169,21 +162,9 @@ func (r *ResourceFetcher) Debug(msg string, args ...any) {
 	r.Context.LogDebug(msg, args...)
 }
 
-// SetToken will set the token for the fetch (if not already set)
-func (r *ResourceFetcher) SetToken(token string) {
-	if getToken() == "" {
-		os.Setenv(cli.BlapToken, token)
-	}
-}
-
-func getToken() string {
-	for _, env := range cli.TokenOptions {
-		v := strings.TrimSpace(os.Getenv(env))
-		if v != "" {
-			return v
-		}
-	}
-	return ""
+// SetConnections will configure connection information for the fetcher
+func (r *ResourceFetcher) SetConnections(conn types.Connections) {
+	r.Connections = conn
 }
 
 // ExecuteCommand executes an executable and args

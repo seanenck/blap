@@ -11,11 +11,11 @@ type (
 	Configuration struct {
 		handler         *processHandler
 		context         cli.Settings
-		Token           string       `yaml:"token"`
-		Directory       string       `yaml:"directory"`
-		Include         []string     `yaml:"include"`
-		Applications    types.AppSet `yaml:"applications"`
-		Parallelization int          `yaml:"parallelization"`
-		Pinned          types.Pinned `yaml:"pinned"`
+		Directory       string            `yaml:"directory"`
+		Include         []string          `yaml:"include"`
+		Applications    types.AppSet      `yaml:"applications"`
+		Parallelization int               `yaml:"parallelization"`
+		Pinned          types.Pinned      `yaml:"pinned"`
+		Connections     types.Connections `yaml:"connections"`
 	}
 )

@@ -95,50 +95,32 @@ func TestDownload(t *testing.T) {
 	}
 }
 
-func TestTokenHandling(t *testing.T) {
+func TestSetConnections(t *testing.T) {
 	os.Clearenv()
-	checkToken := func(unset, set bool, expect string) {
-		defer os.Clearenv()
-		r := &retriever.ResourceFetcher{}
-		if set {
-			r.SetToken("abc")
-		}
-		client := &mockClient{}
-		client.payload = []byte(`{"tag_name": "123", "assets": [{"browser_download_url": "x/111"}, {"browser_download_url": "222"}]}`)
-		r.Backend = client
-		r.GitHubFetch("abc", "aaa", struct{}{})
-		h, ok := client.req.Header["Authorization"]
-		if unset {
-			if ok {
-				t.Error("token should be unset")
-			}
-		} else {
-			if expect != "[]" {
-				if !ok {
-					t.Error("token should be set")
-				}
-			}
-		}
-		if fmt.Sprintf("%v", h) != expect {
-			t.Errorf("%s != %s", h, expect)
-		}
+	defer os.Clearenv()
+	r := &retriever.ResourceFetcher{}
+	client := &mockClient{}
+	client.payload = []byte(`{"tag_name": "123", "assets": [{"browser_download_url": "x/111"}, {"browser_download_url": "222"}]}`)
+	r.Backend = client
+	r.GitHubFetch("abc", "aaa", struct{}{})
+	h, ok := client.req.Header["Authorization"]
+	if ok || fmt.Sprintf("%v", h) != "[]" {
+		t.Errorf("invalid header: %v", h)
 	}
-	checkToken(true, false, "[]")
-	checkToken(false, false, "[]")
-	checkToken(false, true, "[token abc]")
-	t.Setenv("GITHUB_TOKEN", "xyz")
-	t.Setenv("BLAP_GITHUB_TOKEN", "xyz1")
-	checkToken(false, false, "[token xyz1]")
-	t.Setenv("BLAP_GITHUB_TOKEN", "xyz1")
-	checkToken(false, true, "[token xyz1]")
-	t.Setenv("GITHUB_TOKEN", "xyz")
-	checkToken(false, false, "[token xyz]")
-	os.RemoveAll("testdata")
-	os.Mkdir("testdata", 0o755)
-	tokenFile := filepath.Join("testdata", "token")
-	os.WriteFile(tokenFile, []byte("xxx"), 0o644)
-	t.Setenv("GITHUB_TOKEN", tokenFile)
-	checkToken(false, false, "[token xxx]")
+	if client.req.URL.String() != "https://api.github.com/repos/abc/aaa" {
+		t.Errorf("invalid url: %v", client.req.URL)
+	}
+	os.Clearenv()
+	c := types.Connections{}
+	r.SetConnections(c)
+	c.GitHub.Token = "xyz"
+	r.SetConnections(c)
+	r.Backend = client
+	r.GitHubFetch("abc", "aaa", struct{}{})
+	h, ok = client.req.Header["Authorization"]
+	if !ok || fmt.Sprintf("%v", h) != "[token xyz]" {
+		t.Errorf("invalid header: %v", h)
+	}
 }
 
 func testIter(objs ...any) iter.Seq[any] {

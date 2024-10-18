@@ -8,6 +8,7 @@ import (
 	"regexp"
 
 	"github.com/seanenck/blap/internal/asset"
+	"github.com/seanenck/blap/internal/config/types"
 	"github.com/seanenck/blap/internal/env"
 )
 
@@ -24,7 +25,7 @@ type (
 	// Retriever provides the means to fetch application information
 	Retriever interface {
 		Download(bool, string, string) (bool, error)
-		SetToken(string)
+		SetConnections(types.Connections)
 		Process(Context, iter.Seq[any]) (*asset.Resource, error)
 		GitHubFetch(ownerRepo, call string, to any) error
 		Debug(string, ...any)

@@ -10,13 +10,7 @@ import (
 const (
 	// ConfigFileEnv is the environment variable for config file override
 	ConfigFileEnv = "BLAP_CONFIG_FILE"
-	gitHubToken   = "GITHUB_TOKEN"
-	// BlapToken is the token name for GitHub API auth
-	BlapToken = "BLAP_" + gitHubToken
 )
-
-// TokenOptions are the env vars for setting a github token
-var TokenOptions = []string{BlapToken, gitHubToken}
 
 // DefaultConfigs is the list of options for config files
 func DefaultConfigs() []string {

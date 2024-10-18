@@ -3,7 +3,11 @@ package types
 
 import (
 	"iter"
+	"os"
 	"reflect"
+	"strings"
+
+	"github.com/seanenck/blap/internal/util"
 )
 
 type (
@@ -75,7 +79,52 @@ type (
 	Pinned []string
 	// AppSet are a name->app pair
 	AppSet map[string]Application
+	// GitHubSettings are overall github settings
+	GitHubSettings struct {
+		Token string `yaml:"token"`
+	}
+	// Connections are various endpoint settings
+	Connections struct {
+		GitHub GitHubSettings `yaml:"github"`
+	}
+	// Token defines an interface for setting API/auth tokens
+	Token interface {
+		Env() []string
+		Value() string
+	}
 )
+
+// Env will get the possible environment variables
+func (g GitHubSettings) Env() []string {
+	const gitHubToken = "GITHUB_TOKEN"
+	return []string{"BLAP_" + gitHubToken, gitHubToken}
+}
+
+// Value will get the configured token value
+func (g GitHubSettings) Value() string {
+	return g.Token
+}
+
+// ParseToken will handle determine the appropriate token to use
+func ParseToken(t Token) (string, error) {
+	for _, t := range t.Env() {
+		v := strings.TrimSpace(os.Getenv(t))
+		if v != "" {
+			return v, nil
+		}
+	}
+	val := t.Value()
+	if val != "" {
+		if util.PathExists(val) {
+			b, err := os.ReadFile(val)
+			if err != nil {
+				return "", err
+			}
+			return strings.TrimSpace(string(b)), nil
+		}
+	}
+	return val, nil
+}
 
 // Items will iterate over the available source itmes
 func (s Source) Items() iter.Seq[any] {

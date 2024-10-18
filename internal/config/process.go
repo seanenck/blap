@@ -146,7 +146,7 @@ func (c Configuration) Process(executor Executor, fetcher fetch.Retriever, runne
 	if c.Parallelization < 0 {
 		return fmt.Errorf("parallelization must be >= 0 (have: %d)", c.Parallelization)
 	}
-	fetcher.SetToken(c.context.Resolve(c.Token))
+	fetcher.SetConnections(c.Connections)
 	var priorities []int
 	prioritySet := make(map[int][]Context)
 	for name, app := range c.Applications {

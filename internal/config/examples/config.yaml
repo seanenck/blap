@@ -11,6 +11,13 @@ include:
 # parallelization allows running updates in parallel
 # increase > 1 to support parallel jobs (0 == disabled == 1)
 parallelization: 0
+# configure various connection source components
+connections:
+  # github settings
+  github:
+    # set a token (if not using one of the env values)
+    # this can be a file path/name which holds the value of the token
+    token: agithubpersonalaccesstoken
 # a set of regex values can be specified to pin packages (prevent purging)
 # one would also have to `disable: true` the application to stop updates
 pinned:
