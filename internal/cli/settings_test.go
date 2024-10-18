@@ -3,9 +3,11 @@ package cli_test
 import (
 	"bytes"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/seanenck/blap/internal/cli"
+	"github.com/seanenck/blap/internal/config/types"
 )
 
 func TestLogging(t *testing.T) {
@@ -112,5 +114,33 @@ func TestResolveDir(t *testing.T) {
 	t.Setenv("HOME", "TEST")
 	if dir := c.Resolve("~/ix"); dir != "TEST/ix" {
 		t.Errorf("invalid dir: %s", dir)
+	}
+}
+
+func TestParseToken(t *testing.T) {
+	os.Clearenv()
+	defer os.Clearenv()
+	s := cli.Settings{}
+	r, err := s.ParseToken(types.GitHubSettings{})
+	if r != "" || err != nil {
+		t.Errorf("invalid result: %s %v", r, err)
+	}
+	r, err = s.ParseToken(types.GitHubSettings{Token: "abc"})
+	if r != "abc" || err != nil {
+		t.Errorf("invalid result: %s %v", r, err)
+	}
+	r, err = s.ParseToken(types.GitHubSettings{Token: "settings_test.go"})
+	if r == "" || !strings.Contains(r, "package cli_test") || err != nil {
+		t.Errorf("invalid result: %s %v", r, err)
+	}
+	t.Setenv("GITHUB_TOKEN", "xyz")
+	r, err = s.ParseToken(types.GitHubSettings{Token: "abc"})
+	if r != "xyz" || err != nil {
+		t.Errorf("invalid result: %s %v", r, err)
+	}
+	t.Setenv("BLAP_GITHUB_TOKEN", "123")
+	r, err = s.ParseToken(types.GitHubSettings{Token: "abc"})
+	if r != "123" || err != nil {
+		t.Errorf("invalid result: %s %v", r, err)
 	}
 }

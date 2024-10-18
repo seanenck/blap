@@ -4,9 +4,12 @@ package cli
 import (
 	"fmt"
 	"io"
+	"os"
 	"regexp"
+	"strings"
 	"sync"
 
+	"github.com/seanenck/blap/internal/config/types"
 	"github.com/seanenck/blap/internal/util"
 )
 
@@ -66,6 +69,28 @@ func (s Settings) AllowApplication(input string) bool {
 		m = !m
 	}
 	return m
+}
+
+// ParseToken will handle determine the appropriate token to use
+func (s Settings) ParseToken(t types.Token) (string, error) {
+	for _, t := range t.Env() {
+		v := strings.TrimSpace(os.Getenv(t))
+		if v != "" {
+			return v, nil
+		}
+	}
+	val := t.Value()
+	if val != "" {
+		path := s.Resolve(val)
+		if util.PathExists(path) {
+			b, err := os.ReadFile(path)
+			if err != nil {
+				return "", err
+			}
+			return strings.TrimSpace(string(b)), nil
+		}
+	}
+	return val, nil
 }
 
 // CompileApplicationFilter will compile the necessary app filter

@@ -147,11 +147,11 @@ func (r ResourceFetcher) get(url string) (*http.Response, error) {
 }
 
 func (r *ResourceFetcher) tokenHeader(req *http.Request) error {
-	token, err := types.ParseToken(r.Connections.GitHub)
+	token, err := r.Context.ParseToken(r.Connections.GitHub)
 	if err != nil {
 		return err
 	}
-	if token != "" {
+	if token != "" && req.URL.Scheme == "https" && req.Host == "api.github.com" {
 		req.Header.Set("Authorization", fmt.Sprintf("token %s", token))
 	}
 	return nil

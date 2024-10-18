@@ -3,11 +3,7 @@ package types
 
 import (
 	"iter"
-	"os"
 	"reflect"
-	"strings"
-
-	"github.com/seanenck/blap/internal/util"
 )
 
 type (
@@ -103,27 +99,6 @@ func (g GitHubSettings) Env() []string {
 // Value will get the configured token value
 func (g GitHubSettings) Value() string {
 	return g.Token
-}
-
-// ParseToken will handle determine the appropriate token to use
-func ParseToken(t Token) (string, error) {
-	for _, t := range t.Env() {
-		v := strings.TrimSpace(os.Getenv(t))
-		if v != "" {
-			return v, nil
-		}
-	}
-	val := t.Value()
-	if val != "" {
-		if util.PathExists(val) {
-			b, err := os.ReadFile(val)
-			if err != nil {
-				return "", err
-			}
-			return strings.TrimSpace(string(b)), nil
-		}
-	}
-	return val, nil
 }
 
 // Items will iterate over the available source itmes
