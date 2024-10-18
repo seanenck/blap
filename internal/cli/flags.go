@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"regexp"
 )
 
 const (
@@ -25,7 +26,11 @@ const (
 	ApplicationsFlag = "applications"
 	// DisableFlag disables selected applications
 	DisableFlag = "disable"
+	// IncludeFlag allows for filtering included files
+	IncludeFlag = "include"
 	isFlag      = "-"
+	// DisplayIncludeFlag is the displayed version of the include flag
+	DisplayIncludeFlag = isFlag + IncludeFlag
 	// DisplayApplicationsFlag is the displayed version of application flag
 	DisplayApplicationsFlag = isFlag + ApplicationsFlag
 	// DisplayDisableFlag is the displayed version of disable flag
@@ -40,15 +45,18 @@ const (
 func Parse(w io.Writer, purging bool, args []string) (*Settings, error) {
 	var appFilter string
 	var negateFilter bool
+	var includeFilter string
 	dryRun := true
 	verbosity := InfoVerbosity
 	if len(args) > 0 {
 		set := flag.NewFlagSet("app", flag.ContinueOnError)
 		var apps *string
 		var disable *string
+		var include *string
 		if !purging {
 			apps = set.String(ApplicationsFlag, "", "limit application checks")
 			disable = set.String(DisableFlag, "", "disable applications")
+			include = set.String(IncludeFlag, "", "include only matched files")
 		}
 		verbose := set.Int(VerbosityFlag, InfoVerbosity, "set verbosity level")
 		commit := set.Bool(CommitFlag, false, "confirm and commit changes")
@@ -62,6 +70,7 @@ func Parse(w io.Writer, purging bool, args []string) (*Settings, error) {
 		if !purging {
 			a := *apps
 			d := *disable
+			includeFilter = *include
 			lengthApps := len(a)
 			lengthDis := len(d)
 			if lengthApps > 0 || lengthDis > 0 {
@@ -78,11 +87,20 @@ func Parse(w io.Writer, purging bool, args []string) (*Settings, error) {
 		}
 		dryRun = !*commit
 	}
+	var includeReg *regexp.Regexp
+	if includeFilter != "" {
+		re, err := regexp.Compile(includeFilter)
+		if err != nil {
+			return nil, err
+		}
+		includeReg = re
+	}
 	ctx := &Settings{
 		DryRun:    dryRun,
 		Verbosity: verbosity,
 		Purge:     purging,
 		Writer:    w,
+		Include:   includeReg,
 	}
 	if err := ctx.CompileApplicationFilter(appFilter, negateFilter); err != nil {
 		return nil, err

@@ -21,10 +21,11 @@ type Completion struct {
 		Applications string
 		Confirm      string
 		Disable      string
+		Include      string
 	}
 }
 
-//go:embed bash.sh
+//go:embed shell/bash
 var bashShell string
 
 // GenerateCompletions will generate shell completions
@@ -46,6 +47,7 @@ func GenerateCompletions(w io.Writer) error {
 	comp.Arg.Confirm = DisplayCommitFlag
 	comp.Arg.Applications = DisplayApplicationsFlag
 	comp.Arg.Disable = DisplayDisableFlag
+	comp.Arg.Include = DisplayIncludeFlag
 	t, err := template.New("sh").Parse(bashShell)
 	if err != nil {
 		return err

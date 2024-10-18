@@ -37,6 +37,7 @@ func help(w io.Writer) error {
 	helpLine(w, PurgeCommand, "purge old versions")
 	helpLine(w, DisplayApplicationsFlag, "specify a subset of packages (regex)")
 	helpLine(w, DisplayDisableFlag, "disable applications (regex)")
+	helpLine(w, DisplayIncludeFlag, "include specified files only (regex)")
 	helpLine(w, DisplayVerbosityFlag, "increase/decrease output verbosity")
 	helpLine(w, DisplayCommitFlag, "confirm and commit changes for actions")
 	fmt.Fprintln(w)

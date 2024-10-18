@@ -3,6 +3,7 @@ package config_test
 import (
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -63,6 +64,21 @@ func TestLoadFilter(t *testing.T) {
 		t.Errorf("invalid error: %v", err)
 	}
 	if len(c.Applications) != 2 {
+		t.Errorf("invalid apps: %d", len(c.Applications))
+	}
+}
+
+func TestLoadInclude(t *testing.T) {
+	makeTestFile("disabled.more.yaml")
+	example := filepath.Join("examples", "config.yaml")
+	s := cli.Settings{}
+	re, _ := regexp.Compile("other")
+	s.Include = re
+	c, err := config.Load(example, s)
+	if err != nil {
+		t.Errorf("invalid error: %v", err)
+	}
+	if len(c.Applications) != 3 {
 		t.Errorf("invalid apps: %d", len(c.Applications))
 	}
 }

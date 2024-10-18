@@ -36,6 +36,7 @@ func Load(input string, context cli.Settings) (Configuration, error) {
 		return c, err
 	}
 	if len(c.Include) > 0 {
+		hasIncludefilter := context.Include != nil
 		var including []string
 		for _, i := range c.Include {
 			r := context.Resolve(i)
@@ -52,6 +53,12 @@ func Load(input string, context cli.Settings) (Configuration, error) {
 		}
 		for _, include := range including {
 			c.context.LogDebug("loading included: %s\n", include)
+			if hasIncludefilter {
+				if !context.Include.MatchString(include) {
+					c.context.LogDebug("file does not match include filter\n")
+					continue
+				}
+			}
 			type included struct {
 				Applications types.AppSet `yaml:"applications"`
 				Disable      bool         `yaml:"disable"`
