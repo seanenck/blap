@@ -30,7 +30,6 @@ type Settings struct {
 		regex  *regexp.Regexp
 	}
 	Verbosity int
-	Resolves  map[string]string
 }
 
 // FilterApplications indicates if the
@@ -38,23 +37,6 @@ func (s Settings) FilterApplications() bool {
 	settingsLock.Lock()
 	defer settingsLock.Unlock()
 	return s.filter.has
-}
-
-// Resolve will cache resolve paths
-func (s Settings) Resolve(dir string) string {
-	settingsLock.Lock()
-	defer settingsLock.Unlock()
-	if s.Resolves != nil {
-		has, ok := s.Resolves[dir]
-		if ok {
-			return has
-		}
-	}
-	res := util.ResolveDirectory(dir)
-	if s.Resolves != nil {
-		s.Resolves[dir] = res
-	}
-	return res
 }
 
 // AllowApplication indicates if an application is allowed
@@ -79,9 +61,9 @@ func (s Settings) ParseToken(t types.Token) (string, error) {
 			return v, nil
 		}
 	}
-	val := t.Value()
+	val := t.Value().String()
 	if val != "" {
-		path := s.Resolve(val)
+		path := val
 		if util.PathExists(path) {
 			b, err := os.ReadFile(path)
 			if err != nil {

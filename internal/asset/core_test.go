@@ -74,15 +74,15 @@ func TestExtractErrors(t *testing.T) {
 	if err := r.Extract(&mockExtract{}); err == nil || err.Error() != "asset has no extraction command" {
 		t.Errorf("invalid error: %v", err)
 	}
-	r.SetAppData("a", "b", types.Extraction{Command: []string{"xyz"}})
+	r.SetAppData("a", "b", types.Extraction{Command: []types.Resolved{"xyz"}})
 	if err := r.Extract(&mockExtract{}); err == nil || err.Error() != "missing input/output args for extract command: {{ $.Input }} {{ $.Output }}" {
 		t.Errorf("invalid error: %v", err)
 	}
-	r.SetAppData("a", "b", types.Extraction{Command: []string{"xyz", "{{ $.Output }}"}})
+	r.SetAppData("a", "b", types.Extraction{Command: []types.Resolved{"xyz", "{{ $.Output }}"}})
 	if err := r.Extract(&mockExtract{}); err == nil || err.Error() != "missing input/output args for extract command: {{ $.Input }} {{ $.Output }}" {
 		t.Errorf("invalid error: %v", err)
 	}
-	r.SetAppData("a", "b", types.Extraction{Command: []string{"xyz", "{{ $.Input }}"}})
+	r.SetAppData("a", "b", types.Extraction{Command: []types.Resolved{"xyz", "{{ $.Input }}"}})
 	if err := r.Extract(&mockExtract{}); err == nil || err.Error() != "missing input/output args for extract command: {{ $.Input }} {{ $.Output }}" {
 		t.Errorf("invalid error: %v", err)
 	}
@@ -95,7 +95,7 @@ func TestExtract(t *testing.T) {
 	r.File = "file"
 	r.Tag = "tag"
 	r.URL = "url"
-	r.SetAppData("a", "testdata", types.Extraction{Command: []string{"xyz", "{{ $.Output }}", "{{ $.Input }}"}})
+	r.SetAppData("a", "testdata", types.Extraction{Command: []types.Resolved{"xyz", "{{ $.Output }}", "{{ $.Input }}"}})
 	if err := r.Extract(&mockExtract{}); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
@@ -108,7 +108,7 @@ func TestExtractDepth(t *testing.T) {
 	r.File = "file"
 	r.Tag = "tag"
 	r.URL = "url"
-	r.SetAppData("a", "testdata", types.Extraction{NoDepth: true, Command: []string{"xyz", "{{ $.Output }}", "{{ $.Input }}"}})
+	r.SetAppData("a", "testdata", types.Extraction{NoDepth: true, Command: []types.Resolved{"xyz", "{{ $.Output }}", "{{ $.Input }}"}})
 	m := &mockExtract{}
 	if err := r.Extract(m); err != nil {
 		t.Errorf("invalid error: %v", err)

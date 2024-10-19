@@ -27,7 +27,7 @@ func Do(src string, deploys []types.Artifact, ctx steps.Context) error {
 		if deploy.Destination == "" {
 			return errors.New("missing deploy destination")
 		}
-		dir := ctx.Settings.Resolve(deploy.Destination)
+		dir := deploy.Destination.String()
 		d, err := ctx.Resource.Template(dir)
 		if err != nil {
 			return err
@@ -37,7 +37,7 @@ func Do(src string, deploys []types.Artifact, ctx steps.Context) error {
 			if path == "" {
 				return errors.New("empty file not allowed")
 			}
-			b, err := ctx.Resource.Template(path)
+			b, err := ctx.Resource.Template(path.String())
 			if err != nil {
 				return err
 			}

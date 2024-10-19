@@ -39,7 +39,7 @@ func Load(input string, context cli.Settings) (Configuration, error) {
 		hasIncludefilter := context.Include != nil
 		var including []string
 		for _, i := range c.Include {
-			r := context.Resolve(i)
+			r := i.String()
 			res := []string{r}
 			c.context.LogDebug("including: %s\n", i)
 			if strings.Contains(r, "*") {

@@ -11,8 +11,8 @@ type (
 	Configuration struct {
 		handler         *processHandler
 		context         cli.Settings
-		Directory       string            `yaml:"directory"`
-		Include         []string          `yaml:"include"`
+		Directory       types.Resolved    `yaml:"directory"`
+		Include         []types.Resolved  `yaml:"include"`
 		Applications    types.AppSet      `yaml:"applications"`
 		Parallelization int               `yaml:"parallelization"`
 		Pinned          types.Pinned      `yaml:"pinned"`

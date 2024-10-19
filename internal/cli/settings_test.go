@@ -97,26 +97,6 @@ func TestAllowed(t *testing.T) {
 	}
 }
 
-func TestResolveDir(t *testing.T) {
-	os.Clearenv()
-	c := cli.Settings{Resolves: make(map[string]string)}
-	if dir := c.Resolve("abc"); dir != "abc" {
-		t.Errorf("invalid dir: %s", dir)
-	}
-	os.Unsetenv("HOME")
-	if dir := c.Resolve("~/abc"); dir != "~/abc" {
-		t.Errorf("invalid dir: %s", dir)
-	}
-	t.Setenv("HOME", "TEST")
-	if dir := c.Resolve("~/abc"); dir != "~/abc" {
-		t.Errorf("invalid dir: %s", dir)
-	}
-	t.Setenv("HOME", "TEST")
-	if dir := c.Resolve("~/ix"); dir != "TEST/ix" {
-		t.Errorf("invalid dir: %s", dir)
-	}
-}
-
 func TestParseToken(t *testing.T) {
 	os.Clearenv()
 	defer os.Clearenv()

@@ -36,8 +36,8 @@ func TestDo(t *testing.T) {
 		t.Errorf("invalid error: %v", err)
 	}
 	dest := filepath.Join("testdata", "dir")
-	obj.Destination = strings.ReplaceAll(dest, "a", "{{ $.Name }}")
-	objs.Destination = dest
+	obj.Destination = types.Resolved(strings.ReplaceAll(dest, "a", "{{ $.Name }}"))
+	objs.Destination = types.Resolved(dest)
 	os.Mkdir(dest, 0o755)
 	if err := deploy.Do("testdata", []types.Artifact{objs, obj}, step); err != nil {
 		t.Errorf("invalid error: %v", err)
@@ -46,7 +46,7 @@ func TestDo(t *testing.T) {
 	if err := deploy.Do("testdata", []types.Artifact{objs, obj}, step); err == nil || err.Error() != "empty file not allowed" {
 		t.Errorf("invalid error: %v", err)
 	}
-	obj.Files = []string{}
+	obj.Files = []types.Resolved{}
 	obj.Files = append(obj.Files, "{{ $.Name }}")
 	if err := deploy.Do("testdata", []types.Artifact{objs, obj}, step); err == nil || err.Error() != "unable to find source file: testdata/a" {
 		t.Errorf("invalid error: %v", err)

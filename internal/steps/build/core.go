@@ -26,13 +26,13 @@ func Do(steps []types.Step, builder util.Runner, destination string, ctx steps.C
 		if len(cmd) == 0 {
 			continue
 		}
-		exe := ctx.Settings.Resolve(cmd[0])
+		exe := cmd[0].String()
 		var args []string
 		for idx, a := range cmd {
 			if idx == 0 {
 				continue
 			}
-			res := ctx.Settings.Resolve(a)
+			res := a.String()
 			t, err := ctx.Resource.Template(res)
 			if err != nil {
 				return err
@@ -41,7 +41,7 @@ func Do(steps []types.Step, builder util.Runner, destination string, ctx steps.C
 		}
 		to := destination
 		if step.Directory != "" {
-			to = filepath.Join(to, step.Directory)
+			to = filepath.Join(to, step.Directory.String())
 		}
 		run := util.RunSettings{}
 		run.Dir = to

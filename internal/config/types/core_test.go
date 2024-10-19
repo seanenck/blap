@@ -2,6 +2,7 @@ package types_test
 
 import (
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/seanenck/blap/internal/config/types"
@@ -15,6 +16,24 @@ func TestSourceItems(t *testing.T) {
 	}
 	if cnt != 2 {
 		t.Errorf("invalid reflection count %d", cnt)
+	}
+}
+
+func TestResolve(t *testing.T) {
+	os.Clearenv()
+	v := types.Resolved("")
+	if v.String() != "" {
+		t.Errorf("invalid result: %v", v)
+	}
+	t.Setenv("HOME", "abc")
+	v = types.Resolved("~/")
+	if v.String() != "abc" {
+		t.Errorf("invalid result: %v", v)
+	}
+	t.Setenv("XXX", "123")
+	v = types.Resolved("~/$XXX")
+	if v.String() != "abc/123" {
+		t.Errorf("invalid result: %v", v)
 	}
 }
 

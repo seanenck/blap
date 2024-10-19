@@ -51,10 +51,6 @@ func (e errorList) add(errs []chan error) errorList {
 	return e
 }
 
-func (c Configuration) resolveDir() string {
-	return c.context.Resolve(c.Directory)
-}
-
 // Do will perform processing of configuration components
 func (c Configuration) Do(ctx Context) error {
 	if ctx.Name == "" {
@@ -71,7 +67,7 @@ func (c Configuration) Do(ctx Context) error {
 	if err != nil {
 		return err
 	}
-	if err := rsrc.SetAppData(ctx.Name, c.resolveDir(), ctx.Application.Extract); err != nil {
+	if err := rsrc.SetAppData(ctx.Name, c.Directory.String(), ctx.Application.Extract); err != nil {
 		return err
 	}
 	for _, f := range []string{rsrc.Paths.Unpack, rsrc.Paths.Archive} {
@@ -124,7 +120,7 @@ func (c Configuration) Do(ctx Context) error {
 
 // Purge will run a purge operation
 func (c Configuration) Purge() (bool, error) {
-	return purge.Do(c.resolveDir(), c.handler.assets, c.Pinned, c.context)
+	return purge.Do(c.Directory.String(), c.handler.assets, c.Pinned, c.context)
 }
 
 // Updated gets the list of updated components

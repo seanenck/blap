@@ -2,11 +2,17 @@
 package types
 
 import (
+	"fmt"
 	"iter"
+	"os"
+	"path/filepath"
 	"reflect"
+	"strings"
 )
 
 type (
+	// Resolved will handle env-based strings for resolution of env vars
+	Resolved string
 	// GitTaggedMode means a repository+download is required to manage
 	GitTaggedMode struct {
 		Download string   `yaml:"download"`
@@ -47,13 +53,13 @@ type (
 	}
 	// Artifact are definitions of what to deploy
 	Artifact struct {
-		Files       []string `yaml:"files"`
-		Destination string   `yaml:"destination"`
+		Files       []Resolved `yaml:"files"`
+		Destination Resolved   `yaml:"destination"`
 	}
 	// Step is a build process step
 	Step struct {
-		Directory   string           `yaml:"directory"`
-		Command     []string         `yaml:"command"`
+		Directory   Resolved         `yaml:"directory"`
+		Command     []Resolved       `yaml:"command"`
 		Environment BuildEnvironment `yaml:"environment"`
 	}
 	// BuildEnvironment are environment configuration settings for build steps
@@ -63,8 +69,8 @@ type (
 	}
 	// Extraction handles asset extraction
 	Extraction struct {
-		NoDepth bool     `yaml:"nodepth"`
-		Command []string `yaml:"command"`
+		NoDepth bool       `yaml:"nodepth"`
+		Command []Resolved `yaml:"command"`
 	}
 	// Source are the available source options
 	Source struct {
@@ -77,7 +83,7 @@ type (
 	AppSet map[string]Application
 	// GitHubSettings are overall github settings
 	GitHubSettings struct {
-		Token string `yaml:"token"`
+		Token Resolved `yaml:"token"`
 	}
 	// Connections are various endpoint settings
 	Connections struct {
@@ -86,7 +92,7 @@ type (
 	// Token defines an interface for setting API/auth tokens
 	Token interface {
 		Env() []string
-		Value() string
+		Value() Resolved
 	}
 )
 
@@ -97,7 +103,7 @@ func (g GitHubSettings) Env() []string {
 }
 
 // Value will get the configured token value
-func (g GitHubSettings) Value() string {
+func (g GitHubSettings) Value() Resolved {
 	return g.Token
 }
 
@@ -111,4 +117,22 @@ func (s Source) Items() iter.Seq[any] {
 			}
 		}
 	}
+}
+
+// String will resolve ~/ and basic env vars
+func (r Resolved) String() string {
+	v := string(r)
+	if v == "" {
+		return v
+	}
+	dir := os.Expand(v, os.Getenv)
+	isHome := fmt.Sprintf("~%c", os.PathSeparator)
+	if !strings.HasPrefix(dir, isHome) {
+		return dir
+	}
+	h, err := os.UserHomeDir()
+	if err != nil || h == "" {
+		return dir
+	}
+	return filepath.Join(h, strings.TrimPrefix(dir, isHome))
 }

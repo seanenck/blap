@@ -68,7 +68,10 @@ func (asset *Resource) SetAppData(name, workdir string, settings types.Extractio
 		asset.extract.NoDepth = settings.NoDepth
 		for k, v := range knownExtensions {
 			if strings.HasSuffix(asset.File, k) {
-				asset.extract.Command = v
+				asset.extract.Command = []types.Resolved{}
+				for _, value := range v {
+					asset.extract.Command = append(asset.extract.Command, types.Resolved(value))
+				}
 				break
 			}
 		}
@@ -91,7 +94,7 @@ func (asset *Resource) Extract(opts util.Runner) error {
 	var depth []string
 	if !asset.extract.NoDepth {
 		var err error
-		depth, err = asset.handleDepth(cmd, opts)
+		depth, err = asset.handleDepth(cmd.String(), opts)
 		if err != nil {
 			return err
 		}
@@ -100,7 +103,7 @@ func (asset *Resource) Extract(opts util.Runner) error {
 		if idx == 0 {
 			continue
 		}
-		use := a
+		use := a.String()
 		switch a {
 		case inputArg:
 			hasIn = true
@@ -120,7 +123,7 @@ func (asset *Resource) Extract(opts util.Runner) error {
 	if err := os.Mkdir(asset.Paths.Unpack, 0o755); err != nil {
 		return err
 	}
-	return opts.RunCommand(cmd, args...)
+	return opts.RunCommand(cmd.String(), args...)
 }
 
 func (asset *Resource) handleDepth(cmd string, opts util.Runner) ([]string, error) {
