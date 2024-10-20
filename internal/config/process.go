@@ -14,8 +14,6 @@ import (
 	"github.com/seanenck/blap/internal/fetch"
 	"github.com/seanenck/blap/internal/purge"
 	"github.com/seanenck/blap/internal/steps"
-	"github.com/seanenck/blap/internal/steps/build"
-	"github.com/seanenck/blap/internal/steps/deploy"
 	"github.com/seanenck/blap/internal/util"
 )
 
@@ -33,7 +31,7 @@ type (
 		Purge() (bool, error)
 		Updated() []string
 	}
-	// Context allows processing an application (fetch, extract, build, deploy)
+	// Context allows processing an application (fetch, extract, command)
 	Context struct {
 		Name        string
 		Application types.Application
@@ -109,10 +107,7 @@ func (c Configuration) Do(ctx Context) error {
 	step := steps.Context{}
 	step.Resource = e
 	step.Settings = c.context
-	if err := build.Do(ctx.Application.Build.Steps, ctx.Runner, dest, step, ctx.Application.Build.Environment); err != nil {
-		return err
-	}
-	if err := deploy.Do(rsrc.Paths.Unpack, ctx.Application.Deploy.Artifacts, step); err != nil {
+	if err := steps.Do(ctx.Application.Commands.Steps, ctx.Runner, dest, step, ctx.Application.Commands.Environment); err != nil {
 		return err
 	}
 	return nil
@@ -156,6 +151,8 @@ func (c Configuration) Process(executor Executor, fetcher fetch.Retriever, runne
 	}
 	sort.Ints(priorities)
 	slices.Reverse(priorities)
+	c.Variables.Set()
+	defer c.Variables.Unset()
 	for _, p := range priorities {
 		var errs []chan error
 		var errorSet errorList

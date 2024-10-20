@@ -13,8 +13,7 @@ type (
 	RunSettings struct {
 		Dir string
 		Env struct {
-			Clear  bool
-			Values []string
+			Clear bool
 		}
 	}
 	// Runner is the runner interface for exec'ing
@@ -33,13 +32,8 @@ func (r CommandRunner) Run(settings RunSettings, cmd string, args ...string) err
 	if settings.Dir != "" {
 		c.Dir = settings.Dir
 	}
-	if settings.Env.Clear || len(settings.Env.Values) > 0 {
-		env := os.Environ()
-		if settings.Env.Clear {
-			env = []string{}
-		}
-		env = append(env, settings.Env.Values...)
-		c.Env = env
+	if settings.Env.Clear {
+		c.Env = []string{}
 	}
 	return c.Run()
 }

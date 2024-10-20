@@ -23,6 +23,12 @@ connections:
 pinned:
   - "nvim"
   - "another"
+# set configuration-wide environment variables for command steps
+variables:
+  # these are key (env key) / value (set value) pairs
+  values:
+    "ENV_KEY": "some values"
+    "LDFLAGS": "-X -y"
 # application settings for deployment
 applications:
   nvim:
@@ -37,13 +43,10 @@ applications:
         # select the necessary asset
         release:
           asset: "nvim-linux64.tar.gz$"
-    deploy:
+    commands:
       # deploy the appropriate files
-      artifacts:
-        - files:
-            - "bin/nvim"
-          # offset from home
-          destination: "~/bin"
+      steps:
+        - command: ["ln", "-sf", "bin/nvim", "~/bin"]
   blap:
     # github release mode
     source:
@@ -53,26 +56,28 @@ applications:
           # instead of selecting a _binary_ asset, get the tarball of a release
           # can perform a source build
           asset: "tarball"
-    build:
+    commands:
       # setup build environment settings for ALL application build steps
       environment:
         # clear environment before each step
         clear: true
         # set environment valuues
-        values: ["GOOS=linux", "GOARCH=arm64"]
+        variables:
+          values:
+            "GOOS": "linux"
+            "GOARCH": "arm64"
       # run specific commands
       steps:
         - command: ["make", "VERSION={{ $.Vars.Tag }}"]
           environment:
             # set values specifically for this step
             # can also set clear ON at this level
-            values: ["GOOS=1", "X=1"]
-    deploy:
-      # deploy the built files
-      artifacts:
-        - files:
-            - "build/blap"
-          destination: "~/.local/bin/development"
+            variables:
+              values:
+                "GOOS": "1"
+                "X": "1"
+        # deploy the built files
+        - command: ["ln", "-sf", "target/blap", "~/.local/bin"]
   nvim2:
     # this app, specifically, is disabled
     disable: true
@@ -81,8 +86,6 @@ applications:
         project: "neovim/neovim"
         release:
           asset: "nvim-linux64.tar.gz$"
-    deploy:
-      artifacts:
-        - files:
-            - "bin/nvim"
-          destination: "~/bin"
+    commands:
+      steps:
+        - command: ["ln", "-sf", "bin/nvim", "~/bin"]

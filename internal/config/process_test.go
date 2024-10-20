@@ -25,6 +25,7 @@ type mockExecutor struct {
 	dl     bool
 	purged bool
 	static bool
+	env    bool
 }
 
 func (m *mockExecutor) Purge() (bool, error) {
@@ -35,6 +36,11 @@ func (m *mockExecutor) Purge() (bool, error) {
 func (m *mockExecutor) Do(ctx config.Context) error {
 	m.mode = "do"
 	m.name = ctx.Name
+	for _, e := range os.Environ() {
+		if e == "ENV_KEY=some values" {
+			m.env = true
+		}
+	}
 	return m.err
 }
 
@@ -57,8 +63,8 @@ func (m *mockExecutor) Output(string, ...string) ([]byte, error) {
 	return nil, m.err
 }
 
-func (m *mockExecutor) Run(util.RunSettings, string, ...string) error {
-	return m.err
+func (m *mockExecutor) Run(s util.RunSettings, c string, a ...string) error {
+	return m.RunCommand(c, a...)
 }
 
 func (m *mockExecutor) Updated() []string {
@@ -149,6 +155,9 @@ func TestProcessUpdate(t *testing.T) {
 	}
 	if m.name != "nvim" {
 		t.Errorf("last app should be nvim: %s", m.name)
+	}
+	if !m.env {
+		t.Errorf("env var not set")
 	}
 }
 

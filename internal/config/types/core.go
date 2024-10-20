@@ -11,6 +11,10 @@ import (
 )
 
 type (
+	Variables struct {
+		Vars map[string]string `yaml:"values"`
+		had  map[string]string
+	}
 	// Resolved will handle env-based strings for resolution of env vars
 	Resolved string
 	// GitTaggedMode means a repository+download is required to manage
@@ -43,29 +47,21 @@ type (
 		Disable  bool       `yaml:"disable"`
 		Source   Source     `yaml:"source"`
 		Extract  Extraction `yaml:"extract"`
-		Build    struct {
-			Environment BuildEnvironment `yaml:"environment"`
-			Steps       []Step           `yaml:"steps"`
-		} `yaml:"build"`
-		Deploy struct {
-			Artifacts []Artifact `yaml:"artifacts"`
-		} `yaml:"deploy"`
-	}
-	// Artifact are definitions of what to deploy
-	Artifact struct {
-		Files       []Resolved `yaml:"files"`
-		Destination Resolved   `yaml:"destination"`
+		Commands struct {
+			Environment CommandEnvironment `yaml:"environment"`
+			Steps       []Step             `yaml:"steps"`
+		} `yaml:"commands"`
 	}
 	// Step is a build process step
 	Step struct {
-		Directory   Resolved         `yaml:"directory"`
-		Command     []Resolved       `yaml:"command"`
-		Environment BuildEnvironment `yaml:"environment"`
+		Directory   Resolved           `yaml:"directory"`
+		Command     []Resolved         `yaml:"command"`
+		Environment CommandEnvironment `yaml:"environment"`
 	}
-	// BuildEnvironment are environment configuration settings for build steps
-	BuildEnvironment struct {
-		Clear  bool     `yaml:"clear"`
-		Values []string `yaml:"values"`
+	// CommandEnvironment are environment configuration settings for build steps
+	CommandEnvironment struct {
+		Variables Variables `yaml:"variables"`
+		Clear     bool      `yaml:"clear"`
 	}
 	// Extraction handles asset extraction
 	Extraction struct {
@@ -135,4 +131,33 @@ func (r Resolved) String() string {
 		return dir
 	}
 	return filepath.Join(h, strings.TrimPrefix(dir, isHome))
+}
+
+func (v *Variables) Set() {
+	if v.Vars == nil {
+		return
+	}
+	if v.had == nil {
+		v.had = make(map[string]string)
+	}
+	for key, val := range v.Vars {
+		had, ok := os.LookupEnv(key)
+		if ok {
+			v.had[key] = had
+		}
+		os.Setenv(key, val)
+	}
+}
+
+func (v *Variables) Unset() {
+	if v.Vars == nil || v.had == nil {
+		return
+	}
+	for key := range v.Vars {
+		if was, ok := v.had[key]; ok {
+			os.Setenv(key, was)
+		} else {
+			os.Unsetenv(key)
+		}
+	}
 }

@@ -15,19 +15,9 @@ applications:
             - "refs/tags/weekly"
             - "refs/tags/release"
             - "[0-9]rc[0-9]"
-    deploy:
-      artifacts:
-        - files:
-            - "bin/go"
-          destination: "~/bin"
   rg:
     source:
       github:
         project: "BurntSushi/ripgrep"
         release:
           asset: "x86_64-unknown-linux-(.+?).tar.gz$"
-    deploy:
-      artifacts:
-        - files:
-            - "rg"
-          destination: "~/bin"

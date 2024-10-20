@@ -1,17 +1,16 @@
-// Package build handles build step processing
-package build
+// Package steps handles build step processing
+package steps
 
 import (
 	"errors"
 	"path/filepath"
 
 	"github.com/seanenck/blap/internal/config/types"
-	"github.com/seanenck/blap/internal/steps"
 	"github.com/seanenck/blap/internal/util"
 )
 
 // Do will run each build step
-func Do(steps []types.Step, builder util.Runner, destination string, ctx steps.Context, env types.BuildEnvironment) error {
+func Do(steps []types.Step, builder util.Runner, destination string, ctx Context, env types.CommandEnvironment) error {
 	if destination == "" {
 		return errors.New("destination must be set")
 	}
@@ -21,6 +20,8 @@ func Do(steps []types.Step, builder util.Runner, destination string, ctx steps.C
 	if err := ctx.Valid(); err != nil {
 		return err
 	}
+	env.Variables.Set()
+	defer env.Variables.Unset()
 	for _, step := range steps {
 		cmd := step.Command
 		if len(cmd) == 0 {
@@ -43,16 +44,20 @@ func Do(steps []types.Step, builder util.Runner, destination string, ctx steps.C
 		if step.Directory != "" {
 			to = filepath.Join(to, step.Directory.String())
 		}
-		run := util.RunSettings{}
-		run.Dir = to
-		run.Env.Values = env.Values
-		run.Env.Values = append(run.Env.Values, step.Environment.Values...)
-		if step.Environment.Clear || env.Clear {
-			run.Env.Clear = true
-		}
-		if err := builder.Run(run, exe, args...); err != nil {
+		if err := runStep(builder, to, exe, args, step.Environment, step.Environment.Clear || env.Clear); err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+func runStep(builder util.Runner, to, exe string, args []string, env types.CommandEnvironment, doClear bool) error {
+	env.Variables.Set()
+	defer env.Variables.Unset()
+	run := util.RunSettings{}
+	run.Dir = to
+	if doClear {
+		run.Env.Clear = true
+	}
+	return builder.Run(run, exe, args...)
 }

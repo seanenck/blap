@@ -20,15 +20,10 @@ applications:
             - "refs/tags/weekly"
             - "refs/tags/release"
             - "[0-9]rc[0-9]"
-    deploy:
-      # deploy specific files from the bundle, like an executable (but support any list)
-      # offset from build area (can also be templated)
-      # this is an asset, it did not have any build steps
-      artifacts:
-        - files:
-            - "bin/go"
-          # where are the above files (sym)linked into, use '~/' to root from HOME
-          destination: "~/bin"
+    commands:
+      # run some commands upon source download/extraction
+      steps:
+        - command: ["ln", "-sf", "bin/go", "~/bin"]
   rg:
     source:
       # github mode
@@ -40,9 +35,7 @@ applications:
           # need to select the asset, can use $.Arch/$.OS (tag and name) to find the asset
           # only one asset can match
           asset: '{{ if eq $.Arch "amd64" }}x86_64{{ end }}-unknown-{{ $.OS }}-(.+?).tar.gz$'
-    deploy:
+    commands:
       # again, deploy files appropriately
-      artifacts:
-        - files:
-            - "rg"
-          destination: "~/bin"
+      steps:
+        - command: ["ln", "-sf", "rg", "~/bin"]

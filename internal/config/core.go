@@ -17,5 +17,6 @@ type (
 		Parallelization int               `yaml:"parallelization"`
 		Pinned          types.Pinned      `yaml:"pinned"`
 		Connections     types.Connections `yaml:"connections"`
+		Variables       types.Variables   `yaml:"variables"`
 	}
 )
