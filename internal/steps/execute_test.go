@@ -53,9 +53,9 @@ func TestDo(t *testing.T) {
 	vars := steps.Variables{}
 	vars.Directory = "a"
 	vars.Resource = &asset.Resource{File: "A"}
-	e, _ := env.NewValues("a", vars)
+	e, _ := env.NewValues("xyz", vars)
 	step.Variables = e
-	if err := steps.Do([]types.Step{{}, {Directory: "xyz", Command: []types.Resolved{"~/exe", `~/{{ if eq $.Arch "fakearch" }}{{else}}{{ $.Vars.Resource.File }}{{end}}`}}}, m, step, types.CommandEnvironment{}); err != nil {
+	if err := steps.Do([]types.Step{{}, {Directory: "{{ $.Name }}", Command: []types.Resolved{"~/exe", `~/{{ if eq $.Arch "fakearch" }}{{else}}{{ $.Vars.Resource.File }}{{end}}`}}}, m, step, types.CommandEnvironment{}); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	if fmt.Sprintf("%v", m) != "&{a/xyz xyz/exe [xyz/A] [HOME=xyz] false}" {
@@ -102,11 +102,14 @@ func TestEnv(t *testing.T) {
 	if !m.lastClear || len(m.lastEnv) > 0 {
 		t.Errorf("invalid env: %v %v", m.lastClear, m.lastEnv)
 	}
-	if err := steps.Do([]types.Step{{Environment: o}, {Command: []types.Resolved{"~/exe", "~/{{ $.Name }}"}}}, m, step, types.CommandEnvironment{Clear: true}); err != nil {
+	if err := steps.Do([]types.Step{{Environment: o}, {Command: []types.Resolved{"~/exe/{{ $.Name }}", "~/{{ $.Name }}"}}}, m, step, types.CommandEnvironment{Clear: true}); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	if !m.lastClear || len(m.lastEnv) > 0 {
 		t.Errorf("invalid env: %v %v", m.lastClear, m.lastEnv)
+	}
+	if m.lastCmd != "~/exe/a" {
+		t.Errorf("invalid cmd: %s", m.lastCmd)
 	}
 	o.Clear = false
 	o.Variables.Vars = make(map[string]types.Resolved)

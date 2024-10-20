@@ -17,6 +17,9 @@ func Do(steps []types.Step, builder util.Runner, ctx Context, env types.CommandE
 	if err := ctx.Valid(); err != nil {
 		return err
 	}
+	template := func(in string) (string, error) {
+		return ctx.Variables.Template(in)
+	}
 	env.Variables.Set()
 	defer env.Variables.Unset()
 	for _, step := range steps {
@@ -24,14 +27,17 @@ func Do(steps []types.Step, builder util.Runner, ctx Context, env types.CommandE
 		if len(cmd) == 0 {
 			continue
 		}
-		exe := cmd[0].String()
+		exe, err := template(cmd[0].String())
+		if err != nil {
+			return err
+		}
 		var args []string
 		for idx, a := range cmd {
 			if idx == 0 {
 				continue
 			}
 			res := a.String()
-			t, err := ctx.Variables.Template(res)
+			t, err := template(res)
 			if err != nil {
 				return err
 			}
@@ -39,7 +45,11 @@ func Do(steps []types.Step, builder util.Runner, ctx Context, env types.CommandE
 		}
 		to := ctx.Variables.Vars.Directory
 		if step.Directory != "" {
-			to = filepath.Join(to, step.Directory.String())
+			sub, err := template(step.Directory.String())
+			if err != nil {
+				return err
+			}
+			to = filepath.Join(to, sub)
 		}
 		if err := runStep(builder, to, exe, args, step.Environment, step.Environment.Clear || env.Clear); err != nil {
 			return err
