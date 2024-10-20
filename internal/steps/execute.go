@@ -10,10 +10,7 @@ import (
 )
 
 // Do will run each build step
-func Do(steps []types.Step, builder util.Runner, destination string, ctx Context, env types.CommandEnvironment) error {
-	if destination == "" {
-		return errors.New("destination must be set")
-	}
+func Do(steps []types.Step, builder util.Runner, ctx Context, env types.CommandEnvironment) error {
 	if builder == nil {
 		return errors.New("builder is unset")
 	}
@@ -34,13 +31,13 @@ func Do(steps []types.Step, builder util.Runner, destination string, ctx Context
 				continue
 			}
 			res := a.String()
-			t, err := ctx.Resource.Template(res)
+			t, err := ctx.Variables.Template(res)
 			if err != nil {
 				return err
 			}
 			args = append(args, t)
 		}
-		to := destination
+		to := ctx.Variables.Vars.Directory
 		if step.Directory != "" {
 			to = filepath.Join(to, step.Directory.String())
 		}

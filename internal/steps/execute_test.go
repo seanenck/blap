@@ -42,30 +42,29 @@ func TestDo(t *testing.T) {
 	m := &mockRun{}
 	step := steps.Context{}
 	step.Settings = cli.Settings{}
-	step.Resource = env.Values[*asset.Resource]{}
-	if err := steps.Do([]types.Step{}, m, "", step, types.CommandEnvironment{}); err == nil || err.Error() != "destination must be set" {
+	if err := steps.Do([]types.Step{}, m, step, types.CommandEnvironment{}); err == nil || err.Error() != "no resource set" {
 		t.Errorf("invalid error: %v", err)
 	}
-	if err := steps.Do([]types.Step{}, m, "a", step, types.CommandEnvironment{}); err == nil || err.Error() != "no resource set" {
-		t.Errorf("invalid error: %v", err)
-	}
-	step.Resource = env.Values[*asset.Resource]{Vars: &asset.Resource{}}
-	if err := steps.Do([]types.Step{}, nil, "a", step, types.CommandEnvironment{}); err == nil || err.Error() != "builder is unset" {
+	if err := steps.Do([]types.Step{}, nil, step, types.CommandEnvironment{}); err == nil || err.Error() != "builder is unset" {
 		t.Errorf("invalid error: %v", err)
 	}
 	os.Clearenv()
 	t.Setenv("HOME", "xyz")
-	e, _ := env.NewValues("a", &asset.Resource{File: "A"})
-	step.Resource = e
-	if err := steps.Do([]types.Step{{}, {Directory: "xyz", Command: []types.Resolved{"~/exe", `~/{{ if eq $.Arch "fakearch" }}{{else}}{{ $.Vars.File }}{{end}}`}}}, m, "a", step, types.CommandEnvironment{}); err != nil {
+	vars := steps.Variables{}
+	vars.Directory = "a"
+	vars.Resource = &asset.Resource{File: "A"}
+	e, _ := env.NewValues("a", vars)
+	step.Variables = e
+	if err := steps.Do([]types.Step{{}, {Directory: "xyz", Command: []types.Resolved{"~/exe", `~/{{ if eq $.Arch "fakearch" }}{{else}}{{ $.Vars.Resource.File }}{{end}}`}}}, m, step, types.CommandEnvironment{}); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	if fmt.Sprintf("%v", m) != "&{a/xyz xyz/exe [xyz/A] [HOME=xyz] false}" {
 		t.Errorf("invalid result: %v", m)
 	}
-	e, _ = env.NewValues("A", &asset.Resource{})
-	step.Resource = e
-	if err := steps.Do([]types.Step{{}, {Command: []types.Resolved{"~/$HOME/exe", "~/{{ $.Name }}"}}}, m, "a", step, types.CommandEnvironment{}); err != nil {
+	vars.Resource = &asset.Resource{File: "A"}
+	e, _ = env.NewValues("A", vars)
+	step.Variables = e
+	if err := steps.Do([]types.Step{{}, {Command: []types.Resolved{"~/$HOME/exe", "~/{{ $.Name }}"}}}, m, step, types.CommandEnvironment{}); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	if fmt.Sprintf("%v", m) != "&{a xyz/xyz/exe [xyz/A] [HOME=xyz] false}" {
@@ -76,17 +75,20 @@ func TestDo(t *testing.T) {
 func TestEnv(t *testing.T) {
 	m := &mockRun{}
 	os.Clearenv()
-	e, _ := env.NewValues("A", &asset.Resource{})
+	vars := steps.Variables{}
+	vars.Directory = "a"
+	vars.Resource = &asset.Resource{File: "A"}
+	e, _ := env.NewValues("a", vars)
 	step := steps.Context{}
 	step.Settings = cli.Settings{}
-	step.Resource = e
-	if err := steps.Do([]types.Step{{}, {Command: []types.Resolved{"~/exe", "~/{{ $.Name }}"}}}, m, "a", step, types.CommandEnvironment{}); err != nil {
+	step.Variables = e
+	if err := steps.Do([]types.Step{{}, {Command: []types.Resolved{"~/exe", "~/{{ $.Name }}"}}}, m, step, types.CommandEnvironment{}); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	if m.lastClear || len(m.lastEnv) > 0 {
 		t.Errorf("invalid env: %v %v", m.lastClear, m.lastEnv)
 	}
-	if err := steps.Do([]types.Step{{}, {Command: []types.Resolved{"~/exe", "~/{{ $.Name }}"}}}, m, "a", step, types.CommandEnvironment{Clear: true}); err != nil {
+	if err := steps.Do([]types.Step{{}, {Command: []types.Resolved{"~/exe", "~/{{ $.Name }}"}}}, m, step, types.CommandEnvironment{Clear: true}); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	if !m.lastClear || len(m.lastEnv) > 0 {
@@ -94,13 +96,13 @@ func TestEnv(t *testing.T) {
 	}
 	o := types.CommandEnvironment{}
 	o.Clear = true
-	if err := steps.Do([]types.Step{{}, {Environment: o, Command: []types.Resolved{"~/exe", "~/{{ $.Name }}"}}}, m, "a", step, types.CommandEnvironment{}); err != nil {
+	if err := steps.Do([]types.Step{{}, {Environment: o, Command: []types.Resolved{"~/exe", "~/{{ $.Name }}"}}}, m, step, types.CommandEnvironment{}); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	if !m.lastClear || len(m.lastEnv) > 0 {
 		t.Errorf("invalid env: %v %v", m.lastClear, m.lastEnv)
 	}
-	if err := steps.Do([]types.Step{{Environment: o}, {Command: []types.Resolved{"~/exe", "~/{{ $.Name }}"}}}, m, "a", step, types.CommandEnvironment{Clear: true}); err != nil {
+	if err := steps.Do([]types.Step{{Environment: o}, {Command: []types.Resolved{"~/exe", "~/{{ $.Name }}"}}}, m, step, types.CommandEnvironment{Clear: true}); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	if !m.lastClear || len(m.lastEnv) > 0 {
@@ -109,7 +111,7 @@ func TestEnv(t *testing.T) {
 	o.Clear = false
 	o.Variables.Vars = make(map[string]types.Resolved)
 	o.Variables.Vars["HOME"] = "1"
-	if err := steps.Do([]types.Step{{}, {Environment: o, Command: []types.Resolved{"~/exe", "~/{{ $.Name }}"}}}, m, "a", step, types.CommandEnvironment{}); err != nil {
+	if err := steps.Do([]types.Step{{}, {Environment: o, Command: []types.Resolved{"~/exe", "~/{{ $.Name }}"}}}, m, step, types.CommandEnvironment{}); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	if m.lastClear || len(m.lastEnv) != 1 {
@@ -118,21 +120,21 @@ func TestEnv(t *testing.T) {
 	s := types.CommandEnvironment{}
 	s.Variables.Vars = make(map[string]types.Resolved)
 	s.Variables.Vars["HOME"] = "y"
-	if err := steps.Do([]types.Step{{}, {Environment: o, Command: []types.Resolved{"~/exe", "~/{{ $.Name }}"}}}, m, "a", step, s); err != nil {
+	if err := steps.Do([]types.Step{{}, {Environment: o, Command: []types.Resolved{"~/exe", "~/{{ $.Name }}"}}}, m, step, s); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	if m.lastClear || len(m.lastEnv) != 1 {
 		t.Errorf("invalid env: %v %v", m.lastClear, m.lastEnv)
 	}
 	o.Variables.Vars["XYZ"] = "aaa"
-	if err := steps.Do([]types.Step{{}, {Environment: o, Command: []types.Resolved{"~/exe", "~/{{ $.Name }}"}}}, m, "a", step, s); err != nil {
+	if err := steps.Do([]types.Step{{}, {Environment: o, Command: []types.Resolved{"~/exe", "~/{{ $.Name }}"}}}, m, step, s); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	if m.lastClear || len(m.lastEnv) != 2 {
 		t.Errorf("invalid env: %v %v", m.lastClear, m.lastEnv)
 	}
 	s.Variables.Vars["ZZZ"] = "aaz"
-	if err := steps.Do([]types.Step{{}, {Environment: o, Command: []types.Resolved{"~/exe", "~/{{ $.Name }}"}}}, m, "a", step, s); err != nil {
+	if err := steps.Do([]types.Step{{}, {Environment: o, Command: []types.Resolved{"~/exe", "~/{{ $.Name }}"}}}, m, step, s); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	if m.lastClear || len(m.lastEnv) != 3 {

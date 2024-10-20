@@ -100,14 +100,14 @@ func (c Configuration) Do(ctx Context) error {
 			return err
 		}
 	}
-	e, err := env.NewValues(ctx.Name, rsrc)
+	e, err := env.NewValues(ctx.Name, steps.Variables{Resource: rsrc, Directory: dest})
 	if err != nil {
 		return err
 	}
 	step := steps.Context{}
-	step.Resource = e
+	step.Variables = e
 	step.Settings = c.context
-	if err := steps.Do(ctx.Application.Commands.Steps, ctx.Runner, dest, step, ctx.Application.Commands.Environment); err != nil {
+	if err := steps.Do(ctx.Application.Commands.Steps, ctx.Runner, step, ctx.Application.Commands.Environment); err != nil {
 		return err
 	}
 	return nil

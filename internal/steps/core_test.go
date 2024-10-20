@@ -13,11 +13,15 @@ func TestValid(t *testing.T) {
 	if err := c.Valid(); err == nil || err.Error() != "no resource set" {
 		t.Errorf("invalid error: %v", err)
 	}
-	c.Resource = env.Values[*asset.Resource]{}
+	c.Variables = env.Values[steps.Variables]{}
 	if err := c.Valid(); err == nil || err.Error() != "no resource set" {
 		t.Errorf("invalid error: %v", err)
 	}
-	c.Resource.Vars = &asset.Resource{}
+	c.Variables.Vars.Resource = &asset.Resource{}
+	if err := c.Valid(); err == nil || err.Error() != "directory not set" {
+		t.Errorf("invalid error: %v", err)
+	}
+	c.Variables.Vars.Directory = "abc"
 	if err := c.Valid(); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}

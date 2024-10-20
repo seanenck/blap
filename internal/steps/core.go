@@ -10,17 +10,24 @@ import (
 )
 
 type (
+	Variables struct {
+		Resource  *asset.Resource
+		Directory string
+	}
 	// Context are step settings/context
 	Context struct {
-		Settings cli.Settings
-		Resource env.Values[*asset.Resource]
+		Settings  cli.Settings
+		Variables env.Values[Variables]
 	}
 )
 
 // Valid will check validity of the context
 func (c Context) Valid() error {
-	if c.Resource.Vars == nil {
+	if c.Variables.Vars.Resource == nil {
 		return errors.New("no resource set")
+	}
+	if c.Variables.Vars.Directory == "" {
+		return errors.New("directory not set")
 	}
 	return nil
 }
