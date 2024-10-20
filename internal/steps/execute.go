@@ -51,14 +51,14 @@ func Do(steps []types.Step, builder util.Runner, ctx Context, env types.CommandE
 			}
 			to = filepath.Join(to, sub)
 		}
-		if err := runStep(builder, to, exe, args, step.Environment, step.Environment.Clear || env.Clear); err != nil {
+		if err := runStep(ctx, builder, to, exe, args, step.Environment, step.Environment.Clear || env.Clear); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func runStep(builder util.Runner, to, exe string, args []string, env types.CommandEnvironment, doClear bool) error {
+func runStep(ctx Context, builder util.Runner, to, exe string, args []string, env types.CommandEnvironment, doClear bool) error {
 	env.Variables.Set()
 	defer env.Variables.Unset()
 	run := util.RunSettings{}
@@ -66,5 +66,7 @@ func runStep(builder util.Runner, to, exe string, args []string, env types.Comma
 	if doClear {
 		run.Env.Clear = true
 	}
+	ctx.Settings.LogDebug("run: %v\n", run)
+	ctx.Settings.LogDebug("command: %s (%v)\n", exe, args)
 	return builder.Run(run, exe, args...)
 }
