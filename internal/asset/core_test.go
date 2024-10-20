@@ -113,7 +113,7 @@ func TestExtractDepth(t *testing.T) {
 	if err := r.Extract(m); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
-	if fmt.Sprintf("%v", m.ran) != "[xyz testdata/a.tag testdata/d970aa5.file]" {
+	if fmt.Sprintf("%v", m.ran) != "[xyz testdata/d970aa5.a.tag testdata/d970aa5.file]" {
 		t.Errorf("invalid run: %v", m.ran)
 	}
 	r.File = "file.tar.xz"
@@ -124,7 +124,7 @@ func TestExtractDepth(t *testing.T) {
 	if err := r.Extract(m); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
-	if fmt.Sprintf("%v", m.ran) != "[tar xf testdata/9df62cf.file.tar.xz -C testdata/a.tag2]" {
+	if fmt.Sprintf("%v", m.ran) != "[tar xf testdata/9df62cf.file.tar.xz -C testdata/9df62cf.a.tag2]" {
 		t.Errorf("invalid run: %v", m.ran)
 	}
 	r.Tag = "tag4"

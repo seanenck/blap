@@ -61,7 +61,7 @@ func (asset *Resource) SetAppData(name, workdir string, settings types.Extractio
 	hash := fmt.Sprintf("%x", h.Sum(nil))[0:7]
 	asset.Paths.set = true
 	asset.Paths.Archive = filepath.Join(workdir, fmt.Sprintf("%s.%s", hash, asset.File))
-	asset.Paths.Unpack = filepath.Join(workdir, fmt.Sprintf("%s.%s", name, strings.ReplaceAll(asset.Tag, "/", "_")))
+	asset.Paths.Unpack = filepath.Join(workdir, fmt.Sprintf("%s.%s.%s", hash, name, strings.ReplaceAll(asset.Tag, "/", "_")))
 	asset.extract = settings
 	asset.extract.NoDepth = true
 	if len(settings.Command) == 0 {
