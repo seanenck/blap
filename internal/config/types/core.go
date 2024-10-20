@@ -11,6 +11,7 @@ import (
 )
 
 type (
+	// Variables define os environment variables to set
 	Variables struct {
 		Vars map[string]Resolved `yaml:"values"`
 		had  map[string]string
@@ -133,6 +134,7 @@ func (r Resolved) String() string {
 	return filepath.Join(h, strings.TrimPrefix(dir, isHome))
 }
 
+// Set will set os environment variables
 func (v *Variables) Set() {
 	if v.Vars == nil {
 		return
@@ -149,6 +151,7 @@ func (v *Variables) Set() {
 	}
 }
 
+// Unset will clear/reset variables to prior state
 func (v *Variables) Unset() {
 	if v.Vars == nil || v.had == nil {
 		return

@@ -10,6 +10,7 @@ import (
 )
 
 type (
+	// Variables define step variables for command templating
 	Variables struct {
 		*asset.Resource
 		Directory string
