@@ -46,6 +46,16 @@ type (
 	}
 )
 
+// ID attempt to get a reasonable id for file system parsing
+func (asset *Resource) ID() (string, error) {
+	h := sha256.New()
+	if _, err := fmt.Fprintf(h, "%s%s%s", asset.File, asset.Tag, asset.URL); err != nil {
+		return "", err
+	}
+	hash := fmt.Sprintf("%x", h.Sum(nil))
+	return hash[0:7], nil
+}
+
 // SetAppData will set the asset's data for the overall application
 func (asset *Resource) SetAppData(name, workdir string, settings types.Extraction) error {
 	if name == "" || workdir == "" {
@@ -54,14 +64,13 @@ func (asset *Resource) SetAppData(name, workdir string, settings types.Extractio
 	if asset.Tag == "" || asset.File == "" || asset.URL == "" {
 		return errors.New("asset not initialized properly")
 	}
-	h := sha256.New()
-	if _, err := fmt.Fprintf(h, "%s%s", asset.File, asset.Tag); err != nil {
+	hash, err := asset.ID()
+	if err != nil {
 		return err
 	}
-	hash := fmt.Sprintf("%x", h.Sum(nil))[0:7]
 	asset.Paths.set = true
-	asset.Paths.Archive = filepath.Join(workdir, fmt.Sprintf("%s.%s", hash, asset.File))
-	asset.Paths.Unpack = filepath.Join(workdir, fmt.Sprintf("%s.%s.%s", hash, name, strings.ReplaceAll(asset.Tag, "/", "_")))
+	asset.Paths.Archive = filepath.Join(workdir, util.CleanFileName(fmt.Sprintf("%s.%s", hash, asset.File)))
+	asset.Paths.Unpack = filepath.Join(workdir, util.CleanFileName(fmt.Sprintf("%s.%s.%s", hash, name, asset.Tag)))
 	asset.extract = settings
 	asset.extract.NoDepth = true
 	if len(settings.Command) == 0 {

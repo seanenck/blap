@@ -113,7 +113,7 @@ func TestExtractDepth(t *testing.T) {
 	if err := r.Extract(m); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
-	if fmt.Sprintf("%v", m.ran) != "[xyz testdata/d970aa5.a.tag testdata/d970aa5.file]" {
+	if fmt.Sprintf("%v", m.ran) != "[xyz testdata/6608d41.a.tag testdata/6608d41.file]" {
 		t.Errorf("invalid run: %v", m.ran)
 	}
 	r.File = "file.tar.xz"
@@ -124,7 +124,7 @@ func TestExtractDepth(t *testing.T) {
 	if err := r.Extract(m); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
-	if fmt.Sprintf("%v", m.ran) != "[tar xf testdata/9df62cf.file.tar.xz -C testdata/9df62cf.a.tag2]" {
+	if fmt.Sprintf("%v", m.ran) != "[tar xf testdata/757f538.file.tar.xz -C testdata/757f538.a.tag2]" {
 		t.Errorf("invalid run: %v", m.ran)
 	}
 	r.Tag = "tag4"
@@ -168,5 +168,19 @@ func TestExtractDepth(t *testing.T) {
 	}
 	if strings.Contains(fmt.Sprintf("%v", m.ran), " -j ") {
 		t.Errorf("invalid run: %v", m.ran)
+	}
+}
+
+func TestID(t *testing.T) {
+	a := &asset.Resource{}
+	a.File = "abc"
+	a.Tag = "xyz"
+	a.URL = "aaa"
+	h, err := a.ID()
+	if err != nil {
+		t.Errorf("invalid error: %v", err)
+	}
+	if h != "6e17f7e" {
+		t.Errorf("invalid id: %s", h)
 	}
 }

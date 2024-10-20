@@ -14,3 +14,10 @@ func TestPathExists(t *testing.T) {
 		t.Error("path should NOT exist")
 	}
 }
+
+func TestCleanFileName(t *testing.T) {
+	n := util.CleanFileName(" a *#*)!.tar-gz1")
+	if n != "a.tar-gz1" {
+		t.Errorf("invalid clean: %s", n)
+	}
+}
