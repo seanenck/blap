@@ -11,7 +11,7 @@ import (
 
 type (
 	Variables struct {
-		Resource  *asset.Resource
+		*asset.Resource
 		Directory string
 	}
 	// Context are step settings/context
