@@ -107,6 +107,8 @@ func (c Configuration) Do(ctx Context) error {
 	step := steps.Context{}
 	step.Variables = e
 	step.Settings = c.context
+	processLock.Lock()
+	defer processLock.Unlock()
 	if err := steps.Do(ctx.Application.Commands.Steps, ctx.Runner, step, ctx.Application.Commands.Environment); err != nil {
 		return err
 	}
