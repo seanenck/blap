@@ -12,7 +12,7 @@ import (
 
 type (
 	Variables struct {
-		Vars map[string]string `yaml:"values"`
+		Vars map[string]Resolved `yaml:"values"`
 		had  map[string]string
 	}
 	// Resolved will handle env-based strings for resolution of env vars
@@ -145,7 +145,7 @@ func (v *Variables) Set() {
 		if ok {
 			v.had[key] = had
 		}
-		os.Setenv(key, val)
+		os.Setenv(key, val.String())
 	}
 }
 

@@ -60,18 +60,19 @@ func TestVarSetUnset(t *testing.T) {
 	val := types.Variables{}
 	val.Set()
 	val.Unset()
-	val.Vars = make(map[string]string)
+	val.Vars = make(map[string]types.Resolved)
 	val.Set()
 	val.Unset()
 	os.Setenv("HOME", "1")
-	val.Vars["HOME"] = "2"
+	os.Setenv("A_TEST", "0")
+	val.Vars["A_TEST"] = "~/2"
 	val.Vars["THIS_IS_A_TEST"] = "3"
 	val.Set()
-	if os.Getenv("HOME") != "2" || os.Getenv("THIS_IS_A_TEST") != "3" {
+	if os.Getenv("A_TEST") != "1/2" || os.Getenv("THIS_IS_A_TEST") != "3" {
 		t.Errorf("invalid env")
 	}
 	val.Unset()
-	if os.Getenv("HOME") != "1" || os.Getenv("THIS_IS_A_TEST") != "" {
+	if os.Getenv("A_TEST") != "0" || os.Getenv("THIS_IS_A_TEST") != "" {
 		t.Errorf("invalid env")
 	}
 }

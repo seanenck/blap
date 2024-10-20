@@ -107,7 +107,7 @@ func TestEnv(t *testing.T) {
 		t.Errorf("invalid env: %v %v", m.lastClear, m.lastEnv)
 	}
 	o.Clear = false
-	o.Variables.Vars = make(map[string]string)
+	o.Variables.Vars = make(map[string]types.Resolved)
 	o.Variables.Vars["HOME"] = "1"
 	if err := steps.Do([]types.Step{{}, {Environment: o, Command: []types.Resolved{"~/exe", "~/{{ $.Name }}"}}}, m, "a", step, types.CommandEnvironment{}); err != nil {
 		t.Errorf("invalid error: %v", err)
@@ -116,7 +116,7 @@ func TestEnv(t *testing.T) {
 		t.Errorf("invalid env: %v %v", m.lastClear, m.lastEnv)
 	}
 	s := types.CommandEnvironment{}
-	s.Variables.Vars = make(map[string]string)
+	s.Variables.Vars = make(map[string]types.Resolved)
 	s.Variables.Vars["HOME"] = "y"
 	if err := steps.Do([]types.Step{{}, {Environment: o, Command: []types.Resolved{"~/exe", "~/{{ $.Name }}"}}}, m, "a", step, s); err != nil {
 		t.Errorf("invalid error: %v", err)
