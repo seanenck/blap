@@ -100,7 +100,10 @@ func (c Configuration) Do(ctx Context) error {
 			return err
 		}
 	}
-	e, err := env.NewValues(ctx.Name, steps.Variables{Resource: rsrc, Directory: dest})
+	vars := steps.Variables{}
+	vars.Resource = rsrc
+	vars.Directories.Root = dest
+	e, err := env.NewValues(ctx.Name, vars)
 	if err != nil {
 		return err
 	}

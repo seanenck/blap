@@ -6,26 +6,41 @@ import (
 	"path/filepath"
 
 	"github.com/seanenck/blap/internal/config/types"
+	"github.com/seanenck/blap/internal/env"
 	"github.com/seanenck/blap/internal/util"
 )
 
 // Do will run each build step
-func Do(steps []types.Step, builder util.Runner, ctx Context, env types.CommandEnvironment) error {
+func Do(steps []types.Step, builder util.Runner, ctx Context, e types.CommandEnvironment) error {
 	if builder == nil {
 		return errors.New("builder is unset")
 	}
 	if err := ctx.Valid(); err != nil {
 		return err
 	}
-	template := func(in string) (string, error) {
-		return ctx.Variables.Template(in)
-	}
-	env.Variables.Set()
-	defer env.Variables.Unset()
+	e.Variables.Set()
+	defer e.Variables.Unset()
 	for _, step := range steps {
 		cmd := step.Command
 		if len(cmd) == 0 {
 			continue
+		}
+		to := ctx.Variables.Vars.Directories.Root
+		if step.Directory != "" {
+			sub, err := ctx.Variables.Template(step.Directory.String())
+			if err != nil {
+				return err
+			}
+			to = filepath.Join(to, sub)
+		}
+		clone := ctx.Variables.Vars.Clone()
+		clone.Directories.Working = to
+		v, err := env.NewValues(ctx.Variables.Name, clone)
+		if err != nil {
+			return err
+		}
+		template := func(in string) (string, error) {
+			return v.Template(in)
 		}
 		exe, err := template(cmd[0].String())
 		if err != nil {
@@ -43,15 +58,7 @@ func Do(steps []types.Step, builder util.Runner, ctx Context, env types.CommandE
 			}
 			args = append(args, t)
 		}
-		to := ctx.Variables.Vars.Directory
-		if step.Directory != "" {
-			sub, err := template(step.Directory.String())
-			if err != nil {
-				return err
-			}
-			to = filepath.Join(to, sub)
-		}
-		if err := runStep(ctx, builder, to, exe, args, step.Environment, step.Environment.Clear || env.Clear); err != nil {
+		if err := runStep(ctx, builder, to, exe, args, step.Environment, step.Environment.Clear || e.Clear); err != nil {
 			return err
 		}
 	}

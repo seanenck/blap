@@ -21,8 +21,20 @@ func TestValid(t *testing.T) {
 	if err := c.Valid(); err == nil || err.Error() != "directory not set" {
 		t.Errorf("invalid error: %v", err)
 	}
-	c.Variables.Vars.Directory = "abc"
+	c.Variables.Vars.Directories.Root = "abc"
 	if err := c.Valid(); err != nil {
 		t.Errorf("invalid error: %v", err)
+	}
+}
+
+func TestClone(t *testing.T) {
+	v := steps.Variables{}
+	v.Clone()
+	v.Directories.Root = "xyz"
+	v.Resource = &asset.Resource{File: "y"}
+	v.Directories.Working = "work"
+	n := v.Clone()
+	if n.Directories.Root != "xyz" || n.Directories.Working != "work" || n.File != "y" {
+		t.Error("invalid clone")
 	}
 }

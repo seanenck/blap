@@ -51,14 +51,14 @@ func TestDo(t *testing.T) {
 	os.Clearenv()
 	t.Setenv("HOME", "xyz")
 	vars := steps.Variables{}
-	vars.Directory = "a"
+	vars.Directories.Root = "a"
 	vars.Resource = &asset.Resource{File: "A"}
 	e, _ := env.NewValues("xyz", vars)
 	step.Variables = e
-	if err := steps.Do([]types.Step{{}, {Directory: "{{ $.Name }}", Command: []types.Resolved{"~/exe", `~/{{ if eq $.Arch "fakearch" }}{{else}}{{ $.Vars.Resource.File }}{{end}}`}}}, m, step, types.CommandEnvironment{}); err != nil {
+	if err := steps.Do([]types.Step{{}, {Directory: "{{ $.Name }}", Command: []types.Resolved{"~/exe/{{ $.Vars.Directories.Working }}", `~/{{ if eq $.Arch "fakearch" }}{{else}}{{ $.Vars.Resource.File }}{{end}}`}}}, m, step, types.CommandEnvironment{}); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
-	if fmt.Sprintf("%v", m) != "&{a/xyz xyz/exe [xyz/A] [HOME=xyz] false}" {
+	if fmt.Sprintf("%v", m) != "&{a/xyz xyz/exe/a/xyz [xyz/A] [HOME=xyz] false}" {
 		t.Errorf("invalid result: %v", m)
 	}
 	vars.Resource = &asset.Resource{File: "A"}
@@ -76,7 +76,7 @@ func TestEnv(t *testing.T) {
 	m := &mockRun{}
 	os.Clearenv()
 	vars := steps.Variables{}
-	vars.Directory = "a"
+	vars.Directories.Root = "a"
 	vars.Resource = &asset.Resource{File: "A"}
 	e, _ := env.NewValues("a", vars)
 	step := steps.Context{}
