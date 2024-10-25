@@ -28,7 +28,7 @@ const (
 	DisableFlag = "disable"
 	// IncludeFlag allows for filtering included files
 	IncludeFlag = "include"
-	isFlag      = "-"
+	isFlag      = "--"
 	// DisplayIncludeFlag is the displayed version of the include flag
 	DisplayIncludeFlag = isFlag + IncludeFlag
 	// DisplayApplicationsFlag is the displayed version of application flag
