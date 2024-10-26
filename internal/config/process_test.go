@@ -560,14 +560,16 @@ func TestCleanDirs(t *testing.T) {
 	var buf bytes.Buffer
 	s.Verbosity = 100
 	s.Writer = &buf
-	os.Mkdir(filepath.Join("testdata", "abc"), 0o644)
-	os.Mkdir(filepath.Join("testdata", "nvim"), 0o644)
+	os.Mkdir(filepath.Join("testdata", "zzzzzzz"), 0o755)
+	os.Mkdir(filepath.Join("testdata", "abc"), 0o755)
+	os.Mkdir(filepath.Join("testdata", "nvim"), 0o755)
+	os.WriteFile(filepath.Join("testdata", "test.yaml"), []byte("{}"), 0o644)
 	cfg, _ = config.Load(filepath.Join("examples", "config.yaml"), s)
 	if err := cfg.CleanDirectories(); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	dirs, _ := os.ReadDir("testdata")
-	if len(dirs) != 2 {
+	if len(dirs) != 4 {
 		t.Errorf("invalid dirs: %v", dirs)
 	}
 	str := buf.String()
@@ -582,7 +584,7 @@ func TestCleanDirs(t *testing.T) {
 		t.Errorf("invalid error: %v", err)
 	}
 	dirs, _ = os.ReadDir("testdata")
-	if len(dirs) != 1 {
+	if len(dirs) != 3 {
 		t.Errorf("invalid dirs: %v", dirs)
 	}
 	str = buf.String()

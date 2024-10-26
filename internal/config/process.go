@@ -168,8 +168,21 @@ func (c Configuration) CleanDirectories() error {
 	}
 	found := false
 	for _, d := range dirs {
+		if !d.IsDir() {
+			continue
+		}
 		name := d.Name()
 		if _, ok := c.Applications[name]; ok {
+			continue
+		}
+		matched := false
+		for _, p := range c.pinnedMatchers {
+			if p.MatchString(name) {
+				matched = true
+				break
+			}
+		}
+		if matched {
 			continue
 		}
 		found = true

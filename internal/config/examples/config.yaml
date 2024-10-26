@@ -23,6 +23,7 @@ connections:
 pinned:
   - "nvim"
   - "another"
+  - "zzzzzzz"
 # set configuration-wide environment variables for command steps
 variables:
   # these are key (env key) / value (set value) pairs
