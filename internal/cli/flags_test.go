@@ -49,21 +49,21 @@ func TestParseErrors(t *testing.T) {
 }
 
 func TestParse(t *testing.T) {
-	c, err := cli.Parse(nil, false, []string{"-verbosity", "5", "-commit"})
+	c, err := cli.Parse(nil, false, []string{"-verbosity", "5", "-confirm"})
 	if err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	if c.Verbosity != 5 || c.DryRun {
 		t.Errorf("invalid result: %v", c)
 	}
-	c, err = cli.Parse(nil, false, []string{"-verbosity", "5", "-commit", "-applications=nvim"})
+	c, err = cli.Parse(nil, false, []string{"-verbosity", "5", "-confirm", "-applications=nvim"})
 	if err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	if c.Verbosity != 5 || c.DryRun || !c.FilterApplications() || !c.AllowApplication("nvim") {
 		t.Errorf("invalid result: %v", c)
 	}
-	c, err = cli.Parse(nil, false, []string{"-verbosity", "5", "-commit", "-disable=nvim"})
+	c, err = cli.Parse(nil, false, []string{"-verbosity", "5", "-confirm", "-disable=nvim"})
 	if err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
