@@ -106,11 +106,6 @@ func (s Settings) LogDebug(msg string, a ...any) {
 	s.log(4, msg, a...)
 }
 
-// LogInfo logs an informational message
-func (s Settings) LogInfo(msg string, a ...any) {
-	s.log(1, msg, a...)
-}
-
 // LogCore logs a core message
 func (s Settings) LogCore(msg string, a ...any) {
 	s.log(0, msg, a...)

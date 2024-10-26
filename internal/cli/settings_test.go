@@ -25,7 +25,6 @@ func TestLogging(t *testing.T) {
 	c.Verbosity = 1
 	c.LogCore("a11")
 	c.LogDebug("xyz")
-	c.LogInfo("zbc")
 	s = buf.String()
 	if s != "a11" {
 		t.Errorf("invalid buffer result: %s", s)
@@ -35,9 +34,8 @@ func TestLogging(t *testing.T) {
 	c.Verbosity = 2
 	c.LogCore("a11")
 	c.LogDebug("xyz")
-	c.LogInfo("zbc")
 	s = buf.String()
-	if s != "a11zbc" {
+	if s != "a11" {
 		t.Errorf("invalid buffer result: %s", s)
 	}
 	buf = bytes.Buffer{}
@@ -45,9 +43,8 @@ func TestLogging(t *testing.T) {
 	c.Verbosity = 100
 	c.LogCore("a11")
 	c.LogDebug("xyz")
-	c.LogInfo("zbc")
 	s = buf.String()
-	if s != "a11xyzzbc" {
+	if s != "a11xyz" {
 		t.Errorf("invalid buffer result: %s", s)
 	}
 }
