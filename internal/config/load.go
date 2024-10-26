@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/seanenck/blap/internal/cli"
@@ -94,6 +95,15 @@ func Load(input string, context cli.Settings) (Configuration, error) {
 			sub[n] = a
 		}
 	}
+	var re []*regexp.Regexp
+	for _, p := range c.Pinned {
+		r, err := regexp.Compile(p)
+		if err != nil {
+			return c, err
+		}
+		re = append(re, r)
+	}
+	c.pinnedMatchers = re
 	c.Applications = sub
 	return c, nil
 }

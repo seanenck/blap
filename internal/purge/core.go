@@ -15,7 +15,7 @@ import (
 type OnPurge func()
 
 // Do will perform purge (or dryrun at least)
-func Do(dir string, known, pinned []string, context cli.Settings, fxn OnPurge) error {
+func Do(dir string, known []string, pinned []*regexp.Regexp, context cli.Settings, fxn OnPurge) error {
 	if dir == "" {
 		return errors.New("directory must be set")
 	}
@@ -23,18 +23,10 @@ func Do(dir string, known, pinned []string, context cli.Settings, fxn OnPurge) e
 	if err != nil {
 		return err
 	}
-	var re []*regexp.Regexp
-	for _, p := range pinned {
-		r, err := regexp.Compile(p)
-		if err != nil {
-			return err
-		}
-		re = append(re, r)
-	}
 	for _, d := range dirs {
 		name := d.Name()
 		pin := false
-		for _, r := range re {
+		for _, r := range pinned {
 			if r.MatchString(name) {
 				pin = true
 				break

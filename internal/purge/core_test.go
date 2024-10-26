@@ -3,6 +3,7 @@ package purge_test
 import (
 	"os"
 	"path/filepath"
+	"regexp"
 	"testing"
 
 	"github.com/seanenck/blap/internal/cli"
@@ -36,7 +37,8 @@ func TestDo(t *testing.T) {
 		t.Errorf("invalid dirs: %v", d)
 	}
 	did = false
-	if err := purge.Do("testdata", []string{"abc"}, []string{"xyz"}, cli.Settings{}, fxn); err != nil || did {
+	p, _ := regexp.Compile("xyz")
+	if err := purge.Do("testdata", []string{"abc"}, []*regexp.Regexp{p}, cli.Settings{}, fxn); err != nil || did {
 		t.Errorf("invalid error: %v|purge", err)
 	}
 	if d, _ := os.ReadDir("testdata"); len(d) != 2 {

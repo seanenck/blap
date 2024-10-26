@@ -24,13 +24,12 @@ var processLock = &sync.Mutex{}
 type (
 	errorList      []error
 	processHandler struct {
-		assets  []string
 		changed []string
 	}
 	// Executor is the process executor
 	Executor interface {
 		Do(Context) error
-		Purge(string, purge.OnPurge) error
+		Purge(string, []string, purge.OnPurge) error
 		Changed() []string
 	}
 	// Context allows processing an application (fetch, extract, command)
@@ -91,21 +90,22 @@ func (c Configuration) Do(ctx Context) error {
 	if err := rsrc.SetAppData(ctx.Name, to, ctx.Application.Extract); err != nil {
 		return err
 	}
+	knownAssets := []string{}
 	for _, f := range []string{rsrc.Paths.Unpack, rsrc.Paths.Archive} {
 		if f == "" {
 			continue
 		}
-		processLock.Lock()
-		c.handler.assets = append(c.handler.assets, filepath.Base(f))
-		processLock.Unlock()
+		knownAssets = append(knownAssets, filepath.Base(f))
 	}
 	onChange := func() {
 		processLock.Lock()
-		c.handler.changed = append(c.handler.changed, ctx.Name)
+		if !slices.Contains(c.handler.changed, ctx.Name) {
+			c.handler.changed = append(c.handler.changed, ctx.Name)
+		}
 		processLock.Unlock()
 	}
 	if c.context.Purge {
-		return ctx.Executor.Purge(to, onChange)
+		return ctx.Executor.Purge(to, knownAssets, onChange)
 	}
 
 	did, err := ctx.Fetcher.Download(c.context.DryRun, rsrc.URL, rsrc.Paths.Archive)
@@ -145,8 +145,8 @@ func (c Configuration) Do(ctx Context) error {
 }
 
 // Purge will run purge on inputs
-func (c Configuration) Purge(dir string, fxn purge.OnPurge) error {
-	return purge.Do(dir, c.handler.assets, c.Pinned, c.context, fxn)
+func (c Configuration) Purge(dir string, assets []string, fxn purge.OnPurge) error {
+	return purge.Do(dir, assets, c.pinnedMatchers, c.context, fxn)
 }
 
 // Changed gets the list of changed components

@@ -4,6 +4,7 @@ package config
 import (
 	"fmt"
 	"path/filepath"
+	"regexp"
 
 	"github.com/seanenck/blap/internal/cli"
 	"github.com/seanenck/blap/internal/config/types"
@@ -22,6 +23,7 @@ type (
 		Pinned          types.Pinned      `yaml:"pinned"`
 		Connections     types.Connections `yaml:"connections"`
 		Variables       types.Variables   `yaml:"variables"`
+		pinnedMatchers  []*regexp.Regexp
 	}
 )
 

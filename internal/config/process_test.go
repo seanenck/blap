@@ -42,7 +42,7 @@ func (m *mockExecutor) expectCount(do, purge int) error {
 	return nil
 }
 
-func (m *mockExecutor) Purge(dest string, fxn purge.OnPurge) error {
+func (m *mockExecutor) Purge(_ string, _ []string, fxn purge.OnPurge) error {
 	m.calledPurge++
 	fxn()
 	return m.err
