@@ -154,17 +154,11 @@ func (c Configuration) Changed() []string {
 	return c.handler.changed
 }
 
-// CleanDirectories will cleanup untracked applicaton directories
-func (c Configuration) CleanDirectories() error {
-	if c.Applications == nil {
-		return nil
-	}
-	c.Variables.Set()
-	defer c.Variables.Unset()
+func (c Configuration) cleanDirectories() (bool, error) {
 	dir := c.Directory.String()
 	dirs, err := os.ReadDir(dir)
 	if err != nil {
-		return err
+		return false, err
 	}
 	found := false
 	for _, d := range dirs {
@@ -191,13 +185,10 @@ func (c Configuration) CleanDirectories() error {
 			continue
 		}
 		if err := os.RemoveAll(filepath.Join(dir, name)); err != nil {
-			return err
+			return false, err
 		}
 	}
-	if found && c.context.DryRun {
-		c.isDryRun()
-	}
-	return nil
+	return found, nil
 }
 
 // Process will process application definitions
@@ -275,7 +266,18 @@ func (c Configuration) Process(executor Executor, fetcher fetch.Retriever, runne
 		}
 	}
 	changed := executor.Changed()
-	if !c.context.Purge {
+	isDryRun := false
+	if c.context.Purge {
+		if c.context.CleanDirs {
+			did, err := c.cleanDirectories()
+			if err != nil {
+				return err
+			}
+			if did && c.context.DryRun {
+				isDryRun = true
+			}
+		}
+	} else {
 		for idx, update := range changed {
 			if idx == 0 {
 				c.context.LogCore("updates\n")
@@ -287,7 +289,7 @@ func (c Configuration) Process(executor Executor, fetcher fetch.Retriever, runne
 	if c.context.DryRun {
 		if len(changed) > 0 {
 			removeIndex = false
-			c.isDryRun()
+			isDryRun = true
 			if c.Indexing {
 				b, err := json.Marshal(Index{Names: changed})
 				if err != nil {
@@ -302,9 +304,8 @@ func (c Configuration) Process(executor Executor, fetcher fetch.Retriever, runne
 	if c.Indexing && removeIndex {
 		return os.Remove(indexFile)
 	}
+	if isDryRun {
+		c.context.LogCore("\n[DRYRUN] impactful changes were not committed\n")
+	}
 	return nil
-}
-
-func (c Configuration) isDryRun() {
-	c.context.LogCore("\n[DRYRUN] impactful changes were not committed\n")
 }

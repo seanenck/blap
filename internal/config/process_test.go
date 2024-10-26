@@ -551,13 +551,20 @@ func TestCleanDirs(t *testing.T) {
 	defer func() {
 		os.RemoveAll("testdata")
 	}()
-	cfg := config.Configuration{}
-	if err := cfg.CleanDirectories(); err != nil {
+	m := &mockExecutor{}
+	s := cli.Settings{}
+	s.Verbosity = cli.InfoVerbosity
+	s.Purge = true
+	s.CleanDirs = true
+	var buf bytes.Buffer
+	s.Writer = &buf
+	cfg, _ := config.Load(filepath.Join("examples", "config.yaml"), s)
+	cfg.Indexing = true
+	if err := cfg.Process(m, m, m); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
-	s := cli.Settings{}
 	s.DryRun = true
-	var buf bytes.Buffer
+	buf = bytes.Buffer{}
 	s.Verbosity = 100
 	s.Writer = &buf
 	os.Mkdir(filepath.Join("testdata", "zzzzzzz"), 0o755)
@@ -565,7 +572,7 @@ func TestCleanDirs(t *testing.T) {
 	os.Mkdir(filepath.Join("testdata", "nvim"), 0o755)
 	os.WriteFile(filepath.Join("testdata", "test.yaml"), []byte("{}"), 0o644)
 	cfg, _ = config.Load(filepath.Join("examples", "config.yaml"), s)
-	if err := cfg.CleanDirectories(); err != nil {
+	if err := cfg.Process(m, m, m); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	dirs, _ := os.ReadDir("testdata")
@@ -580,7 +587,7 @@ func TestCleanDirs(t *testing.T) {
 	buf = bytes.Buffer{}
 	s.Writer = &buf
 	cfg, _ = config.Load(filepath.Join("examples", "config.yaml"), s)
-	if err := cfg.CleanDirectories(); err != nil {
+	if err := cfg.Process(m, m, m); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	dirs, _ = os.ReadDir("testdata")
