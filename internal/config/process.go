@@ -173,7 +173,7 @@ func (c Configuration) CleanDirectories() error {
 			continue
 		}
 		found = true
-		c.context.LogCore("removing directory: %s", name)
+		c.context.LogCore("removing directory: %s\n", name)
 		if c.context.DryRun {
 			continue
 		}
