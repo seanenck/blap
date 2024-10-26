@@ -44,10 +44,10 @@ func GenerateCompletions(w io.Writer) error {
 	comp.Executable = filepath.Base(exe)
 	comp.Command.Purge = PurgeCommand
 	comp.Command.Upgrade = UpgradeCommand
-	comp.Arg.Confirm = DisplayCommitFlag
-	comp.Arg.Applications = DisplayApplicationsFlag
-	comp.Arg.Disable = DisplayDisableFlag
-	comp.Arg.Include = DisplayIncludeFlag
+	comp.Arg.Confirm = displayCommitFlag
+	comp.Arg.Applications = displayApplicationsFlag
+	comp.Arg.Disable = displayDisableFlag
+	comp.Arg.Include = displayIncludeFlag
 	t, err := template.New("sh").Parse(bashShell)
 	if err != nil {
 		return err

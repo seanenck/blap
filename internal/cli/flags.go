@@ -27,18 +27,13 @@ const (
 	// DisableFlag disables selected applications
 	DisableFlag = "disable"
 	// IncludeFlag allows for filtering included files
-	IncludeFlag = "include"
-	isFlag      = "--"
-	// DisplayIncludeFlag is the displayed version of the include flag
-	DisplayIncludeFlag = isFlag + IncludeFlag
-	// DisplayApplicationsFlag is the displayed version of application flag
-	DisplayApplicationsFlag = isFlag + ApplicationsFlag
-	// DisplayDisableFlag is the displayed version of disable flag
-	DisplayDisableFlag = isFlag + DisableFlag
-	// DisplayVerbosityFlag is the displayed version of verbosity flag
-	DisplayVerbosityFlag = isFlag + VerbosityFlag
-	// DisplayCommitFlag is the displayed version of the commit flag
-	DisplayCommitFlag = isFlag + CommitFlag
+	IncludeFlag             = "include"
+	isFlag                  = "--"
+	displayIncludeFlag      = isFlag + IncludeFlag
+	displayApplicationsFlag = isFlag + ApplicationsFlag
+	displayDisableFlag      = isFlag + DisableFlag
+	displayVerbosityFlag    = isFlag + VerbosityFlag
+	displayCommitFlag       = isFlag + CommitFlag
 )
 
 // Parse will parse arguments to settings
