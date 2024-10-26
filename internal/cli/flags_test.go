@@ -70,4 +70,14 @@ func TestParse(t *testing.T) {
 	if c.Verbosity != 5 || c.DryRun || !c.FilterApplications() || c.AllowApplication("nvim") {
 		t.Errorf("invalid result: %v", c)
 	}
+	if c.CleanDirs {
+		t.Error("invalid, cleandirs should be set")
+	}
+	c, err = cli.Parse(nil, true, []string{"-directories"})
+	if err != nil {
+		t.Errorf("invalid error: %v", err)
+	}
+	if !c.CleanDirs {
+		t.Error("invalid, cleandirs should be set")
+	}
 }

@@ -12,8 +12,12 @@ import (
 	"github.com/seanenck/blap/internal/config/types"
 )
 
-func helpLine(w io.Writer, flag, text string) {
-	fmt.Fprintf(w, "  %-15s %s\n", flag, text)
+func helpLine(w io.Writer, sub bool, flag, text string) {
+	spacing := ""
+	if sub {
+		spacing = "  "
+	}
+	fmt.Fprintf(w, "  %-15s %s\n", fmt.Sprintf("%s%s", spacing, flag), text)
 }
 
 func configPath(root string) string {
@@ -34,14 +38,15 @@ func help(w io.Writer) error {
 		return err
 	}
 	fmt.Fprintf(w, "%s\n", filepath.Base(exe))
-	helpLine(w, UpgradeCommand, "upgrade packages")
-	helpLine(w, VersionCommand, "display version information")
-	helpLine(w, PurgeCommand, "purge old versions")
-	helpLine(w, displayApplicationsFlag, "specify a subset of packages (regex)")
-	helpLine(w, displayDisableFlag, "disable applications (regex)")
-	helpLine(w, displayIncludeFlag, "include specified files only (regex)")
-	helpLine(w, displayVerbosityFlag, "increase/decrease output verbosity")
-	helpLine(w, displayCommitFlag, "confirm and commit changes for actions")
+	helpLine(w, false, VersionCommand, "display version information")
+	helpLine(w, false, UpgradeCommand, "upgrade packages")
+	helpLine(w, true, displayApplicationsFlag, "specify a subset of packages (regex)")
+	helpLine(w, true, displayDisableFlag, "disable applications (regex)")
+	helpLine(w, true, displayIncludeFlag, "include specified files only (regex)")
+	helpLine(w, false, PurgeCommand, "purge old versions")
+	helpLine(w, true, displayCleanDirFlag, "cleanup orphan directories during purge")
+	helpLine(w, false, displayVerbosityFlag, "increase/decrease output verbosity")
+	helpLine(w, false, displayCommitFlag, "confirm and commit changes for actions")
 	fmt.Fprintln(w)
 	fmt.Fprintln(w, "configuration file locations:")
 	for _, c := range DefaultConfigs() {

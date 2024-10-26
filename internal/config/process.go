@@ -154,6 +154,39 @@ func (c Configuration) Changed() []string {
 	return c.handler.changed
 }
 
+// CleanDirectories will cleanup untracked applicaton directories
+func (c Configuration) CleanDirectories() error {
+	if c.Applications == nil {
+		return nil
+	}
+	c.Variables.Set()
+	defer c.Variables.Unset()
+	dir := c.Directory.String()
+	dirs, err := os.ReadDir(dir)
+	if err != nil {
+		return err
+	}
+	found := false
+	for _, d := range dirs {
+		name := d.Name()
+		if _, ok := c.Applications[name]; ok {
+			continue
+		}
+		found = true
+		c.context.LogCore("removing directory: %s", name)
+		if c.context.DryRun {
+			continue
+		}
+		if err := os.RemoveAll(filepath.Join(dir, name)); err != nil {
+			return err
+		}
+	}
+	if found && c.context.DryRun {
+		c.isDryRun()
+	}
+	return nil
+}
+
 // Process will process application definitions
 func (c Configuration) Process(executor Executor, fetcher fetch.Retriever, runner util.Runner) error {
 	if c.Applications == nil {
@@ -241,7 +274,7 @@ func (c Configuration) Process(executor Executor, fetcher fetch.Retriever, runne
 	if c.context.DryRun {
 		if len(changed) > 0 {
 			removeIndex = false
-			c.context.LogCore("\n[DRYRUN] impactful changes were not committed\n")
+			c.isDryRun()
 			if c.Indexing {
 				b, err := json.Marshal(Index{Names: changed})
 				if err != nil {
@@ -257,4 +290,8 @@ func (c Configuration) Process(executor Executor, fetcher fetch.Retriever, runne
 		return os.Remove(indexFile)
 	}
 	return nil
+}
+
+func (c Configuration) isDryRun() {
+	c.context.LogCore("\n[DRYRUN] impactful changes were not committed\n")
 }

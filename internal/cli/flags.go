@@ -27,13 +27,16 @@ const (
 	// DisableFlag disables selected applications
 	DisableFlag = "disable"
 	// IncludeFlag allows for filtering included files
-	IncludeFlag             = "include"
+	IncludeFlag = "include"
+	// CleanDirFlag indicates directory cleanup should occur
+	CleanDirFlag            = "directories"
 	isFlag                  = "--"
 	displayIncludeFlag      = isFlag + IncludeFlag
 	displayApplicationsFlag = isFlag + ApplicationsFlag
 	displayDisableFlag      = isFlag + DisableFlag
 	displayVerbosityFlag    = isFlag + VerbosityFlag
 	displayCommitFlag       = isFlag + CommitFlag
+	displayCleanDirFlag     = isFlag + CleanDirFlag
 )
 
 // Parse will parse arguments to settings
@@ -41,6 +44,7 @@ func Parse(w io.Writer, purging bool, args []string) (*Settings, error) {
 	var appFilter string
 	var negateFilter bool
 	var includeFilter string
+	var cleanDirs bool
 	dryRun := true
 	verbosity := InfoVerbosity
 	if len(args) > 0 {
@@ -48,7 +52,10 @@ func Parse(w io.Writer, purging bool, args []string) (*Settings, error) {
 		var apps *string
 		var disable *string
 		var include *string
-		if !purging {
+		var dirs *bool
+		if purging {
+			dirs = set.Bool(CleanDirFlag, false, "cleanup orphaned directories")
+		} else {
 			apps = set.String(ApplicationsFlag, "", "limit application checks")
 			disable = set.String(DisableFlag, "", "disable applications")
 			include = set.String(IncludeFlag, "", "include only matched files")
@@ -62,7 +69,9 @@ func Parse(w io.Writer, purging bool, args []string) (*Settings, error) {
 		if verbosity < 0 {
 			return nil, fmt.Errorf("verbosity must be >= 0 (%d)", verbosity)
 		}
-		if !purging {
+		if purging {
+			cleanDirs = *dirs
+		} else {
 			a := *apps
 			d := *disable
 			includeFilter = *include
@@ -91,6 +100,7 @@ func Parse(w io.Writer, purging bool, args []string) (*Settings, error) {
 		includeReg = re
 	}
 	ctx := &Settings{
+		CleanDirs: cleanDirs,
 		DryRun:    dryRun,
 		Verbosity: verbosity,
 		Purge:     purging,

@@ -66,5 +66,8 @@ func run() error {
 	if err != nil {
 		return err
 	}
+	if ctx.CleanDirs {
+		return cfg.CleanDirectories()
+	}
 	return cfg.Process(cfg, &retriever.ResourceFetcher{Context: *ctx}, util.CommandRunner{})
 }

@@ -30,6 +30,7 @@ type Settings struct {
 		regex  *regexp.Regexp
 	}
 	Verbosity int
+	CleanDirs bool
 }
 
 // FilterApplications indicates if the

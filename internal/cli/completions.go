@@ -22,6 +22,7 @@ type Completion struct {
 		Confirm      string
 		Disable      string
 		Include      string
+		CleanDirs    string
 	}
 }
 
@@ -48,6 +49,7 @@ func GenerateCompletions(w io.Writer) error {
 	comp.Arg.Applications = displayApplicationsFlag
 	comp.Arg.Disable = displayDisableFlag
 	comp.Arg.Include = displayIncludeFlag
+	comp.Arg.CleanDirs = displayCleanDirFlag
 	t, err := template.New("sh").Parse(bashShell)
 	if err != nil {
 		return err

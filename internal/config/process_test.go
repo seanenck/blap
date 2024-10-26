@@ -544,3 +544,49 @@ func TestConfigurationIndexProcessSet(t *testing.T) {
 		t.Errorf("invalid error: %v", err)
 	}
 }
+
+func TestCleanDirs(t *testing.T) {
+	os.RemoveAll("testdata")
+	os.Mkdir("testdata", 0o755)
+	defer func() {
+		os.RemoveAll("testdata")
+	}()
+	cfg := config.Configuration{}
+	if err := cfg.CleanDirectories(); err != nil {
+		t.Errorf("invalid error: %v", err)
+	}
+	s := cli.Settings{}
+	s.DryRun = true
+	var buf bytes.Buffer
+	s.Verbosity = 100
+	s.Writer = &buf
+	os.Mkdir(filepath.Join("testdata", "abc"), 0o644)
+	os.Mkdir(filepath.Join("testdata", "nvim"), 0o644)
+	cfg, _ = config.Load(filepath.Join("examples", "config.yaml"), s)
+	if err := cfg.CleanDirectories(); err != nil {
+		t.Errorf("invalid error: %v", err)
+	}
+	dirs, _ := os.ReadDir("testdata")
+	if len(dirs) != 2 {
+		t.Errorf("invalid dirs: %v", dirs)
+	}
+	str := buf.String()
+	if !strings.Contains(str, "DRYRUN") || !strings.Contains(str, "abc") {
+		t.Errorf("invalid buffer: %s", str)
+	}
+	s.DryRun = false
+	buf = bytes.Buffer{}
+	s.Writer = &buf
+	cfg, _ = config.Load(filepath.Join("examples", "config.yaml"), s)
+	if err := cfg.CleanDirectories(); err != nil {
+		t.Errorf("invalid error: %v", err)
+	}
+	dirs, _ = os.ReadDir("testdata")
+	if len(dirs) != 1 {
+		t.Errorf("invalid dirs: %v", dirs)
+	}
+	str = buf.String()
+	if strings.Contains(str, "DRYRUN") || !strings.Contains(str, "abc") {
+		t.Errorf("invalid buffer: %s", str)
+	}
+}
