@@ -2,8 +2,10 @@
 package config
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 	"slices"
 	"sort"
@@ -23,13 +25,13 @@ type (
 	errorList      []error
 	processHandler struct {
 		assets  []string
-		updated []string
+		changed []string
 	}
 	// Executor is the process executor
 	Executor interface {
 		Do(Context) error
-		Purge() (bool, error)
-		Updated() []string
+		Purge(purge.OnPurge) error
+		Changed() []string
 	}
 	// Context allows processing an application (fetch, extract, command)
 	Context struct {
@@ -37,6 +39,11 @@ type (
 		Application types.Application
 		Fetcher     fetch.Retriever
 		Runner      util.Runner
+		Executor    Executor
+	}
+	// Index is the persisted index state information
+	Index struct {
+		Names []string `json:"names"`
 	}
 )
 
@@ -54,8 +61,8 @@ func (c Configuration) Do(ctx Context) error {
 	if ctx.Name == "" {
 		return errors.New("name is required")
 	}
-	if ctx.Fetcher == nil || ctx.Runner == nil {
-		return errors.New("fetcher and runner must be set")
+	if ctx.Fetcher == nil || ctx.Runner == nil || ctx.Executor == nil {
+		return errors.New("fetcher, runner, and executor must be set")
 	}
 	if c.handler == nil {
 		return errors.New("configuration not setup")
@@ -64,6 +71,9 @@ func (c Configuration) Do(ctx Context) error {
 	rsrc, err := ctx.Fetcher.Process(fetch.Context{Name: ctx.Name}, ctx.Application.Source.Items())
 	if err != nil {
 		return err
+	}
+	if rsrc == nil {
+		return errors.New("unexpected nil resource")
 	}
 	if err := rsrc.SetAppData(ctx.Name, c.Directory.String(), ctx.Application.Extract); err != nil {
 		return err
@@ -76,8 +86,13 @@ func (c Configuration) Do(ctx Context) error {
 		c.handler.assets = append(c.handler.assets, filepath.Base(f))
 		processLock.Unlock()
 	}
+	onChange := func() {
+		processLock.Lock()
+		c.handler.changed = append(c.handler.changed, ctx.Name)
+		processLock.Unlock()
+	}
 	if c.context.Purge {
-		return nil
+		return ctx.Executor.Purge(onChange)
 	}
 
 	did, err := ctx.Fetcher.Download(c.context.DryRun, rsrc.URL, rsrc.Paths.Archive)
@@ -85,9 +100,7 @@ func (c Configuration) Do(ctx Context) error {
 		return err
 	}
 	if did {
-		processLock.Lock()
-		c.handler.updated = append(c.handler.updated, ctx.Name)
-		processLock.Unlock()
+		onChange()
 	}
 	if c.context.DryRun {
 		return nil
@@ -118,17 +131,14 @@ func (c Configuration) Do(ctx Context) error {
 	return nil
 }
 
-// Purge will run a purge operation
-func (c Configuration) Purge() (bool, error) {
-	return purge.Do(c.Directory.String(), c.handler.assets, c.Pinned, c.context)
+// Purge will run purge on inputs
+func (c Configuration) Purge(fxn purge.OnPurge) error {
+	return purge.Do(c.Directory.String(), c.handler.assets, c.Pinned, c.context, fxn)
 }
 
-// Updated gets the list of updated components
-func (c Configuration) Updated() []string {
-	if c.handler != nil {
-		return c.handler.updated
-	}
-	return nil
+// Changed gets the list of changed components
+func (c Configuration) Changed() []string {
+	return c.handler.changed
 }
 
 // Process will process application definitions
@@ -142,16 +152,39 @@ func (c Configuration) Process(executor Executor, fetcher fetch.Retriever, runne
 	if c.Parallelization < 0 {
 		return fmt.Errorf("parallelization must be >= 0 (have: %d)", c.Parallelization)
 	}
+	mode := "update"
+	if c.context.Purge {
+		mode = "purge"
+	}
+	indexFile := c.IndexFile(mode)
+	idx := Index{}
+	if c.Indexing {
+		if !c.context.DryRun && util.PathExists(indexFile) {
+			b, err := os.ReadFile(indexFile)
+			if err != nil {
+				return err
+			}
+			if err := json.Unmarshal(b, &idx); err != nil {
+				return err
+			}
+		}
+	}
+	hasIndex := len(idx.Names) > 0
 	fetcher.SetConnections(c.Connections)
 	var priorities []int
 	prioritySet := make(map[int][]Context)
 	for name, app := range c.Applications {
+		if hasIndex {
+			if !slices.Contains(idx.Names, name) {
+				continue
+			}
+		}
 		has, ok := prioritySet[app.Priority]
 		if !ok {
 			has = []Context{}
 			priorities = append(priorities, app.Priority)
 		}
-		has = append(has, Context{Name: name, Application: app, Fetcher: fetcher, Runner: runner})
+		has = append(has, Context{Name: name, Application: app, Fetcher: fetcher, Runner: runner, Executor: executor})
 		prioritySet[app.Priority] = has
 	}
 	sort.Ints(priorities)
@@ -181,24 +214,33 @@ func (c Configuration) Process(executor Executor, fetcher fetch.Retriever, runne
 			return errors.Join(errorSet...)
 		}
 	}
-	changed := false
-	if c.context.Purge {
-		purged, err := executor.Purge()
-		if err != nil {
-			return err
-		}
-		changed = purged
-	} else {
-		for idx, update := range executor.Updated() {
+	changed := executor.Changed()
+	if !c.context.Purge {
+		for idx, update := range changed {
 			if idx == 0 {
-				changed = true
 				c.context.LogCore("updates\n")
 			}
 			c.context.LogCore("  -> %s\n", update)
 		}
 	}
-	if c.context.DryRun && changed {
-		c.context.LogCore("\n[DRYRUN] impactful changes were not committed\n")
+	removeIndex := util.PathExists(indexFile)
+	if c.context.DryRun {
+		if len(changed) > 0 {
+			removeIndex = false
+			c.context.LogCore("\n[DRYRUN] impactful changes were not committed\n")
+			if c.Indexing {
+				b, err := json.Marshal(Index{Names: changed})
+				if err != nil {
+					return err
+				}
+				if err := os.WriteFile(indexFile, b, 0o644); err != nil {
+					return err
+				}
+			}
+		}
+	}
+	if c.Indexing && removeIndex {
+		return os.Remove(indexFile)
 	}
 	return nil
 }

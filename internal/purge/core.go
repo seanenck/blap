@@ -11,24 +11,26 @@ import (
 	"github.com/seanenck/blap/internal/cli"
 )
 
+// OnPurge is called when a purge is performed
+type OnPurge func()
+
 // Do will perform purge (or dryrun at least)
-func Do(dir string, known, pinned []string, context cli.Settings) (bool, error) {
+func Do(dir string, known, pinned []string, context cli.Settings, fxn OnPurge) error {
 	if dir == "" {
-		return false, errors.New("directory must be set")
+		return errors.New("directory must be set")
 	}
 	dirs, err := os.ReadDir(dir)
 	if err != nil {
-		return false, err
+		return err
 	}
 	var re []*regexp.Regexp
 	for _, p := range pinned {
 		r, err := regexp.Compile(p)
 		if err != nil {
-			return false, err
+			return err
 		}
 		re = append(re, r)
 	}
-	found := false
 	for _, d := range dirs {
 		name := d.Name()
 		pin := false
@@ -42,14 +44,14 @@ func Do(dir string, known, pinned []string, context cli.Settings) (bool, error) 
 			continue
 		}
 		if !slices.Contains(known, name) {
-			found = true
 			context.LogCore("purging: %s\n", name)
+			fxn()
 			if !context.DryRun {
 				if err := os.RemoveAll(filepath.Join(dir, name)); err != nil {
-					return false, err
+					return err
 				}
 			}
 		}
 	}
-	return found, nil
+	return nil
 }
