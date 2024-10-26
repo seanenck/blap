@@ -42,7 +42,7 @@ func (m *mockExecutor) expectCount(do, purge int) error {
 	return nil
 }
 
-func (m *mockExecutor) Purge(fxn purge.OnPurge) error {
+func (m *mockExecutor) Purge(dest string, fxn purge.OnPurge) error {
 	m.calledPurge++
 	fxn()
 	return m.err
@@ -187,6 +187,11 @@ func TestProcessPurge(t *testing.T) {
 	s.Purge = true
 	s.DryRun = true
 	s.Verbosity = cli.InfoVerbosity
+	os.RemoveAll("testdata")
+	os.MkdirAll(filepath.Join("testdata", "abc"), 0o755)
+	defer func() {
+		os.RemoveAll("testdata")
+	}()
 	cfg, _ := config.Load(filepath.Join("examples", "config.yaml"), s)
 	if err := cfg.Do(config.Context{Executor: m, Name: "abc", Fetcher: m, Runner: m}); err != nil {
 		t.Errorf("invalid error: %v", err)
@@ -207,7 +212,29 @@ func TestProcessPurge(t *testing.T) {
 	if fmt.Sprintf("%v", cfg.Changed()) != "[abc]" {
 		t.Errorf("invalid changed: %v", cfg.Changed())
 	}
+	s.DryRun = true
+	cfg, _ = config.Load(filepath.Join("examples", "config.yaml"), s)
+	if err := cfg.Do(config.Context{Executor: m, Name: "sabc", Fetcher: m, Runner: m}); err != nil {
+		t.Errorf("invalid error: %v", err)
+	}
+	if err := m.expectCount(0, 2); err != nil {
+		t.Errorf("invalid error: %v", err)
+	}
+	if fmt.Sprintf("%v", cfg.Changed()) != "[]" {
+		t.Errorf("invalid changed: %v", cfg.Changed())
+	}
 	s.DryRun = false
+	cfg, _ = config.Load(filepath.Join("examples", "config.yaml"), s)
+	if err := cfg.Do(config.Context{Executor: m, Name: "sabc", Fetcher: m, Runner: m}); err != nil {
+		t.Errorf("invalid error: %v", err)
+	}
+	if err := m.expectCount(0, 2); err != nil {
+		t.Errorf("invalid error: %v", err)
+	}
+	if fmt.Sprintf("%v", cfg.Changed()) != "[]" {
+		t.Errorf("invalid changed: %v", cfg.Changed())
+	}
+	os.Mkdir(filepath.Join("testdata", "sabc"), 0o755)
 	cfg, _ = config.Load(filepath.Join("examples", "config.yaml"), s)
 	if err := cfg.Do(config.Context{Executor: m, Name: "sabc", Fetcher: m, Runner: m}); err != nil {
 		t.Errorf("invalid error: %v", err)
@@ -263,11 +290,17 @@ func TestConfigurationDoErrors(t *testing.T) {
 }
 
 func TestConfigurationDo(t *testing.T) {
+	os.RemoveAll("testdata")
+	os.Mkdir("testdata", 0o755)
+	defer func() {
+		os.RemoveAll("testdata")
+	}()
 	s := cli.Settings{}
 	s.Purge = true
 	f := &mockExecutor{}
 	f.rsrc = &asset.Resource{File: "xyz.tar.xz", URL: "xxx", Tag: "123"}
 	cfg, _ := config.Load(filepath.Join("examples", "config.yaml"), s)
+	os.Mkdir(filepath.Join("testdata", "abc"), 0o755)
 	if err := cfg.Do(config.Context{Fetcher: f, Name: "abc", Runner: &mockExecutor{}, Executor: &mockExecutor{}}); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
@@ -294,11 +327,6 @@ func TestConfigurationDo(t *testing.T) {
 		t.Error("unexpected updates")
 	}
 	s.DryRun = false
-	os.RemoveAll("testdata")
-	os.Mkdir("testdata", 0o755)
-	defer func() {
-		os.RemoveAll("testdata")
-	}()
 	cfg, _ = config.Load(filepath.Join("examples", "config.yaml"), s)
 	f.rsrc = &asset.Resource{File: "xyz.tar.xz", URL: "xxx", Tag: "123"}
 	if err := cfg.Do(config.Context{Fetcher: f, Name: "abc", Runner: &mockExecutor{}, Executor: &mockExecutor{}}); err != nil {

@@ -30,7 +30,7 @@ type (
 	// Executor is the process executor
 	Executor interface {
 		Do(Context) error
-		Purge(purge.OnPurge) error
+		Purge(string, purge.OnPurge) error
 		Changed() []string
 	}
 	// Context allows processing an application (fetch, extract, command)
@@ -75,7 +75,20 @@ func (c Configuration) Do(ctx Context) error {
 	if rsrc == nil {
 		return errors.New("unexpected nil resource")
 	}
-	if err := rsrc.SetAppData(ctx.Name, c.Directory.String(), ctx.Application.Extract); err != nil {
+	to := filepath.Join(c.Directory.String(), ctx.Name)
+	hasDest := util.PathExists(to)
+	if !hasDest {
+		if c.context.Purge {
+			return nil
+		}
+		if !c.context.DryRun {
+			c.context.LogDebug("making subdirectory: %s\n", to)
+			if err := os.Mkdir(to, 0o755); err != nil {
+				return err
+			}
+		}
+	}
+	if err := rsrc.SetAppData(ctx.Name, to, ctx.Application.Extract); err != nil {
 		return err
 	}
 	for _, f := range []string{rsrc.Paths.Unpack, rsrc.Paths.Archive} {
@@ -92,7 +105,7 @@ func (c Configuration) Do(ctx Context) error {
 		processLock.Unlock()
 	}
 	if c.context.Purge {
-		return ctx.Executor.Purge(onChange)
+		return ctx.Executor.Purge(to, onChange)
 	}
 
 	did, err := ctx.Fetcher.Download(c.context.DryRun, rsrc.URL, rsrc.Paths.Archive)
@@ -132,8 +145,8 @@ func (c Configuration) Do(ctx Context) error {
 }
 
 // Purge will run purge on inputs
-func (c Configuration) Purge(fxn purge.OnPurge) error {
-	return purge.Do(c.Directory.String(), c.handler.assets, c.Pinned, c.context, fxn)
+func (c Configuration) Purge(dir string, fxn purge.OnPurge) error {
+	return purge.Do(dir, c.handler.assets, c.Pinned, c.context, fxn)
 }
 
 // Changed gets the list of changed components
