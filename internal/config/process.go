@@ -181,6 +181,7 @@ func (c Configuration) Process(executor Executor, fetcher fetch.Retriever, runne
 				return err
 			}
 		}
+		c.context.LogDebug("index: %v", idx)
 	}
 	hasIndex := len(idx.Names) > 0
 	fetcher.SetConnections(c.Connections)
