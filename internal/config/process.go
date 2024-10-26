@@ -42,7 +42,8 @@ type (
 	}
 	// Index is the persisted index state information
 	Index struct {
-		Names []string `json:"names"`
+		Names []string `json:"names,omitempty"`
+		Dirs  []string `json:"dirs,omitempty"`
 	}
 )
 
@@ -154,13 +155,14 @@ func (c Configuration) Changed() []string {
 	return c.handler.changed
 }
 
-func (c Configuration) cleanDirectories() (bool, error) {
+func (c Configuration) cleanDirectories(restrict []string) ([]string, error) {
 	dir := c.Directory.String()
 	dirs, err := os.ReadDir(dir)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
-	found := false
+	restricted := len(restrict) > 0
+	var results []string
 	for _, d := range dirs {
 		if !d.IsDir() {
 			continue
@@ -168,6 +170,11 @@ func (c Configuration) cleanDirectories() (bool, error) {
 		name := d.Name()
 		if _, ok := c.Applications[name]; ok {
 			continue
+		}
+		if restricted {
+			if !slices.Contains(restrict, name) {
+				continue
+			}
 		}
 		matched := false
 		for _, p := range c.pinnedMatchers {
@@ -179,16 +186,16 @@ func (c Configuration) cleanDirectories() (bool, error) {
 		if matched {
 			continue
 		}
-		found = true
+		results = append(results, name)
 		c.context.LogCore("removing directory: %s\n", name)
 		if c.context.DryRun {
 			continue
 		}
 		if err := os.RemoveAll(filepath.Join(dir, name)); err != nil {
-			return false, err
+			return nil, err
 		}
 	}
-	return found, nil
+	return results, nil
 }
 
 // Process will process application definitions
@@ -267,13 +274,19 @@ func (c Configuration) Process(executor Executor, fetcher fetch.Retriever, runne
 	}
 	changed := executor.Changed()
 	isDryRun := false
+	newIndex := Index{}
 	if c.context.Purge {
 		if c.context.CleanDirs {
-			did, err := c.cleanDirectories()
+			dirs := idx.Dirs
+			if c.context.DryRun {
+				dirs = []string{}
+			}
+			results, err := c.cleanDirectories(dirs)
 			if err != nil {
 				return err
 			}
-			if did && c.context.DryRun {
+			if c.context.DryRun && len(results) > 0 {
+				newIndex.Dirs = results
 				isDryRun = true
 			}
 		}
@@ -285,24 +298,27 @@ func (c Configuration) Process(executor Executor, fetcher fetch.Retriever, runne
 			c.context.LogCore("  -> %s\n", update)
 		}
 	}
-	removeIndex := util.PathExists(indexFile)
 	if c.context.DryRun {
 		if len(changed) > 0 {
-			removeIndex = false
 			isDryRun = true
-			if c.Indexing {
-				b, err := json.Marshal(Index{Names: changed})
-				if err != nil {
-					return err
-				}
-				if err := os.WriteFile(indexFile, b, 0o644); err != nil {
-					return err
-				}
-			}
+			newIndex.Names = changed
 		}
 	}
-	if c.Indexing && removeIndex {
-		return os.Remove(indexFile)
+	if c.Indexing {
+		removeIndex := util.PathExists(indexFile)
+		if c.context.DryRun && (len(newIndex.Dirs) > 0 || len(newIndex.Names) > 0) {
+			removeIndex = false
+			b, err := json.Marshal(newIndex)
+			if err != nil {
+				return err
+			}
+			if err := os.WriteFile(indexFile, b, 0o644); err != nil {
+				return err
+			}
+		}
+		if removeIndex {
+			return os.Remove(indexFile)
+		}
 	}
 	if isDryRun {
 		c.context.LogCore("\n[DRYRUN] impactful changes were not committed\n")

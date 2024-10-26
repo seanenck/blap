@@ -559,7 +559,6 @@ func TestCleanDirs(t *testing.T) {
 	var buf bytes.Buffer
 	s.Writer = &buf
 	cfg, _ := config.Load(filepath.Join("examples", "config.yaml"), s)
-	cfg.Indexing = true
 	if err := cfg.Process(m, m, m); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
@@ -592,6 +591,67 @@ func TestCleanDirs(t *testing.T) {
 	}
 	dirs, _ = os.ReadDir("testdata")
 	if len(dirs) != 3 {
+		t.Errorf("invalid dirs: %v", dirs)
+	}
+	str = buf.String()
+	if strings.Contains(str, "DRYRUN") || !strings.Contains(str, "abc") {
+		t.Errorf("invalid buffer: %s", str)
+	}
+}
+
+func TestCleanDirsIndexed(t *testing.T) {
+	os.RemoveAll("testdata")
+	os.Mkdir("testdata", 0o755)
+	defer func() {
+		os.RemoveAll("testdata")
+	}()
+	m := &mockExecutor{}
+	s := cli.Settings{}
+	s.Verbosity = cli.InfoVerbosity
+	s.Purge = true
+	s.CleanDirs = true
+	var buf bytes.Buffer
+	s.Writer = &buf
+	cfg, _ := config.Load(filepath.Join("examples", "config.yaml"), s)
+	if err := cfg.Process(m, m, m); err != nil {
+		t.Errorf("invalid error: %v", err)
+	}
+	s.DryRun = true
+	buf = bytes.Buffer{}
+	s.Verbosity = 100
+	s.Writer = &buf
+	os.Mkdir(filepath.Join("testdata", "zzzzzzz"), 0o755)
+	os.Mkdir(filepath.Join("testdata", "abc"), 0o755)
+	os.Mkdir(filepath.Join("testdata", "nvim"), 0o755)
+	os.WriteFile(filepath.Join("testdata", "test.yaml"), []byte("{}"), 0o644)
+	cfg, _ = config.Load(filepath.Join("examples", "config.yaml"), s)
+	cfg.Indexing = true
+	if err := cfg.Process(m, m, m); err != nil {
+		t.Errorf("invalid error: %v", err)
+	}
+	dirs, _ := os.ReadDir("testdata")
+	if len(dirs) != 5 {
+		t.Errorf("invalid dirs: %v", dirs)
+	}
+	b, _ := os.ReadFile(filepath.Join("testdata", ".blap.purge.index"))
+	if strings.Contains(string(b), `"dirs:["abc"]`) {
+		t.Errorf("invalid index: %s", string(b))
+	}
+	str := buf.String()
+	if !strings.Contains(str, "DRYRUN") || !strings.Contains(str, "abc") {
+		t.Errorf("invalid buffer: %s", str)
+	}
+	s.DryRun = false
+	buf = bytes.Buffer{}
+	s.Writer = &buf
+	os.Mkdir(filepath.Join("testdata", "123"), 0o755)
+	cfg, _ = config.Load(filepath.Join("examples", "config.yaml"), s)
+	cfg.Indexing = true
+	if err := cfg.Process(m, m, m); err != nil {
+		t.Errorf("invalid error: %v", err)
+	}
+	dirs, _ = os.ReadDir("testdata")
+	if len(dirs) != 4 {
 		t.Errorf("invalid dirs: %v", dirs)
 	}
 	str = buf.String()
