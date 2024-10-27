@@ -14,7 +14,6 @@ import (
 	"github.com/seanenck/blap/internal/config/types"
 	"github.com/seanenck/blap/internal/env"
 	"github.com/seanenck/blap/internal/fetch"
-	"github.com/seanenck/blap/internal/purge"
 	"github.com/seanenck/blap/internal/steps"
 	"github.com/seanenck/blap/internal/util"
 )
@@ -29,7 +28,7 @@ type (
 	// Executor is the process executor
 	Executor interface {
 		Do(Context) error
-		Purge(string, []string, purge.OnPurge) error
+		Purge(string, []string, steps.OnPurge) error
 		Changed() []string
 	}
 	// Context allows processing an application (fetch, extract, command)
@@ -146,8 +145,8 @@ func (c Configuration) Do(ctx Context) error {
 }
 
 // Purge will run purge on inputs
-func (c Configuration) Purge(dir string, assets []string, fxn purge.OnPurge) error {
-	return purge.Do(dir, assets, c.pinnedMatchers, c.context, fxn)
+func (c Configuration) Purge(dir string, assets []string, fxn steps.OnPurge) error {
+	return steps.Purge(dir, assets, c.pinnedMatchers, c.context, fxn)
 }
 
 // Changed gets the list of changed components

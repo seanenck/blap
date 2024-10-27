@@ -1,5 +1,5 @@
-// Package purge handles clearing out old variants
-package purge
+// Package steps handles clearing out old variants
+package steps
 
 import (
 	"errors"
@@ -14,8 +14,8 @@ import (
 // OnPurge is called when a purge is performed
 type OnPurge func()
 
-// Do will perform purge (or dryrun at least)
-func Do(dir string, known []string, pinned []*regexp.Regexp, context cli.Settings, fxn OnPurge) error {
+// Purge will perform purge operations (or dryrun at least)
+func Purge(dir string, known []string, pinned []*regexp.Regexp, context cli.Settings, fxn OnPurge) error {
 	if dir == "" {
 		return errors.New("directory must be set")
 	}

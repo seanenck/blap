@@ -15,7 +15,7 @@ import (
 	"github.com/seanenck/blap/internal/config"
 	"github.com/seanenck/blap/internal/config/types"
 	"github.com/seanenck/blap/internal/fetch"
-	"github.com/seanenck/blap/internal/purge"
+	"github.com/seanenck/blap/internal/steps"
 	"github.com/seanenck/blap/internal/util"
 )
 
@@ -42,7 +42,7 @@ func (m *mockExecutor) expectCount(do, purge int) error {
 	return nil
 }
 
-func (m *mockExecutor) Purge(_ string, _ []string, fxn purge.OnPurge) error {
+func (m *mockExecutor) Purge(_ string, _ []string, fxn steps.OnPurge) error {
 	m.calledPurge++
 	fxn()
 	return m.err
