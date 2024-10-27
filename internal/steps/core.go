@@ -4,15 +4,14 @@ package steps
 import (
 	"errors"
 
-	"github.com/seanenck/blap/internal/asset"
 	"github.com/seanenck/blap/internal/cli"
-	"github.com/seanenck/blap/internal/env"
+	"github.com/seanenck/blap/internal/core"
 )
 
 type (
 	// Variables define step variables for command templating
 	Variables struct {
-		*asset.Resource
+		*core.Resource
 		Directories struct {
 			Root    string
 			Working string
@@ -21,7 +20,7 @@ type (
 	// Context are step settings/context
 	Context struct {
 		Settings  cli.Settings
-		Variables env.Values[Variables]
+		Variables core.Values[Variables]
 	}
 )
 

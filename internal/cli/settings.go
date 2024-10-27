@@ -9,7 +9,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/seanenck/blap/internal/config/types"
+	"github.com/seanenck/blap/internal/core"
 	"github.com/seanenck/blap/internal/util"
 )
 
@@ -55,7 +55,7 @@ func (s Settings) AllowApplication(input string) bool {
 }
 
 // ParseToken will handle determine the appropriate token to use
-func (s Settings) ParseToken(t types.Token) (string, error) {
+func (s Settings) ParseToken(t core.Token) (string, error) {
 	for _, t := range t.Env() {
 		v := strings.TrimSpace(os.Getenv(t))
 		if v != "" {

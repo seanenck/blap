@@ -5,13 +5,12 @@ import (
 	"errors"
 	"path/filepath"
 
-	"github.com/seanenck/blap/internal/config/types"
-	"github.com/seanenck/blap/internal/env"
+	"github.com/seanenck/blap/internal/core"
 	"github.com/seanenck/blap/internal/util"
 )
 
 // Do will run each build step
-func Do(steps []types.Step, builder util.Runner, ctx Context, e types.CommandEnvironment) error {
+func Do(steps []core.Step, builder util.Runner, ctx Context, e core.CommandEnvironment) error {
 	if builder == nil {
 		return errors.New("builder is unset")
 	}
@@ -35,7 +34,7 @@ func Do(steps []types.Step, builder util.Runner, ctx Context, e types.CommandEnv
 		}
 		clone := ctx.Variables.Vars.Clone()
 		clone.Directories.Working = to
-		v, err := env.NewValues(ctx.Variables.Name, clone)
+		v, err := core.NewValues(ctx.Variables.Name, clone)
 		if err != nil {
 			return err
 		}
@@ -65,7 +64,7 @@ func Do(steps []types.Step, builder util.Runner, ctx Context, e types.CommandEnv
 	return nil
 }
 
-func runStep(ctx Context, builder util.Runner, to, exe string, args []string, env types.CommandEnvironment, doClear bool) error {
+func runStep(ctx Context, builder util.Runner, to, exe string, args []string, env core.CommandEnvironment, doClear bool) error {
 	env.Variables.Set()
 	defer env.Variables.Unset()
 	run := util.RunSettings{}

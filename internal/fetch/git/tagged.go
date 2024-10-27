@@ -8,13 +8,12 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/seanenck/blap/internal/asset"
-	"github.com/seanenck/blap/internal/config/types"
+	"github.com/seanenck/blap/internal/core"
 	"github.com/seanenck/blap/internal/fetch"
 )
 
 // Tagged gets a tagged (git tag) release
-func Tagged(caller fetch.Retriever, ctx fetch.Context, a types.GitMode) (*asset.Resource, error) {
+func Tagged(caller fetch.Retriever, ctx fetch.Context, a core.GitMode) (*core.Resource, error) {
 	if a.Tagged == nil {
 		return nil, errors.New("tagged definition is nil")
 	}
@@ -72,5 +71,5 @@ func Tagged(caller fetch.Retriever, ctx fetch.Context, a types.GitMode) (*asset.
 		return nil, err
 	}
 	url := strings.TrimSpace(tl)
-	return &asset.Resource{URL: url, File: filepath.Base(url), Tag: tag}, nil
+	return &core.Resource{URL: url, File: filepath.Base(url), Tag: tag}, nil
 }

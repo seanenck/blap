@@ -1,5 +1,5 @@
-// Package types maintains configuration definitions
-package types
+// Package core maintains configuration definitions
+package core
 
 import (
 	"fmt"

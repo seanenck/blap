@@ -1,5 +1,5 @@
-// Package env handles environment settings
-package env
+// Package core handles templating value
+package core
 
 import (
 	"bytes"

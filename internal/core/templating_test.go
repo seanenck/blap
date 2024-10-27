@@ -1,17 +1,17 @@
-package env_test
+package core_test
 
 import (
 	"testing"
 
-	"github.com/seanenck/blap/internal/env"
+	"github.com/seanenck/blap/internal/core"
 	"github.com/seanenck/blap/internal/util"
 )
 
 func TestNewValues(t *testing.T) {
-	if _, err := env.NewValues("", struct{}{}); err == nil || err.Error() != "name must be set" {
+	if _, err := core.NewValues("", struct{}{}); err == nil || err.Error() != "name must be set" {
 		t.Errorf("invalid error: %v", err)
 	}
-	obj, _ := env.NewValues("y", struct{}{})
+	obj, _ := core.NewValues("y", struct{}{})
 	if obj.OS == "" {
 		t.Errorf("invalid OS: %s", obj.OS)
 	}
@@ -27,7 +27,7 @@ func TestNewValues(t *testing.T) {
 	type testType struct {
 		x int
 	}
-	res, _ := env.NewValues("x", testType{1})
+	res, _ := core.NewValues("x", testType{1})
 	if res.OS == "" {
 		t.Errorf("invalid OS: %s", obj.OS)
 	}
@@ -43,7 +43,7 @@ func TestNewValues(t *testing.T) {
 }
 
 func TestTemplate(t *testing.T) {
-	o, _ := env.NewValues("abc", struct{ Tag string }{"a"})
+	o, _ := core.NewValues("abc", struct{ Tag string }{"a"})
 	v, err := o.Template("{{ $.Vars.Tag }}{{ $.Name }}")
 	if err != nil {
 		t.Errorf("invalid error: %v", err)

@@ -1,5 +1,5 @@
-// Package config handles processing yaml configs
-package config
+// Package processing handles processing yaml configs
+package processing
 
 import (
 	"encoding/json"
@@ -11,8 +11,7 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/seanenck/blap/internal/config/types"
-	"github.com/seanenck/blap/internal/env"
+	"github.com/seanenck/blap/internal/core"
 	"github.com/seanenck/blap/internal/fetch"
 	"github.com/seanenck/blap/internal/steps"
 	"github.com/seanenck/blap/internal/util"
@@ -34,7 +33,7 @@ type (
 	// Context allows processing an application (fetch, extract, command)
 	Context struct {
 		Name        string
-		Application types.Application
+		Application core.Application
 		Fetcher     fetch.Retriever
 		Runner      util.Runner
 		Executor    Executor
@@ -129,7 +128,7 @@ func (c Configuration) Do(ctx Context) error {
 	vars := steps.Variables{}
 	vars.Resource = rsrc
 	vars.Directories.Root = dest
-	e, err := env.NewValues(ctx.Name, vars)
+	e, err := core.NewValues(ctx.Name, vars)
 	if err != nil {
 		return err
 	}

@@ -1,4 +1,4 @@
-package config_test
+package processing_test
 
 import (
 	"bytes"
@@ -10,11 +10,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/seanenck/blap/internal/asset"
 	"github.com/seanenck/blap/internal/cli"
-	"github.com/seanenck/blap/internal/config"
-	"github.com/seanenck/blap/internal/config/types"
+	"github.com/seanenck/blap/internal/core"
 	"github.com/seanenck/blap/internal/fetch"
+	"github.com/seanenck/blap/internal/processing"
 	"github.com/seanenck/blap/internal/steps"
 	"github.com/seanenck/blap/internal/util"
 )
@@ -22,7 +21,7 @@ import (
 type mockExecutor struct {
 	name        string
 	err         error
-	rsrc        *asset.Resource
+	rsrc        *core.Resource
 	dl          bool
 	static      bool
 	env         bool
@@ -48,7 +47,7 @@ func (m *mockExecutor) Purge(_ string, _ []string, fxn steps.OnPurge) error {
 	return m.err
 }
 
-func (m *mockExecutor) Do(ctx config.Context) error {
+func (m *mockExecutor) Do(ctx processing.Context) error {
 	m.calledDo++
 	m.name = ctx.Name
 	for _, e := range os.Environ() {
@@ -63,10 +62,10 @@ func (m *mockExecutor) Download(bool, string, string) (bool, error) {
 	return m.dl, m.err
 }
 
-func (m *mockExecutor) SetConnections(types.Connections) {
+func (m *mockExecutor) SetConnections(core.Connections) {
 }
 
-func (m *mockExecutor) Process(fetch.Context, iter.Seq[any]) (*asset.Resource, error) {
+func (m *mockExecutor) Process(fetch.Context, iter.Seq[any]) (*core.Resource, error) {
 	return m.rsrc, m.err
 }
 
@@ -101,7 +100,7 @@ func (m *mockExecutor) GitHubFetch(string, string, any) error {
 }
 
 func TestProcessUpdate(t *testing.T) {
-	cfg := config.Configuration{}
+	cfg := processing.Configuration{}
 	m := &mockExecutor{}
 	if err := cfg.Process(m, m, m); err != nil {
 		t.Errorf("invalid error: %v", err)
@@ -109,8 +108,8 @@ func TestProcessUpdate(t *testing.T) {
 	if err := m.noCount(); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
-	cfg.Applications = make(map[string]types.Application)
-	cfg.Applications["go"] = types.Application{}
+	cfg.Applications = make(map[string]core.Application)
+	cfg.Applications["go"] = core.Application{}
 	if err := cfg.Process(m, m, m); err == nil || err.Error() != "configuration not ready" {
 		t.Errorf("invalid error: %v", err)
 	}
@@ -121,7 +120,7 @@ func TestProcessUpdate(t *testing.T) {
 	s.Verbosity = cli.InfoVerbosity
 	var buf bytes.Buffer
 	s.Writer = &buf
-	cfg, _ = config.Load(filepath.Join("examples", "config.yaml"), s)
+	cfg, _ = processing.Load(filepath.Join("examples", "config.yaml"), s)
 	cfg.Parallelization = -1
 	if err := cfg.Process(m, m, m); err == nil || err.Error() != "parallelization must be >= 0 (have: -1)" {
 		t.Errorf("invalid error: %v", err)
@@ -141,7 +140,7 @@ func TestProcessUpdate(t *testing.T) {
 	s.DryRun = true
 	buf = bytes.Buffer{}
 	s.Writer = &buf
-	cfg, _ = config.Load(filepath.Join("examples", "config.yaml"), s)
+	cfg, _ = processing.Load(filepath.Join("examples", "config.yaml"), s)
 	if err := cfg.Process(m, m, m); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
@@ -157,7 +156,7 @@ func TestProcessUpdate(t *testing.T) {
 	}
 	buf = bytes.Buffer{}
 	s.Writer = &buf
-	cfg, _ = config.Load(filepath.Join("examples", "config.yaml"), s)
+	cfg, _ = processing.Load(filepath.Join("examples", "config.yaml"), s)
 	m.static = true
 	if err := cfg.Process(m, m, m); err != nil {
 		t.Errorf("invalid error: %v", err)
@@ -179,7 +178,7 @@ func TestProcessUpdate(t *testing.T) {
 
 func TestProcessPurge(t *testing.T) {
 	m := &mockExecutor{}
-	m.rsrc = &asset.Resource{}
+	m.rsrc = &core.Resource{}
 	m.rsrc.URL = "abc"
 	m.rsrc.File = "xyz"
 	m.rsrc.Tag = "tag"
@@ -192,8 +191,8 @@ func TestProcessPurge(t *testing.T) {
 	defer func() {
 		os.RemoveAll("testdata")
 	}()
-	cfg, _ := config.Load(filepath.Join("examples", "config.yaml"), s)
-	if err := cfg.Do(config.Context{Executor: m, Name: "abc", Fetcher: m, Runner: m}); err != nil {
+	cfg, _ := processing.Load(filepath.Join("examples", "config.yaml"), s)
+	if err := cfg.Do(processing.Context{Executor: m, Name: "abc", Fetcher: m, Runner: m}); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	if err := m.expectCount(0, 1); err != nil {
@@ -202,8 +201,8 @@ func TestProcessPurge(t *testing.T) {
 	if fmt.Sprintf("%v", cfg.Changed()) != "[abc]" {
 		t.Errorf("invalid changed: %v", cfg.Changed())
 	}
-	cfg, _ = config.Load(filepath.Join("examples", "config.yaml"), s)
-	if err := cfg.Do(config.Context{Executor: m, Name: "abc", Fetcher: m, Runner: m}); err != nil {
+	cfg, _ = processing.Load(filepath.Join("examples", "config.yaml"), s)
+	if err := cfg.Do(processing.Context{Executor: m, Name: "abc", Fetcher: m, Runner: m}); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	if err := m.expectCount(0, 2); err != nil {
@@ -213,8 +212,8 @@ func TestProcessPurge(t *testing.T) {
 		t.Errorf("invalid changed: %v", cfg.Changed())
 	}
 	s.DryRun = true
-	cfg, _ = config.Load(filepath.Join("examples", "config.yaml"), s)
-	if err := cfg.Do(config.Context{Executor: m, Name: "sabc", Fetcher: m, Runner: m}); err != nil {
+	cfg, _ = processing.Load(filepath.Join("examples", "config.yaml"), s)
+	if err := cfg.Do(processing.Context{Executor: m, Name: "sabc", Fetcher: m, Runner: m}); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	if err := m.expectCount(0, 2); err != nil {
@@ -224,8 +223,8 @@ func TestProcessPurge(t *testing.T) {
 		t.Errorf("invalid changed: %v", cfg.Changed())
 	}
 	s.DryRun = false
-	cfg, _ = config.Load(filepath.Join("examples", "config.yaml"), s)
-	if err := cfg.Do(config.Context{Executor: m, Name: "sabc", Fetcher: m, Runner: m}); err != nil {
+	cfg, _ = processing.Load(filepath.Join("examples", "config.yaml"), s)
+	if err := cfg.Do(processing.Context{Executor: m, Name: "sabc", Fetcher: m, Runner: m}); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	if err := m.expectCount(0, 2); err != nil {
@@ -235,8 +234,8 @@ func TestProcessPurge(t *testing.T) {
 		t.Errorf("invalid changed: %v", cfg.Changed())
 	}
 	os.Mkdir(filepath.Join("testdata", "sabc"), 0o755)
-	cfg, _ = config.Load(filepath.Join("examples", "config.yaml"), s)
-	if err := cfg.Do(config.Context{Executor: m, Name: "sabc", Fetcher: m, Runner: m}); err != nil {
+	cfg, _ = processing.Load(filepath.Join("examples", "config.yaml"), s)
+	if err := cfg.Do(processing.Context{Executor: m, Name: "sabc", Fetcher: m, Runner: m}); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	if err := m.expectCount(0, 3); err != nil {
@@ -255,36 +254,36 @@ func TestProcessDoError(t *testing.T) {
 	s.Verbosity = cli.InfoVerbosity
 	var buf bytes.Buffer
 	s.Writer = &buf
-	cfg, _ := config.Load(filepath.Join("examples", "config.yaml"), s)
+	cfg, _ := processing.Load(filepath.Join("examples", "config.yaml"), s)
 	if err := cfg.Process(m, m, m); err == nil || !strings.Contains(err.Error(), "error: ERROR") {
 		t.Errorf("invalid error: %v", err)
 	}
 	m.err = nil
-	if err := cfg.Do(config.Context{Executor: m, Name: "abc", Fetcher: m, Runner: m}); err == nil || err.Error() != "unexpected nil resource" {
+	if err := cfg.Do(processing.Context{Executor: m, Name: "abc", Fetcher: m, Runner: m}); err == nil || err.Error() != "unexpected nil resource" {
 		t.Errorf("invalid error: %v", err)
 	}
 }
 
 func TestConfigurationDoErrors(t *testing.T) {
 	s := cli.Settings{}
-	cfg, _ := config.Load(filepath.Join("examples", "config.yaml"), s)
-	if err := cfg.Do(config.Context{}); err == nil || err.Error() != "name is required" {
+	cfg, _ := processing.Load(filepath.Join("examples", "config.yaml"), s)
+	if err := cfg.Do(processing.Context{}); err == nil || err.Error() != "name is required" {
 		t.Errorf("invalid error: %v", err)
 	}
-	if err := cfg.Do(config.Context{Name: "abc"}); err == nil || err.Error() != "fetcher, runner, and executor must be set" {
+	if err := cfg.Do(processing.Context{Name: "abc"}); err == nil || err.Error() != "fetcher, runner, and executor must be set" {
 		t.Errorf("invalid error: %v", err)
 	}
-	if err := cfg.Do(config.Context{Name: "abc", Fetcher: &mockExecutor{}}); err == nil || err.Error() != "fetcher, runner, and executor must be set" {
+	if err := cfg.Do(processing.Context{Name: "abc", Fetcher: &mockExecutor{}}); err == nil || err.Error() != "fetcher, runner, and executor must be set" {
 		t.Errorf("invalid error: %v", err)
 	}
-	if err := cfg.Do(config.Context{Name: "abc", Runner: &mockExecutor{}}); err == nil || err.Error() != "fetcher, runner, and executor must be set" {
+	if err := cfg.Do(processing.Context{Name: "abc", Runner: &mockExecutor{}}); err == nil || err.Error() != "fetcher, runner, and executor must be set" {
 		t.Errorf("invalid error: %v", err)
 	}
-	if err := cfg.Do(config.Context{Name: "abc", Runner: &mockExecutor{}, Fetcher: &mockExecutor{}}); err == nil || err.Error() != "fetcher, runner, and executor must be set" {
+	if err := cfg.Do(processing.Context{Name: "abc", Runner: &mockExecutor{}, Fetcher: &mockExecutor{}}); err == nil || err.Error() != "fetcher, runner, and executor must be set" {
 		t.Errorf("invalid error: %v", err)
 	}
-	cfg = config.Configuration{}
-	if err := cfg.Do(config.Context{Fetcher: &mockExecutor{}, Name: "abc", Runner: &mockExecutor{}, Executor: &mockExecutor{}}); err == nil || err.Error() != "configuration not setup" {
+	cfg = processing.Configuration{}
+	if err := cfg.Do(processing.Context{Fetcher: &mockExecutor{}, Name: "abc", Runner: &mockExecutor{}, Executor: &mockExecutor{}}); err == nil || err.Error() != "configuration not setup" {
 		t.Errorf("invalid error: %v", err)
 	}
 }
@@ -298,10 +297,10 @@ func TestConfigurationDo(t *testing.T) {
 	s := cli.Settings{}
 	s.Purge = true
 	f := &mockExecutor{}
-	f.rsrc = &asset.Resource{File: "xyz.tar.xz", URL: "xxx", Tag: "123"}
-	cfg, _ := config.Load(filepath.Join("examples", "config.yaml"), s)
+	f.rsrc = &core.Resource{File: "xyz.tar.xz", URL: "xxx", Tag: "123"}
+	cfg, _ := processing.Load(filepath.Join("examples", "config.yaml"), s)
 	os.Mkdir(filepath.Join("testdata", "abc"), 0o755)
-	if err := cfg.Do(config.Context{Fetcher: f, Name: "abc", Runner: &mockExecutor{}, Executor: &mockExecutor{}}); err != nil {
+	if err := cfg.Do(processing.Context{Fetcher: f, Name: "abc", Runner: &mockExecutor{}, Executor: &mockExecutor{}}); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	if fmt.Sprintf("%v", cfg.Changed()) != "[abc]" {
@@ -309,27 +308,27 @@ func TestConfigurationDo(t *testing.T) {
 	}
 	s.Purge = false
 	s.DryRun = true
-	cfg, _ = config.Load(filepath.Join("examples", "config.yaml"), s)
-	f.rsrc = &asset.Resource{File: "xyz.tar.xz", URL: "xxx", Tag: "123"}
-	if err := cfg.Do(config.Context{Fetcher: f, Name: "abc", Runner: &mockExecutor{}, Executor: &mockExecutor{}}); err != nil {
+	cfg, _ = processing.Load(filepath.Join("examples", "config.yaml"), s)
+	f.rsrc = &core.Resource{File: "xyz.tar.xz", URL: "xxx", Tag: "123"}
+	if err := cfg.Do(processing.Context{Fetcher: f, Name: "abc", Runner: &mockExecutor{}, Executor: &mockExecutor{}}); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	if len(cfg.Changed()) != 0 {
 		t.Error("unexpected updates, no dl")
 	}
-	cfg, _ = config.Load(filepath.Join("examples", "config.yaml"), s)
-	f.rsrc = &asset.Resource{File: "xyz.tar.xz", URL: "xxx", Tag: "123"}
+	cfg, _ = processing.Load(filepath.Join("examples", "config.yaml"), s)
+	f.rsrc = &core.Resource{File: "xyz.tar.xz", URL: "xxx", Tag: "123"}
 	f.dl = true
-	if err := cfg.Do(config.Context{Fetcher: f, Name: "abc", Runner: &mockExecutor{}, Executor: &mockExecutor{}}); err != nil {
+	if err := cfg.Do(processing.Context{Fetcher: f, Name: "abc", Runner: &mockExecutor{}, Executor: &mockExecutor{}}); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	if fmt.Sprintf("%v", cfg.Changed()) != "[abc]" {
 		t.Error("unexpected updates")
 	}
 	s.DryRun = false
-	cfg, _ = config.Load(filepath.Join("examples", "config.yaml"), s)
-	f.rsrc = &asset.Resource{File: "xyz.tar.xz", URL: "xxx", Tag: "123"}
-	if err := cfg.Do(config.Context{Fetcher: f, Name: "abc", Runner: &mockExecutor{}, Executor: &mockExecutor{}}); err != nil {
+	cfg, _ = processing.Load(filepath.Join("examples", "config.yaml"), s)
+	f.rsrc = &core.Resource{File: "xyz.tar.xz", URL: "xxx", Tag: "123"}
+	if err := cfg.Do(processing.Context{Fetcher: f, Name: "abc", Runner: &mockExecutor{}, Executor: &mockExecutor{}}); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	if len(cfg.Changed()) != 1 {
@@ -343,7 +342,7 @@ func TestConfigurationBasicProcess(t *testing.T) {
 	s.Verbosity = cli.InfoVerbosity
 	var buf bytes.Buffer
 	s.Writer = &buf
-	cfg, _ := config.Load(filepath.Join("examples", "config.yaml"), s)
+	cfg, _ := processing.Load(filepath.Join("examples", "config.yaml"), s)
 	if err := cfg.Process(m, m, m); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
@@ -355,7 +354,7 @@ func TestConfigurationBasicProcess(t *testing.T) {
 		t.Errorf("invalid buffer: %s", str)
 	}
 	s.DryRun = true
-	cfg, _ = config.Load(filepath.Join("examples", "config.yaml"), s)
+	cfg, _ = processing.Load(filepath.Join("examples", "config.yaml"), s)
 	if err := cfg.Process(m, m, m); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
@@ -375,7 +374,7 @@ func runTestIndex(do int, purging bool, afterDone, afterDryRun func(bool) error)
 	s.Purge = purging
 	var buf bytes.Buffer
 	s.Writer = &buf
-	cfg, _ := config.Load(filepath.Join("examples", "config.yaml"), s)
+	cfg, _ := processing.Load(filepath.Join("examples", "config.yaml"), s)
 	cfg.Indexing.Enabled = true
 	if err := cfg.Process(m, m, m); err != nil {
 		return err
@@ -396,7 +395,7 @@ func runTestIndex(do int, purging bool, afterDone, afterDryRun func(bool) error)
 		return err
 	}
 	s.DryRun = true
-	cfg, _ = config.Load(filepath.Join("examples", "config.yaml"), s)
+	cfg, _ = processing.Load(filepath.Join("examples", "config.yaml"), s)
 	cfg.Indexing.Enabled = true
 	if err := cfg.Process(m, m, m); err != nil {
 		return err
@@ -558,7 +557,7 @@ func TestCleanDirs(t *testing.T) {
 	s.CleanDirs = true
 	var buf bytes.Buffer
 	s.Writer = &buf
-	cfg, _ := config.Load(filepath.Join("examples", "config.yaml"), s)
+	cfg, _ := processing.Load(filepath.Join("examples", "config.yaml"), s)
 	if err := cfg.Process(m, m, m); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
@@ -570,7 +569,7 @@ func TestCleanDirs(t *testing.T) {
 	os.Mkdir(filepath.Join("testdata", "abc"), 0o755)
 	os.Mkdir(filepath.Join("testdata", "nvim"), 0o755)
 	os.WriteFile(filepath.Join("testdata", "test.yaml"), []byte("{}"), 0o644)
-	cfg, _ = config.Load(filepath.Join("examples", "config.yaml"), s)
+	cfg, _ = processing.Load(filepath.Join("examples", "config.yaml"), s)
 	if err := cfg.Process(m, m, m); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
@@ -585,7 +584,7 @@ func TestCleanDirs(t *testing.T) {
 	s.DryRun = false
 	buf = bytes.Buffer{}
 	s.Writer = &buf
-	cfg, _ = config.Load(filepath.Join("examples", "config.yaml"), s)
+	cfg, _ = processing.Load(filepath.Join("examples", "config.yaml"), s)
 	if err := cfg.Process(m, m, m); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
@@ -612,7 +611,7 @@ func TestCleanDirsIndexed(t *testing.T) {
 	s.CleanDirs = true
 	var buf bytes.Buffer
 	s.Writer = &buf
-	cfg, _ := config.Load(filepath.Join("examples", "config.yaml"), s)
+	cfg, _ := processing.Load(filepath.Join("examples", "config.yaml"), s)
 	if err := cfg.Process(m, m, m); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
@@ -624,7 +623,7 @@ func TestCleanDirsIndexed(t *testing.T) {
 	os.Mkdir(filepath.Join("testdata", "abc"), 0o755)
 	os.Mkdir(filepath.Join("testdata", "nvim"), 0o755)
 	os.WriteFile(filepath.Join("testdata", "test.yaml"), []byte("{}"), 0o644)
-	cfg, _ = config.Load(filepath.Join("examples", "config.yaml"), s)
+	cfg, _ = processing.Load(filepath.Join("examples", "config.yaml"), s)
 	cfg.Indexing.Enabled = true
 	if err := cfg.Process(m, m, m); err != nil {
 		t.Errorf("invalid error: %v", err)
@@ -645,7 +644,7 @@ func TestCleanDirsIndexed(t *testing.T) {
 	buf = bytes.Buffer{}
 	s.Writer = &buf
 	os.Mkdir(filepath.Join("testdata", "123"), 0o755)
-	cfg, _ = config.Load(filepath.Join("examples", "config.yaml"), s)
+	cfg, _ = processing.Load(filepath.Join("examples", "config.yaml"), s)
 	cfg.Indexing.Enabled = true
 	if err := cfg.Process(m, m, m); err != nil {
 		t.Errorf("invalid error: %v", err)
@@ -668,7 +667,7 @@ func TestStrictIndexed(t *testing.T) {
 	s.CleanDirs = true
 	var buf bytes.Buffer
 	s.Writer = &buf
-	cfg, _ := config.Load(filepath.Join("examples", "config.yaml"), s)
+	cfg, _ := processing.Load(filepath.Join("examples", "config.yaml"), s)
 	cfg.Indexing.Enabled = true
 	cfg.Indexing.Strict = true
 	if err := cfg.Process(m, m, m); err == nil || err.Error() != "index not found: testdata/.blap.purge.index (strict mode)" {

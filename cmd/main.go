@@ -7,8 +7,8 @@ import (
 	"os"
 
 	"github.com/seanenck/blap/internal/cli"
-	"github.com/seanenck/blap/internal/config"
 	"github.com/seanenck/blap/internal/fetch/retriever"
+	"github.com/seanenck/blap/internal/processing"
 	"github.com/seanenck/blap/internal/util"
 )
 
@@ -62,7 +62,7 @@ func run() error {
 	if input == "" || !util.PathExists(input) {
 		return fmt.Errorf("config file not set or does not exist: %s", input)
 	}
-	cfg, err := config.Load(input, *ctx)
+	cfg, err := processing.Load(input, *ctx)
 	if err != nil {
 		return err
 	}

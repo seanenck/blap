@@ -11,9 +11,8 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/seanenck/blap/internal/asset"
 	"github.com/seanenck/blap/internal/cli"
-	"github.com/seanenck/blap/internal/config/types"
+	"github.com/seanenck/blap/internal/core"
 	"github.com/seanenck/blap/internal/fetch"
 	"github.com/seanenck/blap/internal/fetch/git"
 	"github.com/seanenck/blap/internal/fetch/github"
@@ -25,12 +24,12 @@ type (
 	ResourceFetcher struct {
 		Context     cli.Settings
 		Backend     fetch.Backend
-		Connections types.Connections
+		Connections core.Connections
 	}
 )
 
 // Process will determine the appropriate backend for processing a fetch
-func (r *ResourceFetcher) Process(ctx fetch.Context, sources iter.Seq[any]) (*asset.Resource, error) {
+func (r *ResourceFetcher) Process(ctx fetch.Context, sources iter.Seq[any]) (*core.Resource, error) {
 	if ctx.Name == "" {
 		return nil, errors.New("name is required")
 	}
@@ -44,7 +43,7 @@ func (r *ResourceFetcher) Process(ctx fetch.Context, sources iter.Seq[any]) (*as
 		}
 	}
 	switch t := src.(type) {
-	case *types.GitHubMode:
+	case *core.GitHubMode:
 		if t.Branch != nil && t.Release != nil {
 			return nil, errors.New("only one github mode is allowed")
 		}
@@ -55,7 +54,7 @@ func (r *ResourceFetcher) Process(ctx fetch.Context, sources iter.Seq[any]) (*as
 			return github.Release(r, ctx, *t)
 		}
 		return nil, errors.New("github mode set but not configured")
-	case *types.GitMode:
+	case *core.GitMode:
 		if t.Tagged != nil {
 			return git.Tagged(r, ctx, *t)
 		}
@@ -165,7 +164,7 @@ func (r *ResourceFetcher) Debug(msg string, args ...any) {
 }
 
 // SetConnections will configure connection information for the fetcher
-func (r *ResourceFetcher) SetConnections(conn types.Connections) {
+func (r *ResourceFetcher) SetConnections(conn core.Connections) {
 	r.Connections = conn
 }
 

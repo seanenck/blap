@@ -1,5 +1,5 @@
-// Package config handles processing yaml configs
-package config
+// Package processing handles the base configuration
+package processing
 
 import (
 	"fmt"
@@ -7,7 +7,7 @@ import (
 	"regexp"
 
 	"github.com/seanenck/blap/internal/cli"
-	"github.com/seanenck/blap/internal/config/types"
+	"github.com/seanenck/blap/internal/core"
 )
 
 type (
@@ -19,13 +19,13 @@ type (
 			Enabled bool `yaml:"enabled"`
 			Strict  bool `yaml:"strict"`
 		} `yaml:"indexing"`
-		Directory       types.Resolved    `yaml:"directory"`
-		Include         []types.Resolved  `yaml:"include"`
-		Applications    types.AppSet      `yaml:"applications"`
-		Parallelization int               `yaml:"parallelization"`
-		Pinned          types.Pinned      `yaml:"pinned"`
-		Connections     types.Connections `yaml:"connections"`
-		Variables       types.Variables   `yaml:"variables"`
+		Directory       core.Resolved    `yaml:"directory"`
+		Include         []core.Resolved  `yaml:"include"`
+		Applications    core.AppSet      `yaml:"applications"`
+		Parallelization int              `yaml:"parallelization"`
+		Pinned          core.Pinned      `yaml:"pinned"`
+		Connections     core.Connections `yaml:"connections"`
+		Variables       core.Variables   `yaml:"variables"`
 		pinnedMatchers  []*regexp.Regexp
 	}
 )

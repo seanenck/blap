@@ -21,4 +21,4 @@ Utilize the primitive `help` to see the CLI/config options for `blap`
 
 ## Config
 
-Example configuration files are [here](internal/config/examples)
+Example configuration files are [here](internal/processing/examples)

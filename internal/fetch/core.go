@@ -7,9 +7,7 @@ import (
 	"net/http"
 	"regexp"
 
-	"github.com/seanenck/blap/internal/asset"
-	"github.com/seanenck/blap/internal/config/types"
-	"github.com/seanenck/blap/internal/env"
+	"github.com/seanenck/blap/internal/core"
 )
 
 type (
@@ -25,8 +23,8 @@ type (
 	// Retriever provides the means to fetch application information
 	Retriever interface {
 		Download(bool, string, string) (bool, error)
-		SetConnections(types.Connections)
-		Process(Context, iter.Seq[any]) (*asset.Resource, error)
+		SetConnections(core.Connections)
+		Process(Context, iter.Seq[any]) (*core.Resource, error)
 		GitHubFetch(ownerRepo, call string, to any) error
 		Debug(string, ...any)
 		ExecuteCommand(cmd string, args ...string) (string, error)
@@ -51,7 +49,7 @@ func (ctx Context) Templating(in string, vals *Template) (string, error) {
 	if ctx.Name == "" {
 		return "", errors.New("context missing name")
 	}
-	v, err := env.NewValues(ctx.Name, vals)
+	v, err := core.NewValues(ctx.Name, vals)
 	if err != nil {
 		return "", err
 	}

@@ -5,13 +5,12 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/seanenck/blap/internal/asset"
-	"github.com/seanenck/blap/internal/config/types"
+	"github.com/seanenck/blap/internal/core"
 	"github.com/seanenck/blap/internal/fetch"
 )
 
 // Branch will get an asset from a branch
-func Branch(caller fetch.Retriever, _ fetch.Context, a types.GitHubMode) (*asset.Resource, error) {
+func Branch(caller fetch.Retriever, _ fetch.Context, a core.GitHubMode) (*core.Resource, error) {
 	if a.Branch == nil {
 		return nil, errors.New("branch is not properly set")
 	}
@@ -33,5 +32,5 @@ func Branch(caller fetch.Retriever, _ fetch.Context, a types.GitHubMode) (*asset
 	}
 	tag := commit.Sha[0:7]
 	caller.Debug("found sha: %s\n", tag)
-	return &asset.Resource{URL: fmt.Sprintf("https://github.com/%s/archive/%s.tar.gz", a.Project, a.Branch.Name), File: fmt.Sprintf("%s-%s.tar.gz", tag, a.Branch.Name), Tag: tag}, nil
+	return &core.Resource{URL: fmt.Sprintf("https://github.com/%s/archive/%s.tar.gz", a.Project, a.Branch.Name), File: fmt.Sprintf("%s-%s.tar.gz", tag, a.Branch.Name), Tag: tag}, nil
 }

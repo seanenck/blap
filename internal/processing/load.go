@@ -1,5 +1,5 @@
-// Package config loads yaml configs
-package config
+// Package processing loads yaml configs
+package processing
 
 import (
 	"bytes"
@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/seanenck/blap/internal/cli"
-	"github.com/seanenck/blap/internal/config/types"
+	"github.com/seanenck/blap/internal/core"
 	"gopkg.in/yaml.v3"
 )
 
@@ -32,7 +32,7 @@ func Load(input string, context cli.Settings) (Configuration, error) {
 	c := Configuration{}
 	c.handler = &processHandler{}
 	c.context = context
-	c.Applications = make(map[string]types.Application)
+	c.Applications = make(map[string]core.Application)
 	if err := doDecode(input, &c); err != nil {
 		return c, err
 	}
@@ -61,9 +61,9 @@ func Load(input string, context cli.Settings) (Configuration, error) {
 				}
 			}
 			type included struct {
-				Applications types.AppSet `yaml:"applications"`
-				Disable      bool         `yaml:"disable"`
-				Pinned       types.Pinned `yaml:"pinned"`
+				Applications core.AppSet `yaml:"applications"`
+				Disable      bool        `yaml:"disable"`
+				Pinned       core.Pinned `yaml:"pinned"`
 			}
 			var apps included
 			if err := doDecode(include, &apps); err != nil {
@@ -82,7 +82,7 @@ func Load(input string, context cli.Settings) (Configuration, error) {
 		}
 	}
 	canFilter := context.FilterApplications()
-	sub := make(map[string]types.Application)
+	sub := make(map[string]core.Application)
 	for n, a := range c.Applications {
 		if a.Disable {
 			continue

@@ -1,5 +1,5 @@
-// Package asset handles asset information for file extraction management
-package asset
+// Package core handles asset information for file extraction management
+package core
 
 import (
 	"crypto/sha256"
@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/seanenck/blap/internal/config/types"
 	"github.com/seanenck/blap/internal/util"
 )
 
@@ -42,7 +41,7 @@ type (
 			Archive string
 			Unpack  string
 		}
-		extract types.Extraction
+		extract Extraction
 	}
 )
 
@@ -57,7 +56,7 @@ func (asset *Resource) ID() (string, error) {
 }
 
 // SetAppData will set the asset's data for the overall application
-func (asset *Resource) SetAppData(name, workdir string, settings types.Extraction) error {
+func (asset *Resource) SetAppData(name, workdir string, settings Extraction) error {
 	if name == "" || workdir == "" {
 		return errors.New("name and directory are required")
 	}
@@ -77,9 +76,9 @@ func (asset *Resource) SetAppData(name, workdir string, settings types.Extractio
 		asset.extract.NoDepth = settings.NoDepth
 		for k, v := range knownExtensions {
 			if strings.HasSuffix(asset.File, k) {
-				asset.extract.Command = []types.Resolved{}
+				asset.extract.Command = []Resolved{}
 				for _, value := range v {
-					asset.extract.Command = append(asset.extract.Command, types.Resolved(value))
+					asset.extract.Command = append(asset.extract.Command, Resolved(value))
 				}
 				break
 			}

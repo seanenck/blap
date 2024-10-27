@@ -1,15 +1,15 @@
-package types_test
+package core_test
 
 import (
 	"fmt"
 	"os"
 	"testing"
 
-	"github.com/seanenck/blap/internal/config/types"
+	"github.com/seanenck/blap/internal/core"
 )
 
 func TestSourceItems(t *testing.T) {
-	s := types.Source{}
+	s := core.Source{}
 	cnt := 0
 	for range s.Items() {
 		cnt++
@@ -21,31 +21,31 @@ func TestSourceItems(t *testing.T) {
 
 func TestResolve(t *testing.T) {
 	os.Clearenv()
-	v := types.Resolved("")
+	v := core.Resolved("")
 	if v.String() != "" {
 		t.Errorf("invalid result: %v", v)
 	}
 	t.Setenv("HOME", "abc")
-	v = types.Resolved("~/")
+	v = core.Resolved("~/")
 	if v.String() != "abc" {
 		t.Errorf("invalid result: %v", v)
 	}
 	t.Setenv("XXX", "123")
-	v = types.Resolved("~/$XXX")
+	v = core.Resolved("~/$XXX")
 	if v.String() != "abc/123" {
 		t.Errorf("invalid result: %v", v)
 	}
 }
 
 func TestGitHubToken(t *testing.T) {
-	token := types.GitHubSettings{}
+	token := core.GitHubSettings{}
 	if fmt.Sprintf("%v", token.Env()) != "[BLAP_GITHUB_TOKEN GITHUB_TOKEN]" {
 		t.Errorf("invalid token: %v", token.Env())
 	}
 	if token.Value() != "" {
 		t.Errorf("invalid value: %s", token.Value())
 	}
-	token = types.GitHubSettings{Token: "xyz"}
+	token = core.GitHubSettings{Token: "xyz"}
 	if fmt.Sprintf("%v", token.Env()) != "[BLAP_GITHUB_TOKEN GITHUB_TOKEN]" {
 		t.Errorf("invalid token: %v", token.Env())
 	}
@@ -57,10 +57,10 @@ func TestGitHubToken(t *testing.T) {
 func TestVarSetUnset(t *testing.T) {
 	os.Clearenv()
 	defer os.Clearenv()
-	val := types.Variables{}
+	val := core.Variables{}
 	val.Set()
 	val.Unset()
-	val.Vars = make(map[string]types.Resolved)
+	val.Vars = make(map[string]core.Resolved)
 	val.Set()
 	val.Unset()
 	os.Setenv("HOME", "1")

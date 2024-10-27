@@ -1,4 +1,4 @@
-package config_test
+package processing_test
 
 import (
 	"os"
@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/seanenck/blap/internal/cli"
-	"github.com/seanenck/blap/internal/config"
+	"github.com/seanenck/blap/internal/processing"
 )
 
 func makeTestFile(src string) {
@@ -22,11 +22,11 @@ func makeTestFile(src string) {
 func TestLoadError(t *testing.T) {
 	makeTestFile("disabled.more.yaml")
 	example := filepath.Join("examples", "config.yaml")
-	if _, err := config.Load(example, cli.Settings{}); err != nil {
+	if _, err := processing.Load(example, cli.Settings{}); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	makeTestFile("added.more.yaml")
-	if _, err := config.Load(example, cli.Settings{}); err == nil || !strings.Contains(err.Error(), "is overwritten by config:") {
+	if _, err := processing.Load(example, cli.Settings{}); err == nil || !strings.Contains(err.Error(), "is overwritten by config:") {
 		t.Errorf("invalid error: %v", err)
 	}
 }
@@ -34,7 +34,7 @@ func TestLoadError(t *testing.T) {
 func TestLoad(t *testing.T) {
 	makeTestFile("disabled.more.yaml")
 	example := filepath.Join("examples", "config.yaml")
-	c, err := config.Load(example, cli.Settings{})
+	c, err := processing.Load(example, cli.Settings{})
 	if err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
@@ -51,7 +51,7 @@ func TestLoadFilter(t *testing.T) {
 	example := filepath.Join("examples", "config.yaml")
 	s := cli.Settings{}
 	s.CompileApplicationFilter("l", true)
-	c, err := config.Load(example, s)
+	c, err := processing.Load(example, s)
 	if err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
@@ -59,7 +59,7 @@ func TestLoadFilter(t *testing.T) {
 		t.Errorf("invalid apps: %d", len(c.Applications))
 	}
 	s.CompileApplicationFilter("l", false)
-	c, err = config.Load(example, s)
+	c, err = processing.Load(example, s)
 	if err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
@@ -74,7 +74,7 @@ func TestLoadInclude(t *testing.T) {
 	s := cli.Settings{}
 	re, _ := regexp.Compile("other")
 	s.Include = re
-	c, err := config.Load(example, s)
+	c, err := processing.Load(example, s)
 	if err != nil {
 		t.Errorf("invalid error: %v", err)
 	}

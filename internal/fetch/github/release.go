@@ -7,13 +7,12 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/seanenck/blap/internal/asset"
-	"github.com/seanenck/blap/internal/config/types"
+	"github.com/seanenck/blap/internal/core"
 	"github.com/seanenck/blap/internal/fetch"
 )
 
 // Release handles GitHub-based releases
-func Release(caller fetch.Retriever, ctx fetch.Context, a types.GitHubMode) (*asset.Resource, error) {
+func Release(caller fetch.Retriever, ctx fetch.Context, a core.GitHubMode) (*core.Resource, error) {
 	up := strings.TrimSpace(a.Project)
 	if up == "" {
 		return nil, errors.New("release mode requires a project")
@@ -45,7 +44,7 @@ func Release(caller fetch.Retriever, ctx fetch.Context, a types.GitHubMode) (*as
 	if err != nil {
 		return nil, err
 	}
-	var rsrc *asset.Resource
+	var rsrc *core.Resource
 	var options []string
 	for _, item := range assets {
 		name := filepath.Base(item)
@@ -57,7 +56,7 @@ func Release(caller fetch.Retriever, ctx fetch.Context, a types.GitHubMode) (*as
 			if tarSource {
 				name = fmt.Sprintf("%s.tar.gz", name)
 			}
-			rsrc = &asset.Resource{URL: item, File: name, Tag: tag}
+			rsrc = &core.Resource{URL: item, File: name, Tag: tag}
 		}
 	}
 
@@ -67,7 +66,7 @@ func Release(caller fetch.Retriever, ctx fetch.Context, a types.GitHubMode) (*as
 	return rsrc, nil
 }
 
-func latestRelease(caller fetch.Retriever, a types.GitHubMode, isTarball bool) (string, []string, error) {
+func latestRelease(caller fetch.Retriever, a core.GitHubMode, isTarball bool) (string, []string, error) {
 	type (
 		Release struct {
 			Assets []struct {

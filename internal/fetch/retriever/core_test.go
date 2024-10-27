@@ -11,7 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/seanenck/blap/internal/config/types"
+	"github.com/seanenck/blap/internal/core"
 	"github.com/seanenck/blap/internal/fetch"
 	"github.com/seanenck/blap/internal/fetch/retriever"
 )
@@ -111,7 +111,7 @@ func TestSetConnections(t *testing.T) {
 		t.Errorf("invalid url: %v", client.req.URL)
 	}
 	os.Clearenv()
-	c := types.Connections{}
+	c := core.Connections{}
 	r.SetConnections(c)
 	c.GitHub.Token = "xyz"
 	r.SetConnections(c)
@@ -141,28 +141,28 @@ func TestProcess(t *testing.T) {
 	if _, err := f.Process(fetch.Context{Name: "abc"}, testIter(nil, nil)); err == nil || err.Error() != "unknown mode for fetch processing" {
 		t.Errorf("invalid error: %v", err)
 	}
-	if _, err := f.Process(fetch.Context{Name: "abc"}, testIter(&types.GitHubMode{}, &types.GitMode{})); err == nil || err.Error() != "multiple modes enabled, only one allowed" {
+	if _, err := f.Process(fetch.Context{Name: "abc"}, testIter(&core.GitHubMode{}, &core.GitMode{})); err == nil || err.Error() != "multiple modes enabled, only one allowed" {
 		t.Errorf("invalid error: %v", err)
 	}
 	m := &mockClient{}
 	f.Backend = m
 	ctx := fetch.Context{Name: "a"}
-	if _, err := f.Process(ctx, testIter(&types.GitHubMode{}, nil)); err == nil || err.Error() != "github mode set but not configured" {
+	if _, err := f.Process(ctx, testIter(&core.GitHubMode{}, nil)); err == nil || err.Error() != "github mode set but not configured" {
 		t.Errorf("invalid error: %v", err)
 	}
-	if _, err := f.Process(ctx, testIter(&types.GitHubMode{Release: &types.GitHubReleaseMode{}, Branch: &types.GitHubBranchMode{}}, nil)); err == nil || err.Error() != "only one github mode is allowed" {
+	if _, err := f.Process(ctx, testIter(&core.GitHubMode{Release: &core.GitHubReleaseMode{}, Branch: &core.GitHubBranchMode{}}, nil)); err == nil || err.Error() != "only one github mode is allowed" {
 		t.Errorf("invalid error: %v", err)
 	}
-	if _, err := f.Process(ctx, testIter(&types.GitHubMode{Branch: &types.GitHubBranchMode{}})); err == nil || err.Error() != "branch required for branch mode" {
+	if _, err := f.Process(ctx, testIter(&core.GitHubMode{Branch: &core.GitHubBranchMode{}})); err == nil || err.Error() != "branch required for branch mode" {
 		t.Errorf("invalid error: %v", err)
 	}
-	if _, err := f.Process(ctx, testIter(&types.GitHubMode{Release: &types.GitHubReleaseMode{}}, nil)); err == nil || err.Error() != "release mode requires a project" {
+	if _, err := f.Process(ctx, testIter(&core.GitHubMode{Release: &core.GitHubReleaseMode{}}, nil)); err == nil || err.Error() != "release mode requires a project" {
 		t.Errorf("invalid error: %v", err)
 	}
-	if _, err := f.Process(ctx, testIter(nil, &types.GitMode{})); err == nil || err.Error() != "unknown git mode for fetch processing" {
+	if _, err := f.Process(ctx, testIter(nil, &core.GitMode{})); err == nil || err.Error() != "unknown git mode for fetch processing" {
 		t.Errorf("invalid error: %v", err)
 	}
-	if _, err := f.Process(ctx, testIter(nil, nil, &types.GitMode{Tagged: &types.GitTaggedMode{}}, nil)); err == nil || err.Error() != "no upstream for tagged mode" {
+	if _, err := f.Process(ctx, testIter(nil, nil, &core.GitMode{Tagged: &core.GitTaggedMode{}}, nil)); err == nil || err.Error() != "no upstream for tagged mode" {
 		t.Errorf("invalid error: %v", err)
 	}
 }
