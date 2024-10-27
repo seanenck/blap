@@ -7,15 +7,13 @@ import (
 	"path/filepath"
 	"regexp"
 	"slices"
-
-	"github.com/seanenck/blap/internal/cli"
 )
 
 // OnPurge is called when a purge is performed
-type OnPurge func(string)
+type OnPurge func(string) bool
 
 // Purge will perform purge operations (or dryrun at least)
-func Purge(dir string, known []string, pinned []*regexp.Regexp, context cli.Settings, fxn OnPurge) error {
+func Purge(dir string, known []string, pinned []*regexp.Regexp, fxn OnPurge) error {
 	if dir == "" {
 		return errors.New("directory must be set")
 	}
@@ -36,8 +34,7 @@ func Purge(dir string, known []string, pinned []*regexp.Regexp, context cli.Sett
 			continue
 		}
 		if !slices.Contains(known, name) {
-			fxn(name)
-			if !context.DryRun {
+			if fxn(name) {
 				if err := os.RemoveAll(filepath.Join(dir, name)); err != nil {
 					return err
 				}

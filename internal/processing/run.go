@@ -101,7 +101,7 @@ func (c Configuration) Do(ctx Context) error {
 		}
 		knownAssets = append(knownAssets, filepath.Base(f))
 	}
-	onChange := func(detail string) {
+	onChange := func(detail string) bool {
 		obj := Change{Name: ctx.Name, Details: detail}
 		processLock.Lock()
 		if !slices.ContainsFunc(c.handler.changed, func(c Change) bool {
@@ -110,6 +110,7 @@ func (c Configuration) Do(ctx Context) error {
 			c.handler.changed = append(c.handler.changed, obj)
 		}
 		processLock.Unlock()
+		return !c.context.DryRun
 	}
 	if c.context.Purge {
 		return ctx.Executor.Purge(to, knownAssets, onChange)
@@ -153,7 +154,7 @@ func (c Configuration) Do(ctx Context) error {
 
 // Purge will run purge on inputs
 func (c Configuration) Purge(dir string, assets []string, fxn steps.OnPurge) error {
-	return steps.Purge(dir, assets, c.pinnedMatchers, c.context, fxn)
+	return steps.Purge(dir, assets, c.pinnedMatchers, fxn)
 }
 
 // Changed gets the list of changed components
