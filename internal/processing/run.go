@@ -314,13 +314,15 @@ func (c Configuration) Process(executor Executor, fetcher fetch.Retriever, runne
 			msg = "purging"
 			t = "directory"
 		}
+		doIndex := false
+		if c.context.DryRun {
+			doIndex = true
+			isDryRun = true
+		}
 		for _, change := range changed {
 			c.context.LogCore("%s: %s (%s -> %s)\n", msg, change.Name, t, change.Details)
-		}
-		if c.context.DryRun {
-			isDryRun = true
-			for _, o := range changed {
-				newIndex.Names = append(newIndex.Names, o.Name)
+			if doIndex {
+				newIndex.Names = append(newIndex.Names, change.Name)
 			}
 		}
 	}
