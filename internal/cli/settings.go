@@ -110,17 +110,3 @@ func (s Settings) LogDebug(msg string, a ...any) {
 func (s Settings) LogCore(msg string, a ...any) {
 	s.log(0, msg, a...)
 }
-
-// Purging outputs a common purging message
-func (s Settings) Purging(name, version string) {
-	s.action("purging", name, "directory", version)
-}
-
-// Updating outputs an updating message
-func (s Settings) Updating(name, version string) {
-	s.action("updating", name, "tag", version)
-}
-
-func (s Settings) action(t, name, obj, version string) {
-	s.LogCore("%s: %s (%s -> %s)\n", t, name, obj, version)
-}

@@ -149,7 +149,7 @@ func TestProcessUpdate(t *testing.T) {
 		t.Errorf("invalid error: %v", err)
 	}
 	str = buf.String()
-	if !strings.Contains(str, "xyz") || !strings.Contains(str, "abc") || !strings.Contains(str, "DRYRUN") {
+	if !strings.Contains(str, "updating: abc (tag -> 1 details)") || !strings.Contains(str, "updating: xyz (tag -> other)") || !strings.Contains(str, "DRYRUN") {
 		t.Errorf("invalid buffer: %s", str)
 	}
 	if m.name != "nvim" {
@@ -353,7 +353,7 @@ func TestConfigurationBasicProcess(t *testing.T) {
 		t.Errorf("invalid changed: %v", cfg.Changed())
 	}
 	str := buf.String()
-	if strings.Contains(str, "DRYRUN") || !strings.Contains(str, "xyz") || !strings.Contains(str, "abc") {
+	if strings.Contains(str, "DRYRUN") || !strings.Contains(str, "updating: xyz (tag -> other)") || !strings.Contains(str, "updating: abc (tag -> 1 details)") {
 		t.Errorf("invalid buffer: %s", str)
 	}
 	s.DryRun = true
@@ -365,7 +365,7 @@ func TestConfigurationBasicProcess(t *testing.T) {
 		t.Errorf("invalid changed: %v", cfg.Changed())
 	}
 	str = buf.String()
-	if !strings.Contains(str, "DRYRUN") || !strings.Contains(str, "xyz") || !strings.Contains(str, "abc") {
+	if !strings.Contains(str, "DRYRUN") || !strings.Contains(str, "updating: xyz (tag -> other)") || !strings.Contains(str, "updating: abc (tag -> 1 details)") {
 		t.Errorf("invalid buffer: %s", str)
 	}
 }
@@ -389,10 +389,14 @@ func runTestIndex(do int, purging bool, afterDone, afterDryRun func(bool) error)
 	if strings.Contains(str, "DRYRUN") {
 		return fmt.Errorf("invalid buffer: %s", str)
 	}
+	messageOne := "purging: abc (directory -> 1 details)"
+	messageTwo := "purging: xyz (directory -> other)"
 	if !purging {
-		if !strings.Contains(str, "xyz") || !strings.Contains(str, "abc") {
-			return fmt.Errorf("invalid buffer: %s", str)
-		}
+		messageOne = "updating: abc (tag -> 1 details)"
+		messageTwo = "updating: xyz (tag -> other)"
+	}
+	if !strings.Contains(str, messageOne) || !strings.Contains(str, messageTwo) {
+		return fmt.Errorf("invalid buffer: %s", str)
 	}
 	if err := afterDone(purging); err != nil {
 		return err
@@ -414,10 +418,8 @@ func runTestIndex(do int, purging bool, afterDone, afterDryRun func(bool) error)
 	if !strings.Contains(str, "DRYRUN") {
 		return fmt.Errorf("invalid buffer: %s", str)
 	}
-	if !purging {
-		if !strings.Contains(str, "xyz") || !strings.Contains(str, "abc") {
-			return fmt.Errorf("invalid buffer: %s", str)
-		}
+	if !strings.Contains(str, messageTwo) || !strings.Contains(str, messageOne) {
+		return fmt.Errorf("invalid buffer: %s", str)
 	}
 	return afterDryRun(purging)
 }
@@ -581,7 +583,7 @@ func TestCleanDirs(t *testing.T) {
 		t.Errorf("invalid dirs: %v", dirs)
 	}
 	str := buf.String()
-	if !strings.Contains(str, "DRYRUN") || !strings.Contains(str, "abc") {
+	if !strings.Contains(str, "DRYRUN") || !strings.Contains(str, "removing directory: abc") {
 		t.Errorf("invalid buffer: %s", str)
 	}
 	s.DryRun = false
@@ -596,7 +598,7 @@ func TestCleanDirs(t *testing.T) {
 		t.Errorf("invalid dirs: %v", dirs)
 	}
 	str = buf.String()
-	if strings.Contains(str, "DRYRUN") || !strings.Contains(str, "abc") {
+	if strings.Contains(str, "DRYRUN") || !strings.Contains(str, "removing directory: abc") {
 		t.Errorf("invalid buffer: %s", str)
 	}
 }
@@ -640,7 +642,7 @@ func TestCleanDirsIndexed(t *testing.T) {
 		t.Errorf("invalid index: %s", string(b))
 	}
 	str := buf.String()
-	if !strings.Contains(str, "DRYRUN") || !strings.Contains(str, "abc") {
+	if !strings.Contains(str, "DRYRUN") || !strings.Contains(str, "removing directory: abc") {
 		t.Errorf("invalid buffer: %s", str)
 	}
 	s.DryRun = false
@@ -657,7 +659,7 @@ func TestCleanDirsIndexed(t *testing.T) {
 		t.Errorf("invalid dirs: %v", dirs)
 	}
 	str = buf.String()
-	if strings.Contains(str, "DRYRUN") || !strings.Contains(str, "abc") {
+	if strings.Contains(str, "DRYRUN") || !strings.Contains(str, "removing directory: abc") {
 		t.Errorf("invalid buffer: %s", str)
 	}
 }

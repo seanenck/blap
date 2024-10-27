@@ -23,7 +23,6 @@ func Purge(dir string, known []string, pinned []*regexp.Regexp, context cli.Sett
 	if err != nil {
 		return err
 	}
-	from := filepath.Base(dir)
 	for _, d := range dirs {
 		name := d.Name()
 		pin := false
@@ -37,7 +36,6 @@ func Purge(dir string, known []string, pinned []*regexp.Regexp, context cli.Sett
 			continue
 		}
 		if !slices.Contains(known, name) {
-			context.Purging(from, name)
 			fxn(name)
 			if !context.DryRun {
 				if err := os.RemoveAll(filepath.Join(dir, name)); err != nil {

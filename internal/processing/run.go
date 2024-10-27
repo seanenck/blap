@@ -240,7 +240,7 @@ func (c Configuration) Process(executor Executor, fetcher fetch.Retriever, runne
 				}
 			}
 		}
-		c.context.LogDebug("index: %v", idx)
+		c.context.LogDebug("index: %v\n", idx)
 	}
 	hasIndex := len(idx.Names) > 0
 	fetcher.SetConnections(c.Connections)
@@ -305,13 +305,18 @@ func (c Configuration) Process(executor Executor, fetcher fetch.Retriever, runne
 				isDryRun = true
 			}
 		}
-	} else {
-		for _, update := range changed {
-			c.context.Updating(update.Name, update.Details)
-		}
 	}
-	if c.context.DryRun {
-		if len(changed) > 0 {
+	if len(changed) > 0 {
+		msg := "updating"
+		t := "tag"
+		if c.context.Purge {
+			msg = "purging"
+			t = "directory"
+		}
+		for _, change := range changed {
+			c.context.LogCore("%s: %s (%s -> %s)\n", msg, change.Name, t, change.Details)
+		}
+		if c.context.DryRun {
 			isDryRun = true
 			for _, o := range changed {
 				newIndex.Names = append(newIndex.Names, o.Name)
