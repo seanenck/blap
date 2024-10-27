@@ -13,8 +13,9 @@ import (
 type (
 	// Configuration is the overall configuration
 	Configuration struct {
-		handler  *processHandler
-		context  cli.Settings
+		handler *processHandler
+		context cli.Settings
+
 		Indexing struct {
 			Enabled bool `yaml:"enabled"`
 			Strict  bool `yaml:"strict"`
