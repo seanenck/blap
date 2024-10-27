@@ -12,8 +12,10 @@ import (
 
 func TestPurge(t *testing.T) {
 	did := false
-	fxn := func() {
+	v := ""
+	fxn := func(value string) {
 		did = true
+		v = value
 	}
 	if err := steps.Purge("", nil, nil, cli.Settings{}, fxn); err == nil || err.Error() != "directory must be set" || did {
 		t.Errorf("invalid error: %v|purge", err)
@@ -30,13 +32,14 @@ func TestPurge(t *testing.T) {
 	os.Mkdir(filepath.Join("testdata", "abc"), 0o755)
 	os.Mkdir(filepath.Join("testdata", "xyz"), 0o755)
 	did = false
-	if err := steps.Purge("testdata", []string{"abc"}, nil, cli.Settings{DryRun: true}, fxn); err != nil || !did {
-		t.Errorf("invalid error: %v|purge", err)
+	if err := steps.Purge("testdata", []string{"abc"}, nil, cli.Settings{DryRun: true}, fxn); err != nil || !did || v != "xyz" {
+		t.Errorf("invalid error: %v|purge (%s)", err, v)
 	}
 	if d, _ := os.ReadDir("testdata"); len(d) != 2 {
 		t.Errorf("invalid dirs: %v", d)
 	}
 	did = false
+	v = ""
 	p, _ := regexp.Compile("xyz")
 	if err := steps.Purge("testdata", []string{"abc"}, []*regexp.Regexp{p}, cli.Settings{}, fxn); err != nil || did {
 		t.Errorf("invalid error: %v|purge", err)
@@ -45,8 +48,8 @@ func TestPurge(t *testing.T) {
 		t.Errorf("invalid dirs: %v", d)
 	}
 	did = false
-	if err := steps.Purge("testdata", []string{"abc"}, nil, cli.Settings{}, fxn); err != nil || !did {
-		t.Errorf("invalid error: %v|purge", err)
+	if err := steps.Purge("testdata", []string{"abc"}, nil, cli.Settings{}, fxn); err != nil || !did || v != "xyz" {
+		t.Errorf("invalid error: %v|purge (%s)", err, v)
 	}
 	if d, _ := os.ReadDir("testdata"); len(d) != 1 {
 		t.Errorf("invalid dirs: %v", d)

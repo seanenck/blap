@@ -25,6 +25,7 @@ type mockExecutor struct {
 	dl          bool
 	static      bool
 	env         bool
+	details     string
 	calledDo    int
 	calledPurge int
 	calledMulti int
@@ -43,7 +44,7 @@ func (m *mockExecutor) expectCount(do, purge int) error {
 
 func (m *mockExecutor) Purge(_ string, _ []string, fxn steps.OnPurge) error {
 	m.calledPurge++
-	fxn()
+	fxn(m.details)
 	return m.err
 }
 
@@ -81,11 +82,11 @@ func (m *mockExecutor) Run(s util.RunSettings, c string, a ...string) error {
 	return m.RunCommand(c, a...)
 }
 
-func (m *mockExecutor) Changed() []string {
+func (m *mockExecutor) Changed() []processing.Change {
 	if m.static {
 		return nil
 	}
-	return []string{"abc", "xyz"}
+	return []processing.Change{{Name: "abc", Details: "1 details"}, {Name: "xyz", Details: "other"}}
 }
 
 func (m *mockExecutor) Debug(string, ...any) {
@@ -182,6 +183,7 @@ func TestProcessPurge(t *testing.T) {
 	m.rsrc.URL = "abc"
 	m.rsrc.File = "xyz"
 	m.rsrc.Tag = "tag"
+	m.details = "dets"
 	s := cli.Settings{}
 	s.Purge = true
 	s.DryRun = true
@@ -198,9 +200,10 @@ func TestProcessPurge(t *testing.T) {
 	if err := m.expectCount(0, 1); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
-	if fmt.Sprintf("%v", cfg.Changed()) != "[abc]" {
+	if fmt.Sprintf("%v", cfg.Changed()) != "[{abc dets}]" {
 		t.Errorf("invalid changed: %v", cfg.Changed())
 	}
+	m.details = ""
 	cfg, _ = processing.Load(filepath.Join("examples", "config.yaml"), s)
 	if err := cfg.Do(processing.Context{Executor: m, Name: "abc", Fetcher: m, Runner: m}); err != nil {
 		t.Errorf("invalid error: %v", err)
@@ -208,7 +211,7 @@ func TestProcessPurge(t *testing.T) {
 	if err := m.expectCount(0, 2); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
-	if fmt.Sprintf("%v", cfg.Changed()) != "[abc]" {
+	if fmt.Sprintf("%v", cfg.Changed()) != "[{abc }]" {
 		t.Errorf("invalid changed: %v", cfg.Changed())
 	}
 	s.DryRun = true
@@ -241,7 +244,7 @@ func TestProcessPurge(t *testing.T) {
 	if err := m.expectCount(0, 3); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
-	if fmt.Sprintf("%v", cfg.Changed()) != "[sabc]" {
+	if fmt.Sprintf("%v", cfg.Changed()) != "[{sabc }]" {
 		t.Errorf("invalid changed: %v", cfg.Changed())
 	}
 }
@@ -303,7 +306,7 @@ func TestConfigurationDo(t *testing.T) {
 	if err := cfg.Do(processing.Context{Fetcher: f, Name: "abc", Runner: &mockExecutor{}, Executor: &mockExecutor{}}); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
-	if fmt.Sprintf("%v", cfg.Changed()) != "[abc]" {
+	if fmt.Sprintf("%v", cfg.Changed()) != "[{abc }]" {
 		t.Errorf("invalid changed: %v", cfg.Changed())
 	}
 	s.Purge = false
@@ -322,8 +325,8 @@ func TestConfigurationDo(t *testing.T) {
 	if err := cfg.Do(processing.Context{Fetcher: f, Name: "abc", Runner: &mockExecutor{}, Executor: &mockExecutor{}}); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
-	if fmt.Sprintf("%v", cfg.Changed()) != "[abc]" {
-		t.Error("unexpected updates")
+	if fmt.Sprintf("%v", cfg.Changed()) != "[{abc 123}]" {
+		t.Errorf("unexpected updates: %v", cfg.Changed())
 	}
 	s.DryRun = false
 	cfg, _ = processing.Load(filepath.Join("examples", "config.yaml"), s)

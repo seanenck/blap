@@ -47,6 +47,15 @@ func TestLogging(t *testing.T) {
 	if s != "a11xyz" {
 		t.Errorf("invalid buffer result: %s", s)
 	}
+	buf = bytes.Buffer{}
+	c.Writer = &buf
+	c.Verbosity = 100
+	c.Updating("name", "version")
+	c.Purging("xxx", "yyy")
+	s = buf.String()
+	if !strings.Contains(s, "purging: xxx (directory -> yyy)") || !strings.Contains(s, "updating: name (tag -> version)") {
+		t.Errorf("invalid buffer result: %s", s)
+	}
 }
 
 func TestCompileFilter(t *testing.T) {

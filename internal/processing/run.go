@@ -20,15 +20,20 @@ import (
 var processLock = &sync.Mutex{}
 
 type (
-	errorList      []error
+	errorList []error
+	// Change are update/purge change sets
+	Change struct {
+		Name    string
+		Details string
+	}
 	processHandler struct {
-		changed []string
+		changed []Change
 	}
 	// Executor is the process executor
 	Executor interface {
 		Do(Context) error
 		Purge(string, []string, steps.OnPurge) error
-		Changed() []string
+		Changed() []Change
 	}
 	// Context allows processing an application (fetch, extract, command)
 	Context struct {
@@ -96,10 +101,13 @@ func (c Configuration) Do(ctx Context) error {
 		}
 		knownAssets = append(knownAssets, filepath.Base(f))
 	}
-	onChange := func() {
+	onChange := func(detail string) {
+		obj := Change{Name: ctx.Name, Details: detail}
 		processLock.Lock()
-		if !slices.Contains(c.handler.changed, ctx.Name) {
-			c.handler.changed = append(c.handler.changed, ctx.Name)
+		if !slices.ContainsFunc(c.handler.changed, func(c Change) bool {
+			return obj.Name == c.Name
+		}) {
+			c.handler.changed = append(c.handler.changed, obj)
 		}
 		processLock.Unlock()
 	}
@@ -112,7 +120,7 @@ func (c Configuration) Do(ctx Context) error {
 		return err
 	}
 	if did {
-		onChange()
+		onChange(rsrc.Tag)
 	}
 	if c.context.DryRun {
 		return nil
@@ -149,7 +157,7 @@ func (c Configuration) Purge(dir string, assets []string, fxn steps.OnPurge) err
 }
 
 // Changed gets the list of changed components
-func (c Configuration) Changed() []string {
+func (c Configuration) Changed() []Change {
 	return c.handler.changed
 }
 
@@ -298,17 +306,16 @@ func (c Configuration) Process(executor Executor, fetcher fetch.Retriever, runne
 			}
 		}
 	} else {
-		for idx, update := range changed {
-			if idx == 0 {
-				c.context.LogCore("updates\n")
-			}
-			c.context.LogCore("  -> %s\n", update)
+		for _, update := range changed {
+			c.context.Updating(update.Name, update.Details)
 		}
 	}
 	if c.context.DryRun {
 		if len(changed) > 0 {
 			isDryRun = true
-			newIndex.Names = changed
+			for _, o := range changed {
+				newIndex.Names = append(newIndex.Names, o.Name)
+			}
 		}
 	}
 	if c.Indexing.Enabled {

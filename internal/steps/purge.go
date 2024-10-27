@@ -12,7 +12,7 @@ import (
 )
 
 // OnPurge is called when a purge is performed
-type OnPurge func()
+type OnPurge func(string)
 
 // Purge will perform purge operations (or dryrun at least)
 func Purge(dir string, known []string, pinned []*regexp.Regexp, context cli.Settings, fxn OnPurge) error {
@@ -23,6 +23,7 @@ func Purge(dir string, known []string, pinned []*regexp.Regexp, context cli.Sett
 	if err != nil {
 		return err
 	}
+	from := filepath.Base(dir)
 	for _, d := range dirs {
 		name := d.Name()
 		pin := false
@@ -36,8 +37,8 @@ func Purge(dir string, known []string, pinned []*regexp.Regexp, context cli.Sett
 			continue
 		}
 		if !slices.Contains(known, name) {
-			context.LogCore("purging: %s\n", name)
-			fxn()
+			context.Purging(from, name)
+			fxn(name)
 			if !context.DryRun {
 				if err := os.RemoveAll(filepath.Join(dir, name)); err != nil {
 					return err
