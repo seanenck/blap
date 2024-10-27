@@ -13,9 +13,12 @@ import (
 type (
 	// Configuration is the overall configuration
 	Configuration struct {
-		handler         *processHandler
-		context         cli.Settings
-		Indexing        bool              `yaml:"indexing"`
+		handler  *processHandler
+		context  cli.Settings
+		Indexing struct {
+			Enabled bool `yaml:"enabled"`
+			Strict  bool `yaml:"strict"`
+		} `yaml:"indexing"`
 		Directory       types.Resolved    `yaml:"directory"`
 		Include         []types.Resolved  `yaml:"include"`
 		Applications    types.AppSet      `yaml:"applications"`

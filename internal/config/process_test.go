@@ -376,7 +376,7 @@ func runTestIndex(do int, purging bool, afterDone, afterDryRun func(bool) error)
 	var buf bytes.Buffer
 	s.Writer = &buf
 	cfg, _ := config.Load(filepath.Join("examples", "config.yaml"), s)
-	cfg.Indexing = true
+	cfg.Indexing.Enabled = true
 	if err := cfg.Process(m, m, m); err != nil {
 		return err
 	}
@@ -397,7 +397,7 @@ func runTestIndex(do int, purging bool, afterDone, afterDryRun func(bool) error)
 	}
 	s.DryRun = true
 	cfg, _ = config.Load(filepath.Join("examples", "config.yaml"), s)
-	cfg.Indexing = true
+	cfg.Indexing.Enabled = true
 	if err := cfg.Process(m, m, m); err != nil {
 		return err
 	}
@@ -625,7 +625,7 @@ func TestCleanDirsIndexed(t *testing.T) {
 	os.Mkdir(filepath.Join("testdata", "nvim"), 0o755)
 	os.WriteFile(filepath.Join("testdata", "test.yaml"), []byte("{}"), 0o644)
 	cfg, _ = config.Load(filepath.Join("examples", "config.yaml"), s)
-	cfg.Indexing = true
+	cfg.Indexing.Enabled = true
 	if err := cfg.Process(m, m, m); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
@@ -646,7 +646,7 @@ func TestCleanDirsIndexed(t *testing.T) {
 	s.Writer = &buf
 	os.Mkdir(filepath.Join("testdata", "123"), 0o755)
 	cfg, _ = config.Load(filepath.Join("examples", "config.yaml"), s)
-	cfg.Indexing = true
+	cfg.Indexing.Enabled = true
 	if err := cfg.Process(m, m, m); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
@@ -657,5 +657,25 @@ func TestCleanDirsIndexed(t *testing.T) {
 	str = buf.String()
 	if strings.Contains(str, "DRYRUN") || !strings.Contains(str, "abc") {
 		t.Errorf("invalid buffer: %s", str)
+	}
+}
+
+func TestStrictIndexed(t *testing.T) {
+	m := &mockExecutor{}
+	s := cli.Settings{}
+	s.Verbosity = cli.InfoVerbosity
+	s.Purge = true
+	s.CleanDirs = true
+	var buf bytes.Buffer
+	s.Writer = &buf
+	cfg, _ := config.Load(filepath.Join("examples", "config.yaml"), s)
+	cfg.Indexing.Enabled = true
+	cfg.Indexing.Strict = true
+	if err := cfg.Process(m, m, m); err == nil || err.Error() != "index not found: testdata/.blap.purge.index (strict mode)" {
+		t.Errorf("invalid error: %v", err)
+	}
+	cfg.Indexing.Enabled = false
+	if err := cfg.Process(m, m, m); err == nil || err.Error() != "can not enable strict indexing without indexing enabled" {
+		t.Errorf("invalid error: %v", err)
 	}
 }

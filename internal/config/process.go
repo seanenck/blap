@@ -209,20 +209,29 @@ func (c Configuration) Process(executor Executor, fetcher fetch.Retriever, runne
 	if c.Parallelization < 0 {
 		return fmt.Errorf("parallelization must be >= 0 (have: %d)", c.Parallelization)
 	}
+	if !c.Indexing.Enabled && c.Indexing.Strict {
+		return errors.New("can not enable strict indexing without indexing enabled")
+	}
 	mode := "update"
 	if c.context.Purge {
 		mode = "purge"
 	}
 	indexFile := c.IndexFile(mode)
 	idx := Index{}
-	if c.Indexing {
-		if !c.context.DryRun && util.PathExists(indexFile) {
-			b, err := os.ReadFile(indexFile)
-			if err != nil {
-				return err
+	if c.Indexing.Enabled {
+		if !c.context.DryRun {
+			exists := util.PathExists(indexFile)
+			if c.Indexing.Strict && !exists {
+				return fmt.Errorf("index not found: %s (strict mode)", indexFile)
 			}
-			if err := json.Unmarshal(b, &idx); err != nil {
-				return err
+			if exists {
+				b, err := os.ReadFile(indexFile)
+				if err != nil {
+					return err
+				}
+				if err := json.Unmarshal(b, &idx); err != nil {
+					return err
+				}
 			}
 		}
 		c.context.LogDebug("index: %v", idx)
@@ -304,7 +313,7 @@ func (c Configuration) Process(executor Executor, fetcher fetch.Retriever, runne
 			newIndex.Names = changed
 		}
 	}
-	if c.Indexing {
+	if c.Indexing.Enabled {
 		removeIndex := util.PathExists(indexFile)
 		if c.context.DryRun && (len(newIndex.Dirs) > 0 || len(newIndex.Names) > 0) {
 			removeIndex = false

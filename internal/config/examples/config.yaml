@@ -30,6 +30,14 @@ variables:
   values:
     "ENV_KEY": "some values"
     "LDFLAGS": "-X -y"
+# indexing enables using a dryrun/commit strategy of applying updates
+indexing:
+  # when enabled, dryrun commands will generate an index file
+  # that file will be used by follow-on commit actions
+  enabled: false
+  # in strict mode it will not be possible to perform a commit
+  # if an index file does not exist
+  strict: false
 # application settings for deployment
 applications:
   nvim:
