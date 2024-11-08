@@ -38,6 +38,8 @@ func TestResolve(t *testing.T) {
 }
 
 func TestGitHubToken(t *testing.T) {
+	os.Clearenv()
+	defer os.Clearenv()
 	token := core.GitHubSettings{}
 	if fmt.Sprintf("%v", token.Env()) != "[BLAP_GITHUB_TOKEN GITHUB_TOKEN]" {
 		t.Errorf("invalid token: %v", token.Env())
@@ -52,11 +54,12 @@ func TestGitHubToken(t *testing.T) {
 	if fmt.Sprintf("%v", token.Value()) != "[xyz]" {
 		t.Errorf("invalid value: %s", token.Value())
 	}
-	token = core.GitHubSettings{Token: []interface{}{"xyz", "111"}}
+	t.Setenv("HOME", "zzz")
+	token = core.GitHubSettings{Token: []interface{}{"$HOME/xyz", "$HOME/111"}}
 	if fmt.Sprintf("%v", token.Env()) != "[BLAP_GITHUB_TOKEN GITHUB_TOKEN]" {
 		t.Errorf("invalid token: %v", token.Env())
 	}
-	if fmt.Sprintf("%v", token.Value()) != "[xyz 111]" {
+	if fmt.Sprintf("%v", token.Value()) != "[zzz/xyz zzz/111]" {
 		t.Errorf("invalid value: %s", token.Value())
 	}
 }
