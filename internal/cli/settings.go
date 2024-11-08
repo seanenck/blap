@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"regexp"
 	"strings"
 	"sync"
@@ -62,18 +63,45 @@ func (s Settings) ParseToken(t core.Token) (string, error) {
 			return v, nil
 		}
 	}
-	val := t.Value().String()
-	if val != "" {
-		path := val
-		if util.PathExists(path) {
-			b, err := os.ReadFile(path)
+	token, err := func() (string, error) {
+		raw := t.Value()
+		var cmd string
+		var args []string
+		switch len(raw) {
+		case 0:
+			return "", nil
+		case 1:
+			p := raw[0]
+			if !util.PathExists(p) {
+				return p, nil
+			}
+			info, err := os.Stat(p)
 			if err != nil {
 				return "", err
 			}
-			return strings.TrimSpace(string(b)), nil
+			if info.Mode()&0o111 != 0 {
+				cmd = p
+				break
+			}
+			b, err := os.ReadFile(p)
+			if err != nil {
+				return "", err
+			}
+			return string(b), err
+		default:
+			cmd = raw[0]
+			args = raw[1:]
 		}
+		b, err := exec.Command(cmd, args...).Output()
+		if err != nil {
+			return "", err
+		}
+		return string(b), nil
+	}()
+	if err != nil {
+		return "", err
 	}
-	return val, nil
+	return strings.TrimSpace(token), nil
 }
 
 // CompileApplicationFilter will compile the necessary app filter

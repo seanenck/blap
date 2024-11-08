@@ -3,6 +3,7 @@ package cli_test
 import (
 	"bytes"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -108,6 +109,17 @@ func TestParseToken(t *testing.T) {
 	}
 	r, err = s.ParseToken(core.GitHubSettings{Token: "settings_test.go"})
 	if r == "" || !strings.Contains(r, "package cli_test") || err != nil {
+		t.Errorf("invalid result: %s %v", r, err)
+	}
+	os.Mkdir("testdata", 0o755)
+	test := filepath.Join("testdata", "test.sh")
+	os.WriteFile(test, []byte("#!/bin/sh\necho 123 $1"), 0o755)
+	r, err = s.ParseToken(core.GitHubSettings{Token: test})
+	if r != "123" || err != nil {
+		t.Errorf("invalid result: %s %v", r, err)
+	}
+	r, err = s.ParseToken(core.GitHubSettings{Token: []string{test, "111"}})
+	if r != "123 111" || err != nil {
 		t.Errorf("invalid result: %s %v", r, err)
 	}
 	t.Setenv("GITHUB_TOKEN", "xyz")

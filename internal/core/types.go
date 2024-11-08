@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"reflect"
 	"strings"
+
+	"github.com/seanenck/blap/internal/util"
 )
 
 type (
@@ -80,7 +82,7 @@ type (
 	AppSet map[string]Application
 	// GitHubSettings are overall github settings
 	GitHubSettings struct {
-		Token Resolved `yaml:"token"`
+		Token interface{} `yaml:"token"`
 	}
 	// Connections are various endpoint settings
 	Connections struct {
@@ -89,7 +91,7 @@ type (
 	// Token defines an interface for setting API/auth tokens
 	Token interface {
 		Env() []string
-		Value() Resolved
+		Value() []string
 	}
 )
 
@@ -100,8 +102,23 @@ func (g GitHubSettings) Env() []string {
 }
 
 // Value will get the configured token value
-func (g GitHubSettings) Value() Resolved {
-	return g.Token
+func (g GitHubSettings) Value() []string {
+	if util.IsNil(g.Token) {
+		return nil
+	}
+	var vals []Resolved
+	if s, ok := g.Token.(string); ok {
+		vals = append(vals, Resolved(s))
+	} else {
+		for _, v := range g.Token.([]string) {
+			vals = append(vals, Resolved(v))
+		}
+	}
+	var res []string
+	for _, v := range vals {
+		res = append(res, v.String())
+	}
+	return res
 }
 
 // Items will iterate over the available source itmes

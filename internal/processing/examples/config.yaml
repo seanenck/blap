@@ -17,6 +17,8 @@ connections:
   github:
     # set a token (if not using one of the env values)
     # this can be a file path/name which holds the value of the token
+    # it can be a file path which is executable (and will be)
+    # it can be an array which is a command+args to execute
     token: agithubpersonalaccesstoken
 # a set of regex values can be specified to pin packages (prevent purging)
 # one would also have to `disable: true` the application to stop updates
