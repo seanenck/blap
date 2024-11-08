@@ -118,7 +118,7 @@ func TestParseToken(t *testing.T) {
 	if r != "123" || err != nil {
 		t.Errorf("invalid result: %s %v", r, err)
 	}
-	r, err = s.ParseToken(core.GitHubSettings{Token: []string{test, "111"}})
+	r, err = s.ParseToken(core.GitHubSettings{Token: []interface{}{test, "111"}})
 	if r != "123 111" || err != nil {
 		t.Errorf("invalid result: %s %v", r, err)
 	}

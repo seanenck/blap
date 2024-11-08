@@ -110,8 +110,8 @@ func (g GitHubSettings) Value() []string {
 	if s, ok := g.Token.(string); ok {
 		vals = append(vals, Resolved(s))
 	} else {
-		for _, v := range g.Token.([]string) {
-			vals = append(vals, Resolved(v))
+		for _, v := range g.Token.([]interface{}) {
+			vals = append(vals, Resolved(v.(string)))
 		}
 	}
 	var res []string
