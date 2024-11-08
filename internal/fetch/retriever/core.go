@@ -25,6 +25,7 @@ type (
 		Context     cli.Settings
 		Backend     fetch.Backend
 		Connections core.Connections
+		gitHubToken string
 	}
 )
 
@@ -147,12 +148,15 @@ func (r ResourceFetcher) get(url string) (*http.Response, error) {
 
 func (r *ResourceFetcher) tokenHeader(req *http.Request) error {
 	if req.URL.Scheme == "https" && req.Host == "api.github.com" {
-		token, err := r.Context.ParseToken(r.Connections.GitHub)
-		if err != nil {
-			return err
+		if r.gitHubToken == "" {
+			t, err := r.Context.ParseToken(r.Connections.GitHub)
+			if err != nil {
+				return err
+			}
+			r.gitHubToken = t
 		}
-		if token != "" {
-			req.Header.Set("Authorization", fmt.Sprintf("token %s", token))
+		if r.gitHubToken != "" {
+			req.Header.Set("Authorization", fmt.Sprintf("token %s", r.gitHubToken))
 		}
 	}
 	return nil
