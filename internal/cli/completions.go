@@ -26,16 +26,26 @@ type Completion struct {
 	}
 }
 
-//go:embed shell/bash
-var bashShell string
+var (
+	//go:embed shell/bash
+	bashShell string
+	//go:embed shell/zsh
+	zshShell string
+)
 
 // GenerateCompletions will generate shell completions
 func GenerateCompletions(w io.Writer) error {
 	if w == nil {
 		return nil
 	}
-	if shell := filepath.Base(os.Getenv("SHELL")); shell != "bash" {
-		return fmt.Errorf("unable to generate completions for %s", shell)
+	var text string
+	switch filepath.Base(os.Getenv("SHELL")) {
+	case "bash":
+		text = bashShell
+	case "zsh":
+		text = zshShell
+	default:
+		return fmt.Errorf("unable to generate completions for shell")
 	}
 	exe, err := os.Executable()
 	if err != nil {
@@ -50,7 +60,7 @@ func GenerateCompletions(w io.Writer) error {
 	comp.Arg.Disable = displayDisableFlag
 	comp.Arg.Include = displayIncludeFlag
 	comp.Arg.CleanDirs = displayCleanDirFlag
-	t, err := template.New("sh").Parse(bashShell)
+	t, err := template.New("sh").Parse(text)
 	if err != nil {
 		return err
 	}

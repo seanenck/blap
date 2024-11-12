@@ -16,7 +16,7 @@ func TestGenerationCompletions(t *testing.T) {
 	os.Clearenv()
 	var buf bytes.Buffer
 	t.Setenv("SHELL", "x/a")
-	if err := cli.GenerateCompletions(&buf); err == nil || err.Error() != "unable to generate completions for a" {
+	if err := cli.GenerateCompletions(&buf); err == nil || err.Error() != "unable to generate completions for shell" {
 		t.Errorf("invalid error: %v", err)
 	}
 	buf = bytes.Buffer{}
@@ -26,6 +26,14 @@ func TestGenerationCompletions(t *testing.T) {
 	}
 	b := buf.String()
 	if !strings.Contains(b, "local ") {
+		t.Errorf("invalid buffer: %s", b)
+	}
+	t.Setenv("SHELL", "zsh")
+	if err := cli.GenerateCompletions(&buf); err != nil {
+		t.Errorf("invalid error: %v", err)
+	}
+	b = buf.String()
+	if !strings.Contains(b, "main") {
 		t.Errorf("invalid buffer: %s", b)
 	}
 }
