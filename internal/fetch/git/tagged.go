@@ -66,7 +66,7 @@ func Tagged(caller fetch.Retriever, ctx fetch.Context, a core.GitMode) (*core.Re
 		return nil, errors.New("no tags matched")
 	}
 	caller.Debug("found tag: %s\n", tag)
-	tl, err := ctx.Templating(dl, &fetch.Template{Tag: tag})
+	tl, err := ctx.Templating(dl, &fetch.Template{Tag: fetch.Version(tag)})
 	if err != nil {
 		return nil, err
 	}
