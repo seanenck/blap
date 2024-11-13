@@ -2,12 +2,14 @@
 package core
 
 import (
+	"bytes"
 	"fmt"
 	"iter"
 	"os"
 	"path/filepath"
 	"reflect"
 	"strings"
+	"text/template"
 
 	"github.com/seanenck/blap/internal/util"
 )
@@ -140,6 +142,30 @@ func (r Resolved) String() string {
 		return v
 	}
 	dir := os.Expand(v, os.Getenv)
+	matches := templateRegexp.FindAllString(dir, -1)
+	if len(matches) > 0 {
+		for _, m := range matches {
+			if strings.Contains(m, ".Config.") {
+				err := func() error {
+					t, err := template.New("t").Parse(dir)
+					if err != nil {
+						return err
+					}
+					var buf bytes.Buffer
+					if err := t.Execute(&buf, struct{ Config baseValues }{BaseTemplate}); err != nil {
+						return err
+					}
+					dir = buf.String()
+					return nil
+				}()
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "[WARNING] unable to template value %s (error: %v)", v, err)
+					return dir
+				}
+				break
+			}
+		}
+	}
 	isHome := fmt.Sprintf("~%c", os.PathSeparator)
 	if !strings.HasPrefix(dir, isHome) {
 		return dir

@@ -4,17 +4,33 @@ package core
 import (
 	"bytes"
 	"errors"
+	"regexp"
 	"runtime"
 	"text/template"
 )
 
-// Values is the environment variables/values (for templating)
-type Values[T any] struct {
-	Name string
-	Arch string
-	OS   string
-	Vars T
-}
+var (
+	templateRegexp = regexp.MustCompile(`{{(.*?)}}`)
+	// BaseTemplate are common templating needs
+	BaseTemplate = baseValues{
+		runtime.GOARCH,
+		runtime.GOOS,
+	}
+)
+
+type (
+	baseValues struct {
+		Arch string
+		OS   string
+	}
+
+	// Values is the environment variables/values (for templating)
+	Values[T any] struct {
+		baseValues
+		Name string
+		Vars T
+	}
+)
 
 // NewValues create a new environment variable set
 func NewValues[T any](name string, in T) (Values[T], error) {
@@ -22,9 +38,8 @@ func NewValues[T any](name string, in T) (Values[T], error) {
 		return Values[T]{}, errors.New("name must be set")
 	}
 	res := Values[T]{}
+	res.baseValues = BaseTemplate
 	res.Name = name
-	res.Arch = runtime.GOARCH
-	res.OS = runtime.GOOS
 	res.Vars = in
 	return res, nil
 }

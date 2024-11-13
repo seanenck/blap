@@ -5,7 +5,7 @@ directory: testdata
 # include one (or more) files (can use globs)
 # these will all be combined into a singular application (map) set
 include:
-  - "examples/*.more.yaml"
+  - "examples/{{ if ne $.Config.Arch \"1\" }}*.more.yaml{{end}}"
   - "examples/other.yaml"
   - "testdata/test.yaml"
 # parallelization allows running updates in parallel
@@ -23,7 +23,7 @@ connections:
 # a set of regex values can be specified to pin packages (prevent purging)
 # one would also have to `disable: true` the application to stop updates
 pinned:
-  - "nvim"
+  - "{{ if ne $.Config.OS \"fake\" }}nvim{{end}}"
   - "another"
   - "zzzzzzz"
 # set configuration-wide environment variables for command steps

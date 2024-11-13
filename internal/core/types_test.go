@@ -35,6 +35,14 @@ func TestResolve(t *testing.T) {
 	if v.String() != "abc/123" {
 		t.Errorf("invalid result: %v", v)
 	}
+	v = core.Resolved("~/$XXX{{ $.Abc }}")
+	if v.String() != "abc/123{{ $.Abc }}" {
+		t.Errorf("invalid result: %v", v)
+	}
+	v = core.Resolved("~/$XXX{{ if ne $.Config.Arch \"111\" }}$XXX{{end}}")
+	if v.String() != "abc/123123" {
+		t.Errorf("invalid result: %v", v)
+	}
 }
 
 func TestGitHubToken(t *testing.T) {
