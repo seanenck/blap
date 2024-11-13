@@ -76,21 +76,21 @@ func TestVarSetUnset(t *testing.T) {
 	os.Clearenv()
 	defer os.Clearenv()
 	val := core.Variables{}
-	val.Set()
-	val.Unset()
-	val.Vars = make(map[string]core.Resolved)
-	val.Set()
-	val.Unset()
+	obj := val.Set()
+	obj.Unset()
+	val = make(map[string]core.Resolved)
+	obj = val.Set()
+	obj.Unset()
 	os.Setenv("HOME", "1")
 	os.Setenv("A_TEST", "0")
-	val.Vars["A_TEST"] = "~/2"
-	val.Vars["THIS_IS_A_TEST"] = "3"
-	val.Set()
+	val["A_TEST"] = "~/2"
+	val["THIS_IS_A_TEST"] = "3"
+	obj = val.Set()
 	if os.Getenv("A_TEST") != "1/2" || os.Getenv("THIS_IS_A_TEST") != "3" {
 		t.Errorf("invalid env")
 	}
-	val.Unset()
+	obj.Unset()
 	if os.Getenv("A_TEST") != "0" || os.Getenv("THIS_IS_A_TEST") != "" {
-		t.Errorf("invalid env")
+		t.Errorf("invalid env: %s", os.Getenv("THIS_IS_A_TEST"))
 	}
 }

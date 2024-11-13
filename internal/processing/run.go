@@ -263,8 +263,8 @@ func (c Configuration) Process(executor Executor, fetcher fetch.Retriever, runne
 	}
 	sort.Ints(priorities)
 	slices.Reverse(priorities)
-	c.Variables.Set()
-	defer c.Variables.Unset()
+	environ := c.Variables.Set()
+	defer environ.Unset()
 	for _, p := range priorities {
 		var errs []chan error
 		var errorSet errorList

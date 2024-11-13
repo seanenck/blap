@@ -110,8 +110,8 @@ func TestEnv(t *testing.T) {
 		t.Errorf("invalid cmd: %s", m.lastCmd)
 	}
 	o.Clear = false
-	o.Variables.Vars = make(map[string]core.Resolved)
-	o.Variables.Vars["HOME"] = "1"
+	o.Variables = make(map[string]core.Resolved)
+	o.Variables["HOME"] = "1"
 	if err := steps.Do([]core.Step{{}, {Environment: o, Command: []core.Resolved{"~/exe", "~/{{ $.Name }}"}}}, m, step, core.CommandEnvironment{}); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
@@ -119,22 +119,22 @@ func TestEnv(t *testing.T) {
 		t.Errorf("invalid env: %v %v", m.lastClear, m.lastEnv)
 	}
 	s := core.CommandEnvironment{}
-	s.Variables.Vars = make(map[string]core.Resolved)
-	s.Variables.Vars["HOME"] = "y"
+	s.Variables = make(map[string]core.Resolved)
+	s.Variables["HOME"] = "y"
 	if err := steps.Do([]core.Step{{}, {Environment: o, Command: []core.Resolved{"~/exe", "~/{{ $.Name }}"}}}, m, step, s); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	if m.lastClear || len(m.lastEnv) != 1 {
 		t.Errorf("invalid env: %v %v", m.lastClear, m.lastEnv)
 	}
-	o.Variables.Vars["XYZ"] = "aaa"
+	o.Variables["XYZ"] = "aaa"
 	if err := steps.Do([]core.Step{{}, {Environment: o, Command: []core.Resolved{"~/exe", "~/{{ $.Name }}"}}}, m, step, s); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	if m.lastClear || len(m.lastEnv) != 2 {
 		t.Errorf("invalid env: %v %v", m.lastClear, m.lastEnv)
 	}
-	s.Variables.Vars["ZZZ"] = "aaz"
+	s.Variables["ZZZ"] = "aaz"
 	if err := steps.Do([]core.Step{{}, {Environment: o, Command: []core.Resolved{"~/exe", "~/{{ $.Name }}"}}}, m, step, s); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}

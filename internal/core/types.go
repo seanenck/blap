@@ -16,9 +16,11 @@ import (
 
 type (
 	// Variables define os environment variables to set
-	Variables struct {
-		Vars map[string]Resolved `yaml:"values"`
-		had  map[string]string
+	Variables map[string]Resolved
+	// SetVariables are the variables that are set on Variables.Set and should be "unset"
+	SetVariables map[string]struct {
+		had   bool
+		value string
 	}
 	// Resolved will handle env-based strings for resolution of env vars
 	Resolved string
@@ -189,30 +191,30 @@ func (r Resolved) String() string {
 }
 
 // Set will set os environment variables
-func (v *Variables) Set() {
-	if v.Vars == nil {
-		return
+func (v Variables) Set() SetVariables {
+	vars := make(SetVariables)
+	if v == nil {
+		return vars
 	}
-	if v.had == nil {
-		v.had = make(map[string]string)
-	}
-	for key, val := range v.Vars {
-		had, ok := os.LookupEnv(key)
-		if ok {
-			v.had[key] = had
-		}
+	for key, val := range v {
+		value, ok := os.LookupEnv(key)
+		vars[key] = struct {
+			had   bool
+			value string
+		}{ok, value}
 		os.Setenv(key, val.String())
 	}
+	return vars
 }
 
 // Unset will clear/reset variables to prior state
-func (v *Variables) Unset() {
-	if v.Vars == nil || v.had == nil {
+func (v SetVariables) Unset() {
+	if v == nil {
 		return
 	}
-	for key := range v.Vars {
-		if was, ok := v.had[key]; ok {
-			os.Setenv(key, was)
+	for key, values := range v {
+		if values.had {
+			os.Setenv(key, values.value)
 		} else {
 			os.Unsetenv(key)
 		}

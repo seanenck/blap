@@ -17,8 +17,8 @@ func Do(steps []core.Step, builder util.Runner, ctx Context, e core.CommandEnvir
 	if err := ctx.Valid(); err != nil {
 		return err
 	}
-	e.Variables.Set()
-	defer e.Variables.Unset()
+	environ := e.Variables.Set()
+	defer environ.Unset()
 	for _, step := range steps {
 		cmd := step.Command
 		if len(cmd) == 0 {
@@ -65,8 +65,8 @@ func Do(steps []core.Step, builder util.Runner, ctx Context, e core.CommandEnvir
 }
 
 func runStep(ctx Context, builder util.Runner, to, exe string, args []string, env core.CommandEnvironment, doClear bool) error {
-	env.Variables.Set()
-	defer env.Variables.Unset()
+	environ := env.Variables.Set()
+	defer environ.Unset()
 	run := util.RunSettings{}
 	run.Dir = to
 	if doClear {
