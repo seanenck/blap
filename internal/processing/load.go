@@ -9,9 +9,9 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/goccy/go-yaml"
 	"github.com/seanenck/blap/internal/cli"
 	"github.com/seanenck/blap/internal/core"
-	"gopkg.in/yaml.v3"
 )
 
 func doDecode[T any](in string, o T) error {
@@ -19,8 +19,7 @@ func doDecode[T any](in string, o T) error {
 	if err != nil {
 		return err
 	}
-	decoder := yaml.NewDecoder(bytes.NewReader(data))
-	decoder.KnownFields(true)
+	decoder := yaml.NewDecoder(bytes.NewReader(data), yaml.Strict())
 	if err := decoder.Decode(o); err != nil {
 		return fmt.Errorf("file: %s -> %v", in, err)
 	}
