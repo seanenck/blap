@@ -29,15 +29,23 @@ func Usage(w io.Writer) error {
 	return help(w)
 }
 
+func baseExe() (string, error) {
+	exe, err := os.Executable()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Base(exe), nil
+}
+
 func help(w io.Writer) error {
 	if w == nil {
 		return errors.New("nil writer")
 	}
-	exe, err := os.Executable()
+	exe, err := baseExe()
 	if err != nil {
 		return err
 	}
-	fmt.Fprintf(w, "%s\n", filepath.Base(exe))
+	fmt.Fprintf(w, "%s\n", exe)
 	helpLine(w, false, VersionCommand, "display version information")
 	helpLine(w, false, UpgradeCommand, "upgrade packages")
 	helpLine(w, true, displayApplicationsFlag, "specify a subset of packages (regex)")

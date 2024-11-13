@@ -2,13 +2,17 @@
 package cli
 
 import (
-	_ "embed"
+	"bytes"
+	"embed"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"text/template"
 )
+
+const completionsDir = "shell"
 
 // Completion is the shell completion template object
 type Completion struct {
@@ -16,6 +20,10 @@ type Completion struct {
 	Command    struct {
 		Purge   string
 		Upgrade string
+	}
+	Params struct {
+		Upgrade string
+		Purge   string
 	}
 	Arg struct {
 		Applications string
@@ -26,33 +34,40 @@ type Completion struct {
 	}
 }
 
-var (
-	//go:embed shell/bash
-	bashShell string
-	//go:embed shell/zsh
-	zshShell string
-)
+//go:embed shell/*
+var files embed.FS
+
+func readFile(file string) ([]byte, error) {
+	return files.ReadFile(filepath.Join(completionsDir, file))
+}
+
+func (c Completion) newParam(command string) (string, error) {
+	b, err := readFile(fmt.Sprintf("params.%s.sh", strings.ToLower(command)))
+	if err != nil {
+		return "", err
+	}
+	t, err := template.New("t").Parse(string(b))
+	if err != nil {
+		return "", err
+	}
+	var buf bytes.Buffer
+	if err := t.Execute(&buf, c); err != nil {
+		return "", err
+	}
+	return buf.String(), nil
+}
 
 // GenerateCompletions will generate shell completions
 func GenerateCompletions(w io.Writer) error {
 	if w == nil {
 		return nil
 	}
-	var text string
-	switch filepath.Base(os.Getenv("SHELL")) {
-	case "bash":
-		text = bashShell
-	case "zsh":
-		text = zshShell
-	default:
-		return fmt.Errorf("unable to generate completions for shell")
-	}
-	exe, err := os.Executable()
+	exe, err := baseExe()
 	if err != nil {
 		return err
 	}
 	comp := Completion{}
-	comp.Executable = filepath.Base(exe)
+	comp.Executable = exe
 	comp.Command.Purge = PurgeCommand
 	comp.Command.Upgrade = UpgradeCommand
 	comp.Arg.Confirm = displayCommitFlag
@@ -60,7 +75,29 @@ func GenerateCompletions(w io.Writer) error {
 	comp.Arg.Disable = displayDisableFlag
 	comp.Arg.Include = displayIncludeFlag
 	comp.Arg.CleanDirs = displayCleanDirFlag
-	t, err := template.New("sh").Parse(text)
+
+	file := filepath.Base(os.Getenv("SHELL"))
+	switch file {
+	case "bash":
+	case "zsh":
+	default:
+		return fmt.Errorf("unable to generate completions for shell")
+	}
+	text, err := readFile(fmt.Sprintf("completions.%s", file))
+	if err != nil {
+		return err
+	}
+	up, err := comp.newParam(UpgradeCommand)
+	if err != nil {
+		return err
+	}
+	purge, err := comp.newParam(PurgeCommand)
+	if err != nil {
+		return err
+	}
+	comp.Params.Purge = purge
+	comp.Params.Upgrade = up
+	t, err := template.New("sh").Parse(string(text))
 	if err != nil {
 		return err
 	}
