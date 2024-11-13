@@ -71,7 +71,7 @@ func (c Configuration) Do(ctx Context) error {
 		return errors.New("configuration not setup")
 	}
 	c.context.LogDebug("processing: %s\n", ctx.Name)
-	rsrc, err := ctx.Fetcher.Process(fetch.Context{Name: ctx.Name}, ctx.Application.Source.Items())
+	rsrc, err := ctx.Fetcher.Process(fetch.Context{Name: ctx.Name}, ctx.Application.Items())
 	if err != nil {
 		return err
 	}

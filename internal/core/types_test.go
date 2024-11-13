@@ -9,7 +9,7 @@ import (
 )
 
 func TestSourceItems(t *testing.T) {
-	s := core.Source{}
+	s := core.Application{}
 	cnt := 0
 	for range s.Items() {
 		cnt++

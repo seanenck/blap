@@ -6,18 +6,16 @@ pinned:
   - "123"
 applications:
   go:
-    source:
-      git:
-        repository: "https://github.com/golang/go"
-        tagged:
-          download: "https://go.dev/dl/{{ $.Vars.Tag }}.linux-amd64.tar.gz"
-          filters: 
-            - "refs/tags/weekly"
-            - "refs/tags/release"
-            - "[0-9]rc[0-9]"
+    git:
+      repository: "https://github.com/golang/go"
+      tagged:
+        download: "https://go.dev/dl/{{ $.Vars.Tag }}.linux-amd64.tar.gz"
+        filters: 
+          - "refs/tags/weekly"
+          - "refs/tags/release"
+          - "[0-9]rc[0-9]"
   rg:
-    source:
-      github:
-        project: "BurntSushi/ripgrep"
-        release:
-          asset: "x86_64-unknown-linux-(.+?).tar.gz$"
+    github:
+      project: "BurntSushi/ripgrep"
+      release:
+        asset: "x86_64-unknown-linux-(.+?).tar.gz$"

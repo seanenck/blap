@@ -47,26 +47,24 @@ applications:
     # higher priority goes FIRST
     priority: -100
     # github project
-    source:
-      github:
-        # actual github project
-        project: "neovim/neovim"
-        # select the necessary asset
-        release:
-          asset: "nvim-linux64.tar.gz$"
+    github:
+      # actual github project
+      project: "neovim/neovim"
+      # select the necessary asset
+      release:
+        asset: "nvim-linux64.tar.gz$"
     commands:
       # deploy the appropriate files
       steps:
         - command: ["ln", "-sf", "bin/nvim", "~/bin"]
   blap:
     # github release mode
-    source:
-      github:
-        project: "seanenck/blap"
-        release:
-          # instead of selecting a _binary_ asset, get the tarball of a release
-          # can perform a source build
-          asset: "tarball"
+    github:
+      project: "seanenck/blap"
+      release:
+        # instead of selecting a _binary_ asset, get the tarball of a release
+        # can perform a source build
+        asset: "tarball"
     commands:
       # setup build environment settings for ALL application build steps
       environment:
@@ -92,11 +90,10 @@ applications:
   nvim2:
     # this app, specifically, is disabled
     disable: true
-    source:
-      github:
-        project: "neovim/neovim"
-        release:
-          asset: "nvim-linux64.tar.gz$"
+    github:
+      project: "neovim/neovim"
+      release:
+        asset: "nvim-linux64.tar.gz$"
     commands:
       steps:
         - command: ["ln", "-sf", "bin/nvim", "~/bin"]

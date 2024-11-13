@@ -3,12 +3,11 @@ applications:
   # this application downloads
   # it does NOT build and it does NOT deploy
   lockbox:
-    source:
-      # github mode
-      github:
-        project: "seanenck/lockbox"
-        # unlike release mode, this will simply get the latest sha of a branch
-        # and consider that a 'version' (or tag) for download/deploy)
-        # this just happens to not build or deploy (it can)
-        branch:
-          name: "master"
+    # github mode
+    github:
+      project: "seanenck/lockbox"
+      # unlike release mode, this will simply get the latest sha of a branch
+      # and consider that a 'version' (or tag) for download/deploy)
+      # this just happens to not build or deploy (it can)
+      branch:
+        name: "master"

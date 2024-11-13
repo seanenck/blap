@@ -48,10 +48,11 @@ type (
 	}
 	// Application defines how an application is downloaded, unpacked, and deployed
 	Application struct {
-		Priority int        `yaml:"priority"`
-		Disable  bool       `yaml:"disable"`
-		Source   Source     `yaml:"source"`
-		Extract  Extraction `yaml:"extract"`
+		Priority int         `yaml:"priority"`
+		Disable  bool        `yaml:"disable"`
+		GitHub   *GitHubMode `yaml:"github"`
+		Git      *GitMode    `yaml:"git"`
+		Extract  Extraction  `yaml:"extract"`
 		Commands struct {
 			Environment CommandEnvironment `yaml:"environment"`
 			Steps       []Step             `yaml:"steps"`
@@ -73,11 +74,6 @@ type (
 		NoDepth bool       `yaml:"nodepth"`
 		Command []Resolved `yaml:"command"`
 	}
-	// Source are the available source options
-	Source struct {
-		GitHub *GitHubMode `yaml:"github"`
-		Git    *GitMode    `yaml:"git"`
-	}
 	// Pinned are pinned names (for regex use)
 	Pinned []string
 	// AppSet are a name->app pair
@@ -95,7 +91,19 @@ type (
 		Env() []string
 		Value() []string
 	}
+	// SourceType indicates if an application field contains a source
+	SourceType interface {
+		Is()
+	}
 )
+
+// Is toggles on source mode
+func (g GitHubMode) Is() {
+}
+
+// Is toggles on source mode
+func (g GitMode) Is() {
+}
 
 // Env will get the possible environment variables
 func (g GitHubSettings) Env() []string {
@@ -124,12 +132,15 @@ func (g GitHubSettings) Value() []string {
 }
 
 // Items will iterate over the available source itmes
-func (s Source) Items() iter.Seq[any] {
+func (a Application) Items() iter.Seq[any] {
 	return func(yield func(any) bool) {
-		v := reflect.ValueOf(s)
+		v := reflect.ValueOf(a)
 		for i := 0; i < v.NumField(); i++ {
-			if !yield(v.Field(i).Interface()) {
-				return
+			obj := v.Field(i).Interface()
+			if _, ok := obj.(SourceType); ok {
+				if !yield(obj) {
+					return
+				}
 			}
 		}
 	}
