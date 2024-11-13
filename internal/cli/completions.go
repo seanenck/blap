@@ -14,25 +14,33 @@ import (
 
 const completionsDir = "shell"
 
-// Completion is the shell completion template object
-type Completion struct {
-	Executable string
-	Command    struct {
-		Purge   string
-		Upgrade string
+type (
+	// Completion is the shell completion template object
+	Completion struct {
+		Executable string
+		Command    struct {
+			Purge   string
+			Upgrade string
+		}
+		Params struct {
+			Upgrade CompletionCommand
+			Purge   CompletionCommand
+		}
+		Arg struct {
+			Applications string
+			Confirm      string
+			Disable      string
+			Include      string
+			CleanDirs    string
+		}
 	}
-	Params struct {
-		Upgrade string
-		Purge   string
+
+	// CompletionCommand are specifics for completing a command
+	CompletionCommand struct {
+		Main string
+		Sub  string
 	}
-	Arg struct {
-		Applications string
-		Confirm      string
-		Disable      string
-		Include      string
-		CleanDirs    string
-	}
-}
+)
 
 //go:embed shell/*
 var files embed.FS
@@ -95,8 +103,10 @@ func GenerateCompletions(w io.Writer) error {
 	if err != nil {
 		return err
 	}
-	comp.Params.Purge = purge
-	comp.Params.Upgrade = up
+	comp.Params.Purge.Main = strings.Join([]string{comp.Arg.Confirm, comp.Arg.CleanDirs}, " ")
+	comp.Params.Purge.Sub = purge
+	comp.Params.Upgrade.Main = strings.Join([]string{comp.Arg.Confirm, comp.Arg.Applications, comp.Arg.Disable, comp.Arg.Include}, " ")
+	comp.Params.Upgrade.Sub = up
 	t, err := template.New("sh").Parse(string(text))
 	if err != nil {
 		return err

@@ -7,13 +7,12 @@ _{{ $.Executable }}() {
     chosen=${COMP_WORDS[1]}
     case "$COMP_CWORD" in
       2)
-        opts="{{ $.Arg.Confirm }}"
         case "$chosen" in
           "{{ $.Command.Upgrade }}")
-            opts="$opts {{ $.Arg.Applications }} {{ $.Arg.Disable }} {{ $.Arg.Include }}"
+            opts="{{ $.Params.Upgrade.Main }}"
             ;;
           "{{ $.Command.Purge }}")
-            opts="$opts {{ $.Arg.CleanDirs }}"
+            opts="{{ $.Params.Purge.Main }}"
             ;;
         esac
       ;;
@@ -22,7 +21,7 @@ _{{ $.Executable }}() {
           "{{ $.Command.Purge }}")
             if [ "$COMP_CWORD" -eq 3 ]; then
               chosen=${COMP_WORDS[2]}
-              {{ $.Params.Purge }}
+              {{ $.Params.Purge.Sub }}
             fi
             ;;
           "{{ $.Command.Upgrade }}") 
@@ -30,7 +29,7 @@ _{{ $.Executable }}() {
             if [ "$COMP_CWORD" -eq 4 ]; then
               sub=${COMP_WORDS[3]}
             fi
-            {{ $.Params.Upgrade }}
+            {{ $.Params.Upgrade.Sub }}
             ;;
         esac
       ;;

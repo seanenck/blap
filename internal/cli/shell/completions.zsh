@@ -24,10 +24,7 @@ _{{ $.Executable }}() {
         "{{ $.Command.Upgrade }}")
           case "$len" in
             3)
-            compadd -- "{{ $.Arg.Applications }}"
-            compadd -- "{{ $.Arg.Disable }}"
-            compadd -- "{{ $.Arg.Confirm }}"
-            compadd -- "{{ $.Arg.Include }}"
+            opts="{{ $.Params.Upgrade.Main }}"
             ;;
             4 | 5)
             chosen=$words[3]
@@ -37,18 +34,17 @@ _{{ $.Executable }}() {
                 sub=""
               fi
             fi
-            {{ $.Params.Upgrade }}
+            {{ $.Params.Upgrade.Sub }}
           esac
           ;;
         "{{ $.Command.Purge }}")
           case "$len" in
             3)
-            compadd -- "{{ $.Arg.Confirm }}"
-            compadd -- "{{ $.Arg.CleanDirs }}"
+            opts="{{ $.Params.Purge.Main }}"
             ;;
             4)
             chosen=$words[3]
-            {{ $.Params.Purge }}
+            {{ $.Params.Purge.Sub }}
             ;;
           esac
           ;;
