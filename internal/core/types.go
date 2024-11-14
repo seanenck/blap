@@ -87,7 +87,10 @@ type (
 	}
 	// Connections are various endpoint settings
 	Connections struct {
-		GitHub GitHubSettings `yaml:"github"`
+		GitHub   GitHubSettings `yaml:"github"`
+		Timeouts struct {
+			Get uint `yaml:"get"`
+		} `yaml:"timeouts"`
 	}
 	// Token defines an interface for setting API/auth tokens
 	Token interface {

@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"time"
 
 	"github.com/seanenck/blap/internal/cli"
 	"github.com/seanenck/blap/internal/core"
@@ -140,6 +141,9 @@ func (r ResourceFetcher) get(url string) (*http.Response, error) {
 	return func() (*http.Response, error) {
 		if r.Backend == nil {
 			cli := &http.Client{}
+			if r.Connections.Timeouts.Get > 0 {
+				cli.Timeout = time.Duration(r.Connections.Timeouts.Get) * time.Second
+			}
 			return cli.Do(req)
 		}
 		return r.Backend.Do(req)

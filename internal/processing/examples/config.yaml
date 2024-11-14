@@ -20,6 +20,10 @@ connections:
     # it can be a file path which is executable (and will be)
     # it can be an array which is a command+args to execute
     token: agithubpersonalaccesstoken
+  # timeouts control connections that may need to be timed out
+  timeouts:
+    # get handles all get request timeouts (0 is default behavior, > 0 is seconds for timeout)
+    get: 0
 # a set of regex values can be specified to pin packages (prevent purging)
 # one would also have to `disable: true` the application to stop updates
 pinned:
