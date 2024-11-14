@@ -337,6 +337,24 @@ func TestConfigurationDo(t *testing.T) {
 	if len(cfg.Changed()) != 1 {
 		t.Error("unexpected updates")
 	}
+	s.Verbosity = 100
+	var buf bytes.Buffer
+	s.Writer = &buf
+	cfg, _ = processing.Load(filepath.Join("examples", "config.yaml"), s)
+	f.rsrc = &core.Resource{File: "xyz.tar.xz", URL: "xxx", Tag: "123"}
+	app := core.Application{}
+	app.Commands.Steps = append(app.Commands.Steps, core.Step{})
+	app.Extract.Skip = true
+	if err := cfg.Do(processing.Context{Application: app, Fetcher: f, Name: "abc", Runner: &mockExecutor{}, Executor: &mockExecutor{}}); err != nil {
+		t.Errorf("invalid error: %v", err)
+	}
+	if len(cfg.Changed()) != 1 {
+		t.Error("unexpected updates")
+	}
+	str := buf.String()
+	if !strings.Contains(str, "no extraction") || !strings.Contains(str, "steps set for") {
+		t.Error("should not extract")
+	}
 }
 
 func TestConfigurationBasicProcess(t *testing.T) {

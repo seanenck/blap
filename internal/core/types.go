@@ -73,6 +73,7 @@ type (
 	}
 	// Extraction handles asset extraction
 	Extraction struct {
+		Skip    bool       `yaml:"skip"`
 		NoDepth bool       `yaml:"nodepth"`
 		Command []Resolved `yaml:"command"`
 	}
