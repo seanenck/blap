@@ -16,7 +16,10 @@ import (
 
 type (
 	// Variables define os environment variables to set
-	Variables map[string]Resolved
+	Variables []struct {
+		Key   string   `yaml:"key"`
+		Value Resolved `yaml:"value"`
+	}
 	// SetVariables are the variables that are set on Variables.Set and should be "unset"
 	SetVariables map[string]struct {
 		had   bool
@@ -200,13 +203,13 @@ func (v Variables) Set() SetVariables {
 	if v == nil {
 		return vars
 	}
-	for key, val := range v {
-		value, ok := os.LookupEnv(key)
-		vars[key] = struct {
+	for _, obj := range v {
+		value, ok := os.LookupEnv(obj.Key)
+		vars[obj.Key] = struct {
 			had   bool
 			value string
 		}{ok, value}
-		os.Setenv(key, val.String())
+		os.Setenv(obj.Key, obj.Value.String())
 	}
 	return vars
 }
