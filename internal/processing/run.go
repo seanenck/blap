@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"slices"
 	"sort"
+	"strings"
 	"sync"
 
 	"github.com/seanenck/blap/internal/core"
@@ -213,6 +214,26 @@ func (c Configuration) cleanDirectories(restrict []string) ([]string, error) {
 	return results, nil
 }
 
+// Lock will lock the configuration for an operation (set)
+func (c Configuration) Lock(file string) error {
+	if util.PathExists(file) {
+		return fmt.Errorf("instance already running, has lock: %s", file)
+	}
+	pid := fmt.Sprintf("pid: %d", os.Getpid())
+	if err := os.WriteFile(file, []byte(pid), 0o644); err != nil {
+		return err
+	}
+	b, err := os.ReadFile(file)
+	if err != nil {
+		return err
+	}
+	running := strings.TrimSpace(string(b))
+	if pid != running {
+		return fmt.Errorf("another process (%s) is operating, locked: %s", running, file)
+	}
+	return nil
+}
+
 // Process will process application definitions
 func (c Configuration) Process(executor Executor, fetcher fetch.Retriever, runner util.Runner) error {
 	if c.Applications == nil {
@@ -227,6 +248,11 @@ func (c Configuration) Process(executor Executor, fetcher fetch.Retriever, runne
 	if !c.Indexing.Enabled && c.Indexing.Strict {
 		return errors.New("can not enable strict indexing without indexing enabled")
 	}
+	lockFile := c.NewFile(".lock")
+	if err := c.Lock(lockFile); err != nil {
+		return err
+	}
+	defer os.Remove(lockFile)
 	mode := "update"
 	if c.context.Purge {
 		mode = "purge"

@@ -31,6 +31,14 @@ type mockExecutor struct {
 	calledMulti int
 }
 
+func genCleanup() func() {
+	os.RemoveAll("testdata")
+	os.MkdirAll("testdata", 0o755)
+	return func() {
+		os.RemoveAll("testdata")
+	}
+}
+
 func (m *mockExecutor) noCount() error {
 	return m.expectCount(0, 0)
 }
@@ -250,6 +258,7 @@ func TestProcessPurge(t *testing.T) {
 }
 
 func TestProcessDoError(t *testing.T) {
+	defer genCleanup()()
 	m := &mockExecutor{}
 	m.err = errors.New("ERROR")
 	s := cli.Settings{}
@@ -358,6 +367,7 @@ func TestConfigurationDo(t *testing.T) {
 }
 
 func TestConfigurationBasicProcess(t *testing.T) {
+	defer genCleanup()()
 	m := &mockExecutor{}
 	s := cli.Settings{}
 	s.Verbosity = cli.InfoVerbosity
@@ -683,6 +693,7 @@ func TestCleanDirsIndexed(t *testing.T) {
 }
 
 func TestStrictIndexed(t *testing.T) {
+	defer genCleanup()()
 	m := &mockExecutor{}
 	s := cli.Settings{}
 	s.Verbosity = cli.InfoVerbosity
@@ -742,5 +753,20 @@ func TestLogging(t *testing.T) {
 	str = string(b)
 	if !strings.Contains(str, "DRYRUN") || !strings.Contains(str, "purging") {
 		t.Errorf("invalid buffer: %s", str)
+	}
+}
+
+func TestLock(t *testing.T) {
+	defer genCleanup()()
+	f := filepath.Join("testdata", "lock")
+	os.WriteFile(f, []byte{}, 0o644)
+	s := cli.Settings{}
+	cfg, _ := processing.Load(filepath.Join("examples", "config.yaml"), s)
+	if err := cfg.Lock(f); err == nil || err.Error() != "instance already running, has lock: testdata/lock" {
+		t.Errorf("invalid error: %v", err)
+	}
+	os.Remove(f)
+	if err := cfg.Lock(f); err != nil {
+		t.Errorf("invalid error: %v", err)
 	}
 }
