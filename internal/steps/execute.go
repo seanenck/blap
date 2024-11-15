@@ -10,7 +10,7 @@ import (
 )
 
 // Do will run each build step
-func Do(steps []core.Step, builder util.Runner, ctx Context, e core.CommandEnvironment) error {
+func Do(steps []core.Step, builder util.Runner, ctx Context, e core.CommandEnv) error {
 	if builder == nil {
 		return errors.New("builder is unset")
 	}
@@ -57,14 +57,14 @@ func Do(steps []core.Step, builder util.Runner, ctx Context, e core.CommandEnvir
 			}
 			args = append(args, t)
 		}
-		if err := runStep(ctx, builder, to, exe, args, step.Environment, step.Environment.Clear || e.Clear); err != nil {
+		if err := runStep(ctx, builder, to, exe, args, step.CommandEnv(), step.ClearEnv || e.Clear); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func runStep(ctx Context, builder util.Runner, to, exe string, args []string, env core.CommandEnvironment, doClear bool) error {
+func runStep(ctx Context, builder util.Runner, to, exe string, args []string, env core.CommandEnv, doClear bool) error {
 	environ := env.Variables.Set()
 	defer environ.Unset()
 	run := util.RunSettings{}

@@ -1,4 +1,4 @@
-// Package processing handles processing yaml configs
+// Package processing handles processing configs
 package processing
 
 import (
@@ -155,7 +155,7 @@ func (c Configuration) Do(ctx Context) error {
 	step.Settings = c.context
 	processLock.Lock()
 	defer processLock.Unlock()
-	if err := steps.Do(ctx.Application.Commands.Steps, ctx.Runner, step, ctx.Application.Commands.Environment); err != nil {
+	if err := steps.Do(ctx.Application.Commands.Steps, ctx.Runner, step, ctx.Application.CommandEnv()); err != nil {
 		return err
 	}
 	return nil

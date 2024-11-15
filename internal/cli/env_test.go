@@ -17,12 +17,12 @@ func TestDefaultConfigs(t *testing.T) {
 	}
 	t.Setenv("HOME", "xxx")
 	cfgs = cli.DefaultConfigs()
-	if fmt.Sprintf("%v", cfgs) != "[xxx/.config/blap/config.yaml]" {
+	if fmt.Sprintf("%v", cfgs) != "[xxx/.config/blap/config.toml]" {
 		t.Errorf("invalid configs: %v", cfgs)
 	}
 	t.Setenv("XDG_CONFIG_HOME", "yyy")
 	cfgs = cli.DefaultConfigs()
-	if fmt.Sprintf("%v", cfgs) != "[xxx/.config/blap/config.yaml yyy/blap/config.yaml]" {
+	if fmt.Sprintf("%v", cfgs) != "[xxx/.config/blap/config.toml yyy/blap/config.toml]" {
 		t.Errorf("invalid configs: %v", cfgs)
 	}
 }

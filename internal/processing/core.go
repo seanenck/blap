@@ -17,17 +17,17 @@ type (
 		context cli.Settings
 
 		Indexing struct {
-			Enabled bool `yaml:"enabled"`
-			Strict  bool `yaml:"strict"`
-		} `yaml:"indexing"`
-		Directory       core.Resolved    `yaml:"directory"`
-		Include         []core.Resolved  `yaml:"include"`
-		Applications    core.AppSet      `yaml:"applications"`
-		Parallelization int              `yaml:"parallelization"`
-		Pinned          core.Pinned      `yaml:"pinned"`
-		Connections     core.Connections `yaml:"connections"`
-		Variables       core.Variables   `yaml:"variables"`
-		Log             core.Resolved    `yaml:"logfile"`
+			Enabled bool
+			Strict  bool
+		}
+		Directory       core.Resolved
+		Include         []core.Resolved
+		Applications    core.AppSet
+		Parallelization int
+		Pinned          core.Pinned
+		Connections     core.Connections
+		Variables       core.Variables
+		LogFile         core.Resolved
 		pinnedMatchers  []*regexp.Regexp
 		logFile         string
 		dir             string

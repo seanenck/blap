@@ -17,8 +17,8 @@ import (
 type (
 	// Variables define os environment variables to set
 	Variables []struct {
-		Key   string   `yaml:"key"`
-		Value Resolved `yaml:"value"`
+		Key   string
+		Value Resolved
 	}
 	// SetVariables are the variables that are set on Variables.Set and should be "unset"
 	SetVariables map[string]struct {
@@ -29,56 +29,58 @@ type (
 	Resolved string
 	// GitTaggedMode means a repository+download is required to manage
 	GitTaggedMode struct {
-		Download string   `yaml:"download"`
-		Filters  []string `yaml:"filters"`
+		Download string
+		Filters  []string
 	}
 	// GitHubReleaseMode are github modes operating on releases
 	GitHubReleaseMode struct {
-		Asset string `yaml:"asset"`
+		Asset string
 	}
 	// GitHubBranchMode will enable a repository+branch to pull a tarball
 	GitHubBranchMode struct {
-		Name string `yaml:"name"`
+		Name string
 	}
 	// GitMode enables git-based fetches
 	GitMode struct {
-		Repository string         `yaml:"repository"`
-		Tagged     *GitTaggedMode `yaml:"tagged"`
+		Repository string
+		Tagged     *GitTaggedMode
 	}
 	// GitHubMode indicates processing of a github project for upstreams
 	GitHubMode struct {
-		Project string             `yaml:"project"`
-		Release *GitHubReleaseMode `yaml:"release"`
-		Branch  *GitHubBranchMode  `yaml:"branch"`
+		Project string
+		Release *GitHubReleaseMode
+		Branch  *GitHubBranchMode
 	}
 	// Application defines how an application is downloaded, unpacked, and deployed
 	Application struct {
-		Priority int         `yaml:"priority"`
-		Disable  bool        `yaml:"disable"`
-		GitHub   *GitHubMode `yaml:"github"`
-		Git      *GitMode    `yaml:"git"`
-		Extract  Extraction  `yaml:"extract"`
+		Priority int
+		Disable  bool
+		GitHub   *GitHubMode
+		Git      *GitMode
+		Extract  Extraction
 		Commands struct {
-			Environment CommandEnvironment `yaml:"environment"`
-			Steps       []Step             `yaml:"steps"`
-		} `yaml:"commands"`
+			Variables Variables
+			ClearEnv  bool
+			Steps     []Step
+		}
 	}
 	// Step is a build process step
 	Step struct {
-		Directory   Resolved           `yaml:"directory"`
-		Command     []Resolved         `yaml:"command"`
-		Environment CommandEnvironment `yaml:"environment"`
-	}
-	// CommandEnvironment are environment configuration settings for build steps
-	CommandEnvironment struct {
-		Variables Variables `yaml:"variables"`
-		Clear     bool      `yaml:"clear"`
+		Directory Resolved
+		Command   []Resolved
+		Variables Variables
+		ClearEnv  bool
 	}
 	// Extraction handles asset extraction
 	Extraction struct {
-		Skip    bool       `yaml:"skip"`
-		NoDepth bool       `yaml:"nodepth"`
-		Command []Resolved `yaml:"command"`
+		Skip    bool
+		NoDepth bool
+		Command []Resolved
+	}
+	// CommandEnv wraps build command environment settings
+	CommandEnv struct {
+		Clear     bool
+		Variables Variables
 	}
 	// Pinned are pinned names (for regex use)
 	Pinned []string
@@ -86,14 +88,14 @@ type (
 	AppSet map[string]Application
 	// GitHubSettings are overall github settings
 	GitHubSettings struct {
-		Token interface{} `yaml:"token"`
+		Token interface{}
 	}
 	// Connections are various endpoint settings
 	Connections struct {
-		GitHub   GitHubSettings `yaml:"github"`
+		GitHub   GitHubSettings
 		Timeouts struct {
-			Get uint `yaml:"get"`
-		} `yaml:"timeouts"`
+			Get uint
+		}
 	}
 	// Token defines an interface for setting API/auth tokens
 	Token interface {
@@ -105,6 +107,16 @@ type (
 		Is()
 	}
 )
+
+// CommandEnv creates a command environment from an application
+func (a Application) CommandEnv() CommandEnv {
+	return CommandEnv{Clear: a.Commands.ClearEnv, Variables: a.Commands.Variables}
+}
+
+// CommandEnv creates a command environment from a step
+func (s Step) CommandEnv() CommandEnv {
+	return CommandEnv{Clear: s.ClearEnv, Variables: s.Variables}
+}
 
 // Is toggles on source mode
 func (g GitHubMode) Is() {

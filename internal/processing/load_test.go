@@ -13,27 +13,27 @@ import (
 
 func makeTestFile(src string) {
 	b, _ := os.ReadFile(filepath.Join("examples", src))
-	to := filepath.Join("testdata", "test.yaml")
+	to := filepath.Join("testdata", "test.toml")
 	os.RemoveAll("testdata")
 	os.Mkdir("testdata", 0o755)
 	os.WriteFile(to, b, 0o644)
 }
 
 func TestLoadError(t *testing.T) {
-	makeTestFile("disabled.more.yaml")
-	example := filepath.Join("examples", "config.yaml")
+	makeTestFile("disabled.more.toml")
+	example := filepath.Join("examples", "config.toml")
 	if _, err := processing.Load(example, cli.Settings{}); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
-	makeTestFile("added.more.yaml")
+	makeTestFile("added.more.toml")
 	if _, err := processing.Load(example, cli.Settings{}); err == nil || !strings.Contains(err.Error(), "is overwritten by config:") {
 		t.Errorf("invalid error: %v", err)
 	}
 }
 
 func TestLoad(t *testing.T) {
-	makeTestFile("disabled.more.yaml")
-	example := filepath.Join("examples", "config.yaml")
+	makeTestFile("disabled.more.toml")
+	example := filepath.Join("examples", "config.toml")
 	c, err := processing.Load(example, cli.Settings{})
 	if err != nil {
 		t.Errorf("invalid error: %v", err)
@@ -47,8 +47,8 @@ func TestLoad(t *testing.T) {
 }
 
 func TestLoadFilter(t *testing.T) {
-	makeTestFile("disabled.more.yaml")
-	example := filepath.Join("examples", "config.yaml")
+	makeTestFile("disabled.more.toml")
+	example := filepath.Join("examples", "config.toml")
 	s := cli.Settings{}
 	s.CompileApplicationFilter("l", true)
 	c, err := processing.Load(example, s)
@@ -69,8 +69,8 @@ func TestLoadFilter(t *testing.T) {
 }
 
 func TestLoadInclude(t *testing.T) {
-	makeTestFile("disabled.more.yaml")
-	example := filepath.Join("examples", "config.yaml")
+	makeTestFile("disabled.more.toml")
+	example := filepath.Join("examples", "config.toml")
 	s := cli.Settings{}
 	re, _ := regexp.Compile("other")
 	s.Include = re

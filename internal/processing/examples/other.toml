@@ -1,0 +1,9 @@
+# included file, define applications
+# this application downloads
+# it does NOT build and it does NOT deploy
+[applications.lockbox.github]
+project = "seanenck/lockbox"
+# unlike release mode, this will simply get the latest sha of a branch
+# and consider that a 'version' (or tag) for download/deploy)
+# this just happens to not build or deploy (it can)
+branch = { name = "master" }

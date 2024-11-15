@@ -84,12 +84,12 @@ func TestVarSetUnset(t *testing.T) {
 	os.Setenv("HOME", "1")
 	os.Setenv("A_TEST", "0")
 	val = append(val, struct {
-		Key   string        "yaml:\"key\""
-		Value core.Resolved "yaml:\"value\""
+		Key   string
+		Value core.Resolved
 	}{"A_TEST", "~/2"})
 	val = append(val, struct {
-		Key   string        "yaml:\"key\""
-		Value core.Resolved "yaml:\"value\""
+		Key   string
+		Value core.Resolved
 	}{"THIS_IS_A_TEST", "3"})
 	obj = val.Set()
 	if os.Getenv("A_TEST") != "1/2" || os.Getenv("THIS_IS_A_TEST") != "3" {
@@ -98,5 +98,32 @@ func TestVarSetUnset(t *testing.T) {
 	obj.Unset()
 	if os.Getenv("A_TEST") != "0" || os.Getenv("THIS_IS_A_TEST") != "" {
 		t.Errorf("invalid env: %s", os.Getenv("THIS_IS_A_TEST"))
+	}
+}
+
+func TestCommandEnv(t *testing.T) {
+	a := core.Application{}
+	a.Commands.ClearEnv = true
+	a.Commands.Variables = append(a.Commands.Variables, struct {
+		Key   string
+		Value core.Resolved
+	}{})
+	e := a.CommandEnv()
+	if !e.Clear || len(e.Variables) != 1 {
+		t.Error("invalid conversion")
+	}
+	s := core.Application{}
+	s.Commands.ClearEnv = true
+	s.Commands.Variables = append(s.Commands.Variables, struct {
+		Key   string
+		Value core.Resolved
+	}{})
+	s.Commands.Variables = append(s.Commands.Variables, struct {
+		Key   string
+		Value core.Resolved
+	}{})
+	e = s.CommandEnv()
+	if !e.Clear || len(e.Variables) != 2 {
+		t.Error("invalid conversion")
 	}
 }

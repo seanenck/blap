@@ -1,4 +1,4 @@
-// Package processing loads yaml configs
+// Package processing loads configs
 package processing
 
 import (
@@ -9,7 +9,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/goccy/go-yaml"
+	"github.com/BurntSushi/toml"
 	"github.com/seanenck/blap/internal/cli"
 	"github.com/seanenck/blap/internal/core"
 )
@@ -19,9 +19,14 @@ func doDecode[T any](in string, o T) error {
 	if err != nil {
 		return err
 	}
-	decoder := yaml.NewDecoder(bytes.NewReader(data), yaml.Strict())
-	if err := decoder.Decode(o); err != nil {
-		return fmt.Errorf("file: %s -> %v", in, err)
+	decoder := toml.NewDecoder(bytes.NewReader(data))
+	md, err := decoder.Decode(o)
+	if err != nil {
+		return err
+	}
+	unknown := md.Undecoded()
+	if len(unknown) > 0 {
+		return fmt.Errorf("unknown fields: %v", unknown)
 	}
 	return nil
 }
@@ -35,7 +40,7 @@ func Load(input string, context cli.Settings) (Configuration, error) {
 	if err := doDecode(input, &c); err != nil {
 		return c, err
 	}
-	c.logFile = c.Log.String()
+	c.logFile = c.LogFile.String()
 	c.dir = c.Directory.String()
 	if len(c.Include) > 0 {
 		hasIncludefilter := context.Include != nil
@@ -62,9 +67,9 @@ func Load(input string, context cli.Settings) (Configuration, error) {
 				}
 			}
 			type included struct {
-				Applications core.AppSet `yaml:"applications"`
-				Disable      bool        `yaml:"disable"`
-				Pinned       core.Pinned `yaml:"pinned"`
+				Applications core.AppSet
+				Disable      bool
+				Pinned       core.Pinned
 			}
 			var apps included
 			if err := doDecode(include, &apps); err != nil {

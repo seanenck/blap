@@ -1,0 +1,99 @@
+# main configuration definition
+# directory to use as a store/cache
+# can be offset from HOME via '~/' as a prefix
+directory = "testdata"
+# include one (or more) files (can use globs)
+# these will all be combined into a singular application (map) set
+include = [
+  "examples/{{ if ne $.Config.Arch \"1\" }}*.more.toml{{end}}",
+  "examples/other.toml",
+  "testdata/test.toml",
+]
+# parallelization allows running updates in parallel
+# increase > 1 to support parallel jobs (0 == disabled == 1)
+parallelization = 0
+# enable logging for activities
+#logfile: "~/.local/state/blap.log"
+# to disable do not set or set to empty string
+logfile = ""
+# configure various connection source components
+# github settings
+# a set of regex values can be specified to pin packages (prevent purging)
+# one would also have to `disable: true` the application to stop updates
+pinned = [
+  "{{ if ne $.Config.OS \"fake\" }}nvim{{end}}",
+  "another",
+  "zzzzzzz",
+]
+
+[connections.github]
+token = "agithubpersonalaccesstoken"
+# timeouts control connections that may need to be timed out
+[connections.timeouts]
+# get handles all get request timeouts (0 is default behavior, > 0 is seconds for timeout)
+get = 0
+
+# set configuration-wide environment variables for command steps
+[[variables]]
+key = "ENV_KEY"
+value = "some_values"
+[[variables]]
+key = "LDFLAGS"
+value = "-X -y" 
+
+# indexing enables using a dryrun/commit strategy of applying updates
+[indexing]
+# when enabled, dryrun commands will generate an index file
+# that file will be used by follow-on commit actions
+enabled = false
+# in strict mode it will not be possible to perform a commit
+# if an index file does not exist
+strict = false
+
+# application settings for deployment
+[applications.nvim]
+# priority can be used to make sure packages are run in a specific order
+# higher priority goes FIRST
+priority = -100
+# github project
+[applications.nvim.github]
+# actual github project
+project = "neovim/neovim"
+# select the necessary asset
+release = { asset = "nvim-linux64.tar.gz$" }
+[[applications.nvim.commands.steps]]
+command = ["ln", "-sf", "bin/nvim", "~/bin"]
+
+[applications.blap]
+[applications.blap.github]
+# github release mode
+project = "seanenck/blap"
+# instead of selecting a _binary_ asset, get the tarball of a release
+# can perform a source build
+release = { asset = "tarball" }
+[applications.blap.commands]
+# setup build environment settings for ALL application build steps
+clearenv = true
+variables = [
+  { key = "GOOS", value = "linux" },
+  { key = "GOARCH", value = "arm64" },
+]
+[[applications.blap.commands.steps]]
+# run specific commands
+command = ["make", "VERSION={{ $.Vars.Tag }}"]
+variables = [
+  { key = "GOOS", value = "1" },
+  { key = "X", value = "1" },
+]
+[[applications.blap.commands.steps]]
+clearenv = true
+command = ["ln", "-sf", "target/blap", "~/.local/bin"]
+
+[applications.nvim2]
+# this app, specifically, is disabled
+disable = true
+[applications.nvim2.github]
+project = "neovim/neovim"
+release = { asset = "nvim-linux64.tar.gz$" }
+[[applications.nvim2.commands.steps]]
+command = ["ln", "-sf", "bin/nvim", "~/bin"]

@@ -21,7 +21,7 @@ func helpLine(w io.Writer, sub bool, flag, text string) {
 }
 
 func configPath(root string) string {
-	return filepath.Join(root, "blap", "config.yaml")
+	return filepath.Join(root, "blap", "config.toml")
 }
 
 // Usage writes usage/help info
