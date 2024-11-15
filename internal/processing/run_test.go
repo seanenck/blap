@@ -726,7 +726,7 @@ func TestLogging(t *testing.T) {
 	s.CleanDirs = true
 	b, _ := os.ReadFile(filepath.Join("examples", "config.toml"))
 	logFile := filepath.Join("testdata", "blap.log")
-	data := strings.ReplaceAll(string(b), "logfile = \"\"", fmt.Sprintf("logfile = \"%s\"", logFile))
+	data := strings.ReplaceAll(string(b), "file = \"\"", fmt.Sprintf("file = \"%s\"", logFile))
 	to := filepath.Join("testdata", "config.toml")
 	os.WriteFile(to, []byte(data), 0o644)
 	cfg, _ := processing.Load(to, s)

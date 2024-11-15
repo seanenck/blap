@@ -264,6 +264,34 @@ func (c Configuration) Process(executor Executor, fetcher fetch.Retriever, runne
 	if c.context.Purge {
 		mode = "purge"
 	}
+	if c.logFile != "" && util.PathExists(c.logFile) {
+		info, err := os.Stat(c.logFile)
+		if err != nil {
+			return err
+		}
+		size := c.Logging.Size
+		switch {
+		case size == 0:
+			size = 10
+		case size > 0:
+		case size < 0:
+			return fmt.Errorf("invalid log roll size, < 0 (have: %d)", size)
+		}
+		if info.Size() > size*1024*1024 {
+			c.context.LogDebug("rotating log file")
+			old := fmt.Sprintf("%s.old", c.logFile)
+			r, err := os.ReadFile(c.logFile)
+			if err != nil {
+				return err
+			}
+			if err := os.WriteFile(old, r, 0o644); err != nil {
+				return err
+			}
+			if err := os.Remove(c.logFile); err != nil {
+				return err
+			}
+		}
+	}
 	c.log(true, "mode: %s\n", mode)
 	indexFile := c.IndexFile(mode)
 	idx := Index{}

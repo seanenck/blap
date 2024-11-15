@@ -27,10 +27,13 @@ type (
 		Pinned          core.Pinned
 		Connections     core.Connections
 		Variables       core.Variables
-		LogFile         core.Resolved
-		pinnedMatchers  []*regexp.Regexp
-		logFile         string
-		dir             string
+		Logging         struct {
+			File core.Resolved
+			Size int64
+		}
+		pinnedMatchers []*regexp.Regexp
+		logFile        string
+		dir            string
 	}
 )
 

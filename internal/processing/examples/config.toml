@@ -12,10 +12,6 @@ include = [
 # parallelization allows running updates in parallel
 # increase > 1 to support parallel jobs (0 == disabled == 1)
 parallelization = 0
-# enable logging for activities
-#logfile: "~/.local/state/blap.log"
-# to disable do not set or set to empty string
-logfile = ""
 # configure various connection source components
 # github settings
 # a set of regex values can be specified to pin packages (prevent purging)
@@ -25,6 +21,14 @@ pinned = [
   "another",
   "zzzzzzz",
 ]
+
+[logging]
+# enable logging for activities
+#file: "~/.local/state/blap.log"
+# to disable do not set or set to empty string
+file = ""
+# size in MB to move to an '.old' log
+#size = 10
 
 [connections.github]
 token = "agithubpersonalaccesstoken"
