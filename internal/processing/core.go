@@ -30,10 +30,16 @@ type (
 		Log             core.Resolved    `yaml:"logfile"`
 		pinnedMatchers  []*regexp.Regexp
 		logFile         string
+		dir             string
 	}
 )
 
+// NewFile will create a new directory-based file from the configuration
+func (c Configuration) NewFile(file string) string {
+	return filepath.Join(c.dir, file)
+}
+
 // IndexFile will get an index file to assist in managing operations
 func (c Configuration) IndexFile(mode string) string {
-	return filepath.Join(c.Directory.String(), fmt.Sprintf(".blap.%s.index", mode))
+	return c.NewFile(fmt.Sprintf(".blap.%s.index", mode))
 }

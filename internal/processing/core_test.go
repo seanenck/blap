@@ -8,8 +8,14 @@ import (
 
 func TestIndexFile(t *testing.T) {
 	f := processing.Configuration{}
-	f.Directory = "xyz"
-	if val := f.IndexFile("abc"); val != "xyz/.blap.abc.index" {
+	if val := f.IndexFile("abc"); val != ".blap.abc.index" {
+		t.Errorf("invalid index: %s", val)
+	}
+}
+
+func TestNewFile(t *testing.T) {
+	f := processing.Configuration{}
+	if val := f.NewFile("abc"); val != "abc" {
 		t.Errorf("invalid index: %s", val)
 	}
 }

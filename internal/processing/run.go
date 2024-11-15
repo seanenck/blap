@@ -78,7 +78,7 @@ func (c Configuration) Do(ctx Context) error {
 	if rsrc == nil {
 		return errors.New("unexpected nil resource")
 	}
-	to := filepath.Join(c.Directory.String(), ctx.Name)
+	to := filepath.Join(c.dir, ctx.Name)
 	hasDest := util.PathExists(to)
 	if !hasDest {
 		if c.context.Purge {

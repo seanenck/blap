@@ -36,6 +36,7 @@ func Load(input string, context cli.Settings) (Configuration, error) {
 		return c, err
 	}
 	c.logFile = c.Log.String()
+	c.dir = c.Directory.String()
 	if len(c.Include) > 0 {
 		hasIncludefilter := context.Include != nil
 		var including []string
