@@ -328,7 +328,9 @@ func (c Configuration) Process(executor Executor, fetcher fetch.Retriever, runne
 			isDryRun = true
 		}
 		for _, change := range changed {
-			c.context.LogCore("%s: %s (%s -> %s)\n", msg, change.Name, t, change.Details)
+			if err := c.log(fmt.Sprintf("%s: %s (%s -> %s)\n", msg, change.Name, t, change.Details)); err != nil {
+				return err
+			}
 			if doIndex {
 				newIndex.Names = append(newIndex.Names, change.Name)
 			}
@@ -351,7 +353,24 @@ func (c Configuration) Process(executor Executor, fetcher fetch.Retriever, runne
 		}
 	}
 	if isDryRun {
-		c.context.LogCore("\n[DRYRUN] impactful changes were not committed\n")
+		if err := c.log("\n[DRYRUN] impactful changes were not committed\n"); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (c Configuration) log(msg string) error {
+	c.context.LogCore(msg)
+	if c.logFile != "" {
+		f, err := os.OpenFile(c.logFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+		if _, err := fmt.Fprint(f, msg); err != nil {
+			return err
+		}
 	}
 	return nil
 }

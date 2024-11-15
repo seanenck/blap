@@ -27,7 +27,9 @@ type (
 		Pinned          core.Pinned      `yaml:"pinned"`
 		Connections     core.Connections `yaml:"connections"`
 		Variables       core.Variables   `yaml:"variables"`
+		Log             core.Resolved    `yaml:"logfile"`
 		pinnedMatchers  []*regexp.Regexp
+		logFile         string
 	}
 )
 

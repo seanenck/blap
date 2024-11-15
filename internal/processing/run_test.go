@@ -701,3 +701,46 @@ func TestStrictIndexed(t *testing.T) {
 		t.Errorf("invalid error: %v", err)
 	}
 }
+
+func TestLogging(t *testing.T) {
+	os.RemoveAll("testdata")
+	os.Mkdir("testdata", 0o755)
+	defer func() {
+		os.RemoveAll("testdata")
+	}()
+	m := &mockExecutor{}
+	s := cli.Settings{}
+	s.Verbosity = cli.InfoVerbosity
+	s.Purge = true
+	s.CleanDirs = true
+	b, _ := os.ReadFile(filepath.Join("examples", "config.yaml"))
+	logFile := filepath.Join("testdata", "blap.log")
+	data := strings.ReplaceAll(string(b), "logfile: \"\"", fmt.Sprintf("logfile: \"%s\"", logFile))
+	to := filepath.Join("testdata", "config.yaml")
+	os.WriteFile(to, []byte(data), 0o644)
+	cfg, _ := processing.Load(to, s)
+	if err := cfg.Process(m, m, m); err != nil {
+		t.Errorf("invalid error: %v", err)
+	}
+	b, _ = os.ReadFile(filepath.Join("testdata", "blap.log"))
+	str := string(b)
+	if strings.Contains(str, "DRYRUN") || !strings.Contains(str, "purging") {
+		t.Errorf("invalid buffer: %s", str)
+	}
+	s.DryRun = true
+	s.Verbosity = 100
+	os.Mkdir(filepath.Join("testdata", "zzzzzzz"), 0o755)
+	os.Mkdir(filepath.Join("testdata", "abc"), 0o755)
+	os.Mkdir(filepath.Join("testdata", "nvim"), 0o755)
+	os.WriteFile(filepath.Join("testdata", "test.yaml"), []byte("{}"), 0o644)
+	cfg, _ = processing.Load(to, s)
+	cfg.Indexing.Enabled = true
+	if err := cfg.Process(m, m, m); err != nil {
+		t.Errorf("invalid error: %v", err)
+	}
+	b, _ = os.ReadFile(filepath.Join("testdata", "blap.log"))
+	str = string(b)
+	if !strings.Contains(str, "DRYRUN") || !strings.Contains(str, "purging") {
+		t.Errorf("invalid buffer: %s", str)
+	}
+}

@@ -24,6 +24,10 @@ connections:
   timeouts:
     # get handles all get request timeouts (0 is default behavior, > 0 is seconds for timeout)
     get: 0
+# enable logging for activities
+#logfile: "~/.local/state/blap.log"
+# to disable do not set or set to empty string
+logfile: ""
 # a set of regex values can be specified to pin packages (prevent purging)
 # one would also have to `disable: true` the application to stop updates
 pinned:

@@ -35,6 +35,7 @@ func Load(input string, context cli.Settings) (Configuration, error) {
 	if err := doDecode(input, &c); err != nil {
 		return c, err
 	}
+	c.logFile = c.Log.String()
 	if len(c.Include) > 0 {
 		hasIncludefilter := context.Include != nil
 		var including []string
