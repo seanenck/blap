@@ -75,16 +75,22 @@ func TestGitHubToken(t *testing.T) {
 func TestVarSetUnset(t *testing.T) {
 	os.Clearenv()
 	defer os.Clearenv()
-	val := core.Variables{}
+	var val core.Variables
 	obj := val.Set()
 	obj.Unset()
-	val = make(map[string]core.Resolved)
+	val = core.Variables{}
 	obj = val.Set()
 	obj.Unset()
 	os.Setenv("HOME", "1")
 	os.Setenv("A_TEST", "0")
-	val["A_TEST"] = "~/2"
-	val["THIS_IS_A_TEST"] = "3"
+	val = append(val, struct {
+		Key   string        "yaml:\"key\""
+		Value core.Resolved "yaml:\"value\""
+	}{"A_TEST", "~/2"})
+	val = append(val, struct {
+		Key   string        "yaml:\"key\""
+		Value core.Resolved "yaml:\"value\""
+	}{"THIS_IS_A_TEST", "3"})
 	obj = val.Set()
 	if os.Getenv("A_TEST") != "1/2" || os.Getenv("THIS_IS_A_TEST") != "3" {
 		t.Errorf("invalid env")

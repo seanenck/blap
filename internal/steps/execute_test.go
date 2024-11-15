@@ -110,8 +110,11 @@ func TestEnv(t *testing.T) {
 		t.Errorf("invalid cmd: %s", m.lastCmd)
 	}
 	o.Clear = false
-	o.Variables = make(map[string]core.Resolved)
-	o.Variables["HOME"] = "1"
+	o.Variables = core.Variables{}
+	o.Variables = append(o.Variables, struct {
+		Key   string        "yaml:\"key\""
+		Value core.Resolved "yaml:\"value\""
+	}{"HOME", "1"})
 	if err := steps.Do([]core.Step{{}, {Environment: o, Command: []core.Resolved{"~/exe", "~/{{ $.Name }}"}}}, m, step, core.CommandEnvironment{}); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
@@ -119,22 +122,31 @@ func TestEnv(t *testing.T) {
 		t.Errorf("invalid env: %v %v", m.lastClear, m.lastEnv)
 	}
 	s := core.CommandEnvironment{}
-	s.Variables = make(map[string]core.Resolved)
-	s.Variables["HOME"] = "y"
+	o.Variables = core.Variables{}
+	o.Variables = append(o.Variables, struct {
+		Key   string        "yaml:\"key\""
+		Value core.Resolved "yaml:\"value\""
+	}{"HOME", "y"})
 	if err := steps.Do([]core.Step{{}, {Environment: o, Command: []core.Resolved{"~/exe", "~/{{ $.Name }}"}}}, m, step, s); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	if m.lastClear || len(m.lastEnv) != 1 {
 		t.Errorf("invalid env: %v %v", m.lastClear, m.lastEnv)
 	}
-	o.Variables["XYZ"] = "aaa"
+	o.Variables = append(o.Variables, struct {
+		Key   string        "yaml:\"key\""
+		Value core.Resolved "yaml:\"value\""
+	}{"XYZ", "aaa"})
 	if err := steps.Do([]core.Step{{}, {Environment: o, Command: []core.Resolved{"~/exe", "~/{{ $.Name }}"}}}, m, step, s); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	if m.lastClear || len(m.lastEnv) != 2 {
 		t.Errorf("invalid env: %v %v", m.lastClear, m.lastEnv)
 	}
-	s.Variables["ZZZ"] = "aaz"
+	o.Variables = append(o.Variables, struct {
+		Key   string        "yaml:\"key\""
+		Value core.Resolved "yaml:\"value\""
+	}{"ZZZ", "aaz"})
 	if err := steps.Do([]core.Step{{}, {Environment: o, Command: []core.Resolved{"~/exe", "~/{{ $.Name }}"}}}, m, step, s); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}

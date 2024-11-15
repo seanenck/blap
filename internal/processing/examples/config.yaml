@@ -33,8 +33,10 @@ pinned:
 # set configuration-wide environment variables for command steps
 variables:
   # these are key (env key) / value (set value) pairs
-  "ENV_KEY": "some values"
-  "LDFLAGS": "-X -y"
+  - key: "ENV_KEY"
+    value: "some values"
+  - key: "LDFLAGS"
+    value: "-X -y"
 # indexing enables using a dryrun/commit strategy of applying updates
 indexing:
   # when enabled, dryrun commands will generate an index file
@@ -75,8 +77,10 @@ applications:
         clear: true
         # set environment valuues
         variables:
-          "GOOS": "linux"
-          "GOARCH": "arm64"
+          - key: "GOOS"
+            value: "linux"
+          - key: "GOARCH"
+            value: "arm64"
       # run specific commands
       steps:
         - command: ["make", "VERSION={{ $.Vars.Tag }}"]
@@ -84,8 +88,10 @@ applications:
             # set values specifically for this step
             # can also set clear ON at this level
             variables:
-              "GOOS": "1"
-              "X": "1"
+              - key: "GOOS"
+                value: "1"
+              - key: "X"
+                value: "1"
         # deploy the built files
         - command: ["ln", "-sf", "target/blap", "~/.local/bin"]
   nvim2:
