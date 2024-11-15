@@ -11,6 +11,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/seanenck/blap/internal/core"
 	"github.com/seanenck/blap/internal/fetch"
@@ -71,7 +72,7 @@ func (c Configuration) Do(ctx Context) error {
 	if c.handler == nil {
 		return errors.New("configuration not setup")
 	}
-	c.context.LogDebug("processing: %s\n", ctx.Name)
+	c.log(true, "processing: %s\n", ctx.Name)
 	rsrc, err := ctx.Fetcher.Process(fetch.Context{Name: ctx.Name}, ctx.Application.Items())
 	if err != nil {
 		return err
@@ -103,6 +104,7 @@ func (c Configuration) Do(ctx Context) error {
 		knownAssets = append(knownAssets, filepath.Base(f))
 	}
 	onChange := func(detail string) bool {
+		c.log(true, "transaction: %s (%s, dryrun: %v)\n", ctx.Name, detail, c.context.DryRun)
 		obj := Change{Name: ctx.Name, Details: detail}
 		processLock.Lock()
 		if !slices.ContainsFunc(c.handler.changed, func(c Change) bool {
@@ -114,6 +116,7 @@ func (c Configuration) Do(ctx Context) error {
 		return !c.context.DryRun
 	}
 	if c.context.Purge {
+		c.log(true, "purge: %s\n", ctx.Name)
 		return ctx.Executor.Purge(to, knownAssets, onChange)
 	}
 
@@ -125,6 +128,7 @@ func (c Configuration) Do(ctx Context) error {
 		onChange(rsrc.Tag)
 	}
 	if c.context.DryRun {
+		c.log(true, "dryrun: %s\n", ctx.Name)
 		return nil
 	}
 
@@ -153,11 +157,14 @@ func (c Configuration) Do(ctx Context) error {
 	step := steps.Context{}
 	step.Variables = e
 	step.Settings = c.context
-	processLock.Lock()
-	defer processLock.Unlock()
-	if err := steps.Do(ctx.Application.Commands.Steps, ctx.Runner, step, ctx.Application.CommandEnv()); err != nil {
+	if err := func() error {
+		processLock.Lock()
+		defer processLock.Unlock()
+		return steps.Do(ctx.Application.Commands.Steps, ctx.Runner, step, ctx.Application.CommandEnv())
+	}(); err != nil {
 		return err
 	}
+	c.log(true, "commit: %s\n", ctx.Name)
 	return nil
 }
 
@@ -203,7 +210,7 @@ func (c Configuration) cleanDirectories(restrict []string) ([]string, error) {
 			continue
 		}
 		results = append(results, name)
-		c.context.LogCore("removing directory: %s\n", name)
+		c.log(false, "removing directory: %s (dryrun: %v)\n", name, c.context.DryRun)
 		if c.context.DryRun {
 			continue
 		}
@@ -257,6 +264,7 @@ func (c Configuration) Process(executor Executor, fetcher fetch.Retriever, runne
 	if c.context.Purge {
 		mode = "purge"
 	}
+	c.log(true, "mode: %s\n", mode)
 	indexFile := c.IndexFile(mode)
 	idx := Index{}
 	if c.Indexing.Enabled {
@@ -354,7 +362,7 @@ func (c Configuration) Process(executor Executor, fetcher fetch.Retriever, runne
 			isDryRun = true
 		}
 		for _, change := range changed {
-			if err := c.log(fmt.Sprintf("%s: %s (%s -> %s)\n", msg, change.Name, t, change.Details)); err != nil {
+			if err := c.log(false, "%s: %s (%s -> %s)\n", msg, change.Name, t, change.Details); err != nil {
 				return err
 			}
 			if doIndex {
@@ -379,22 +387,30 @@ func (c Configuration) Process(executor Executor, fetcher fetch.Retriever, runne
 		}
 	}
 	if isDryRun {
-		if err := c.log("\n[DRYRUN] impactful changes were not committed\n"); err != nil {
+		if err := c.log(false, "\n[DRYRUN] impactful changes were not committed\n"); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (c Configuration) log(msg string) error {
-	c.context.LogCore(msg)
+func (c Configuration) log(debug bool, msg string, parts ...any) error {
+	processLock.Lock()
+	defer processLock.Unlock()
+	fxn := c.context.LogCore
+	if debug {
+		fxn = c.context.LogDebug
+	}
+	fxn(msg, parts...)
 	if c.logFile != "" {
 		f, err := os.OpenFile(c.logFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 		if err != nil {
 			return err
 		}
 		defer f.Close()
-		if _, err := fmt.Fprint(f, msg); err != nil {
+		m := fmt.Sprintf(msg, parts...)
+		m = fmt.Sprintf("%s - %s", time.Now().Format("2006-01-02T15:04:05"), m)
+		if _, err := fmt.Fprint(f, m); err != nil {
 			return err
 		}
 	}
