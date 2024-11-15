@@ -11,7 +11,6 @@ import (
 	"sort"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/seanenck/blap/internal/core"
 	"github.com/seanenck/blap/internal/fetch"
@@ -264,33 +263,10 @@ func (c Configuration) Process(executor Executor, fetcher fetch.Retriever, runne
 	if c.context.Purge {
 		mode = "purge"
 	}
-	if c.logFile != "" && util.PathExists(c.logFile) {
-		info, err := os.Stat(c.logFile)
-		if err != nil {
-			return err
-		}
-		size := c.Logging.Size
-		switch {
-		case size == 0:
-			size = 10
-		case size > 0:
-		case size < 0:
-			return fmt.Errorf("invalid log roll size, < 0 (have: %d)", size)
-		}
-		if info.Size() > size*1024*1024 {
-			c.context.LogDebug("rotating log file")
-			old := fmt.Sprintf("%s.old", c.logFile)
-			r, err := os.ReadFile(c.logFile)
-			if err != nil {
-				return err
-			}
-			if err := os.WriteFile(old, r, 0o644); err != nil {
-				return err
-			}
-			if err := os.Remove(c.logFile); err != nil {
-				return err
-			}
-		}
+	if err := util.RotateLog(c.logFile, c.Logging.Size, func() {
+		c.context.LogDebug("rotating log file")
+	}); err != nil {
+		return err
 	}
 	c.log(true, "mode: %s\n", mode)
 	indexFile := c.IndexFile(mode)
@@ -430,17 +406,5 @@ func (c Configuration) log(debug bool, msg string, parts ...any) error {
 		fxn = c.context.LogDebug
 	}
 	fxn(msg, parts...)
-	if c.logFile != "" {
-		f, err := os.OpenFile(c.logFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
-		if err != nil {
-			return err
-		}
-		defer f.Close()
-		m := fmt.Sprintf(msg, parts...)
-		m = fmt.Sprintf("%s - %s", time.Now().Format("2006-01-02T15:04:05"), m)
-		if _, err := fmt.Fprint(f, m); err != nil {
-			return err
-		}
-	}
-	return nil
+	return util.AppendToLog(c.logFile, msg, parts...)
 }
