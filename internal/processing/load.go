@@ -97,6 +97,15 @@ func Load(input string, context cli.Settings) (Configuration, error) {
 		if canFilter {
 			allowed = context.AllowApplication(n)
 		}
+		if allowed && len(a.Platforms) > 0 {
+			allowed = false
+			for _, p := range a.Platforms {
+				if p.Value.String() == p.Target {
+					allowed = true
+					break
+				}
+			}
+		}
 		if allowed {
 			sub[n] = a
 		}

@@ -96,6 +96,10 @@ command = ["ln", "-sf", "target/blap", "~/.local/bin"]
 [applications.nvim2]
 # this app, specifically, is disabled
 disable = true
+# set an app to filter to platform (any matches will enable the app)
+platforms = [
+  { value = "{{ $.Config.OS }}-abc", target = "os-abc" }
+]
 [applications.nvim2.github]
 project = "neovim/neovim"
 release = { asset = "nvim-linux64.tar.gz$" }

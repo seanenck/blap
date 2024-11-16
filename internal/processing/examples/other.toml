@@ -1,6 +1,11 @@
 # included file, define applications
 # this application downloads
 # it does NOT build and it does NOT deploy
+[applications.lockbox]
+platforms = [
+  { value = "customs", target = "custom" },
+  { value = "customs", target = "customs" }
+]
 [applications.lockbox.github]
 project = "seanenck/lockbox"
 # unlike release mode, this will simply get the latest sha of a branch

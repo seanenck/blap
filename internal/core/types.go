@@ -63,6 +63,10 @@ type (
 			ClearEnv  bool
 			Steps     []Step
 		}
+		Platforms []struct {
+			Value  Resolved
+			Target string
+		}
 	}
 	// Step is a build process step
 	Step struct {
