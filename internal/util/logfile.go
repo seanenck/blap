@@ -17,7 +17,7 @@ func AppendToLog(logFile, msg string, parts ...any) error {
 		defer f.Close()
 		m := fmt.Sprintf(msg, parts...)
 		m = strings.TrimSpace(m)
-		m = fmt.Sprintf("%s - %s", time.Now().Format("2006-01-02T15:04:05"), m)
+		m = fmt.Sprintf("%s - %s\n", time.Now().Format("2006-01-02T15:04:05"), m)
 		if _, err := fmt.Fprint(f, m); err != nil {
 			return err
 		}
