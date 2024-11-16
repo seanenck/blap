@@ -209,7 +209,7 @@ func (c Configuration) cleanDirectories(restrict []string) ([]string, error) {
 			continue
 		}
 		results = append(results, name)
-		c.log(false, "removing directory: %s (dryrun: %v)\n", name, c.context.DryRun)
+		c.log(false, "removing directory: %s\n", name)
 		if c.context.DryRun {
 			continue
 		}
