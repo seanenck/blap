@@ -10,6 +10,7 @@ build:
   mkdir -p "{{target}}"
   go build {{goflags}} -ldflags "{{ldflags}} -X main.version={{version}}" -o "{{object}}" cmd/main.go
 
+[no-cd]
 check: build
   go test ./...
 
