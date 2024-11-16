@@ -127,3 +127,33 @@ func TestCommandEnv(t *testing.T) {
 		t.Error("invalid conversion")
 	}
 }
+
+func TestEnabled(t *testing.T) {
+	a := core.Application{}
+	if !a.Enabled() {
+		t.Error("should be enabled")
+	}
+	a.Disable = true
+	if a.Enabled() {
+		t.Error("should be disabled")
+	}
+	a.Disable = false
+	a.Platforms = append(a.Platforms, struct {
+		Value  core.Resolved
+		Target string
+	}{})
+	if !a.Enabled() {
+		t.Error("should be enabled")
+	}
+	a.Platforms[0].Value = "x"
+	if a.Enabled() {
+		t.Error("should be disabled")
+	}
+	a.Platforms = append(a.Platforms, struct {
+		Value  core.Resolved
+		Target string
+	}{"a", "a"})
+	if !a.Enabled() {
+		t.Error("should be enabled")
+	}
+}

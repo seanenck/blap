@@ -80,6 +80,9 @@ func Load(input string, context cli.Settings) (Configuration, error) {
 			}
 			c.Pinned = append(c.Pinned, apps.Pinned...)
 			for k, v := range apps.Applications {
+				if !v.Enabled() {
+					continue
+				}
 				if _, ok := c.Applications[k]; ok {
 					return c, fmt.Errorf("%s is overwritten by config: %s", k, include)
 				}
@@ -90,21 +93,12 @@ func Load(input string, context cli.Settings) (Configuration, error) {
 	canFilter := context.FilterApplications()
 	sub := make(map[string]core.Application)
 	for n, a := range c.Applications {
-		if a.Disable {
+		if !a.Enabled() {
 			continue
 		}
 		allowed := true
 		if canFilter {
 			allowed = context.AllowApplication(n)
-		}
-		if allowed && len(a.Platforms) > 0 {
-			allowed = false
-			for _, p := range a.Platforms {
-				if p.Value.String() == p.Target {
-					allowed = true
-					break
-				}
-			}
 		}
 		if allowed {
 			sub[n] = a

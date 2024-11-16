@@ -243,3 +243,21 @@ func (v SetVariables) Unset() {
 		}
 	}
 }
+
+// Enabled indicates if an application is enabled for use
+func (a Application) Enabled() bool {
+	if a.Disable {
+		return false
+	}
+	allowed := true
+	if len(a.Platforms) > 0 {
+		allowed = false
+		for _, p := range a.Platforms {
+			if p.Value.String() == p.Target {
+				allowed = true
+				break
+			}
+		}
+	}
+	return allowed
+}
