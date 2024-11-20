@@ -31,10 +31,10 @@ func (m *mock) Output(string, ...string) ([]byte, error) {
 
 func TestScrape(t *testing.T) {
 	client := &mock{}
-	client.payload = []byte("TESD\ta")
+	client.payload = []byte("1.2.3")
 	r := &retriever.ResourceFetcher{}
 	r.Backend = client
-	if _, err := web.Scrape(r, fetch.Context{Name: "afa"}, core.WebMode{URL: "xyz", Scrape: &core.Filtered{Sort: "semver", Download: "ajfaeaijo", Filters: []string{"(TEST?)"}}}); err != nil {
+	if _, err := web.Scrape(r, fetch.Context{Name: "afa"}, core.WebMode{URL: "xyz", Scrape: &core.Filtered{Sort: "", Download: "ajfaeaijo", Filters: []string{"(.*?)"}}}); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	client = &mock{}

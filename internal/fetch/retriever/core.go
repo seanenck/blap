@@ -267,6 +267,10 @@ func (r *ResourceFetcher) Filtered(ctx fetch.Context, filterable fetch.Filterabl
 				if !strings.HasPrefix(matched, "v") {
 					matched = fmt.Sprintf("v%s", matched)
 				}
+				if !semver.IsValid(matched) {
+					r.Debug("semver found an invalid match: %s\n", matched)
+					continue
+				}
 			}
 			options = append(options, matched)
 		}
