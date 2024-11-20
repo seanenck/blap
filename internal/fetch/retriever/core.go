@@ -236,17 +236,16 @@ func (r *ResourceFetcher) Filtered(ctx fetch.Context, filterable fetch.Filterabl
 		if t == "" {
 			continue
 		}
-		for _, r := range re {
-			m := filterable.Match(r, t)
-			if len(m) == 0 {
-				continue
-			}
-			matched := m[0]
-			if len(m) > 1 {
-				matched = m[1]
-			}
-			if !strings.HasPrefix(matched, "v") {
-				matched = fmt.Sprintf("v%s", matched)
+		matches, err := filterable.Match(re, t)
+		if err != nil {
+			return nil, err
+		}
+		for _, opt := range matches {
+			matched := opt
+			if f.SemVer {
+				if !strings.HasPrefix(matched, "v") {
+					matched = fmt.Sprintf("v%s", matched)
+				}
 			}
 			options = append(options, matched)
 		}
@@ -254,8 +253,13 @@ func (r *ResourceFetcher) Filtered(ctx fetch.Context, filterable fetch.Filterabl
 	if len(options) == 0 {
 		return nil, errors.New("no tags found")
 	}
-	semver.Sort(options)
-	tag := options[len(options)-1]
+	var tag string
+	if f.SemVer {
+		semver.Sort(options)
+		tag = options[len(options)-1]
+	} else {
+		tag = options[0]
+	}
 	r.Debug("found tag: %s\n", tag)
 	tl, err := ctx.Templating(dl, &fetch.Template{Tag: fetch.Version(tag)})
 	if err != nil {

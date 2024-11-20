@@ -38,7 +38,7 @@ type (
 		Upstream() string
 		Get(Retriever, string) ([]byte, error)
 		Definition() *core.Filtered
-		Match(*regexp.Regexp, string) []string
+		Match([]*regexp.Regexp, string) ([]string, error)
 	}
 	// Template are the parameters for templated items
 	Template struct {

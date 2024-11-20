@@ -33,3 +33,6 @@ scrape.filters = [
 ]
 # scrape.download can be supplied, much like git tag downloads, to pull from if the url is different
 scrape.download = "https://ftp.gnu.org/gnu/bash/{{ $.Vars.Tag }}"
+# if the scrape result is semver and should be sorted as such (and prefixed with 'v' as needed),
+# it should have semver turned on
+scrape.semver = true

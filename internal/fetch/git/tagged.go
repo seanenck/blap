@@ -2,9 +2,7 @@
 package git
 
 import (
-	"errors"
 	"fmt"
-	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -12,64 +10,42 @@ import (
 	"github.com/seanenck/blap/internal/fetch"
 )
 
+type taggedFilterable struct {
+	data     *core.Filtered
+	upstream string
+}
+
+func (t taggedFilterable) Upstream() string {
+	return t.upstream
+}
+
+func (t taggedFilterable) Get(r fetch.Retriever, url string) ([]byte, error) {
+	s, err := r.ExecuteCommand("git", "-c", "versionsort.suffix=-", "ls-remote", "--tags", "--sort=-v:refname", url)
+	if err != nil {
+		return nil, err
+	}
+	return []byte(s), nil
+}
+
+func (t taggedFilterable) Definition() *core.Filtered {
+	return t.data
+}
+
+func (t taggedFilterable) Match(r []*regexp.Regexp, line string) ([]string, error) {
+	for _, re := range r {
+		if re.MatchString(line) {
+			return []string{}, nil
+		}
+	}
+	parts := strings.Split(line, "\t")
+	if len(parts) != 2 {
+		return nil, fmt.Errorf("matching version line can not be parsed: %s", line)
+	}
+	return []string{strings.TrimPrefix(parts[1], "refs/tags/")}, nil
+}
+
 // Tagged gets a tagged (git tag) release
 func Tagged(caller fetch.Retriever, ctx fetch.Context, a core.GitMode) (*core.Resource, error) {
-	if a.Tagged == nil {
-		return nil, errors.New("tagged definition is nil")
-	}
-	up := strings.TrimSpace(a.Repository)
-	if up == "" {
-		return nil, errors.New("no upstream for tagged mode")
-	}
-	dl := strings.TrimSpace(a.Tagged.Download)
-	if dl == "" {
-		return nil, errors.New("no download URL for tagged mode")
-	}
-	if len(a.Tagged.Filters) == 0 {
-		return nil, errors.New("application lacks filters")
-	}
-	var re []*regexp.Regexp
-	for _, r := range a.Tagged.Filters {
-		r, err := ctx.CompileRegexp(r, nil)
-		if err != nil {
-			return nil, err
-		}
-		re = append(re, r)
-	}
-	out, err := caller.ExecuteCommand("git", "-c", "versionsort.suffix=-", "ls-remote", "--tags", "--sort=-v:refname", up)
-	if err != nil {
-		return nil, err
-	}
-	var tag string
-	for _, line := range strings.Split(string(out), "\n") {
-		t := strings.TrimSpace(line)
-		if t == "" {
-			continue
-		}
-		passed := true
-		for _, r := range re {
-			if r.MatchString(line) {
-				passed = false
-				break
-			}
-		}
-		if passed {
-			parts := strings.Split(line, "\t")
-			if len(parts) != 2 {
-				return nil, fmt.Errorf("matching version line can not be parsed: %s", line)
-			}
-			tag = strings.TrimPrefix(parts[1], "refs/tags/")
-			break
-		}
-	}
-	if tag == "" {
-		return nil, errors.New("no tags matched")
-	}
-	caller.Debug("found tag: %s\n", tag)
-	tl, err := ctx.Templating(dl, &fetch.Template{Tag: fetch.Version(tag)})
-	if err != nil {
-		return nil, err
-	}
-	url := strings.TrimSpace(tl)
-	return &core.Resource{URL: url, File: filepath.Base(url), Tag: tag}, nil
+	t := taggedFilterable{upstream: a.Repository, data: a.Tagged}
+	return caller.Filtered(ctx, t)
 }

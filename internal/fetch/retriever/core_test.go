@@ -57,8 +57,8 @@ func (s *mockFilterable) Definition() *core.Filtered {
 	return s.data
 }
 
-func (s *mockFilterable) Match(r *regexp.Regexp, line string) []string {
-	return s.matches
+func (s *mockFilterable) Match(r []*regexp.Regexp, line string) ([]string, error) {
+	return s.matches, nil
 }
 
 func (m *mockClient) Output(string, ...string) ([]byte, error) {
@@ -198,7 +198,7 @@ func TestProcess(t *testing.T) {
 	if _, err := f.Process(ctx, testIter(nil, &core.GitMode{})); err == nil || err.Error() != "unknown git mode for fetch processing" {
 		t.Errorf("invalid error: %v", err)
 	}
-	if _, err := f.Process(ctx, testIter(nil, nil, &core.GitMode{Tagged: &core.Filtered{}}, nil)); err == nil || err.Error() != "no upstream for tagged mode" {
+	if _, err := f.Process(ctx, testIter(nil, nil, &core.GitMode{Tagged: &core.Filtered{}}, nil)); err == nil || err.Error() != "no upstream configured" {
 		t.Errorf("invalid error: %v", err)
 	}
 	if _, err := f.Process(ctx, testIter(nil, nil, &core.WebMode{Scrape: &core.Filtered{}}, nil)); err == nil || err.Error() != "no upstream configured" {
@@ -308,6 +308,35 @@ func TestFiltered(t *testing.T) {
 	mock.data.Download = "oijoefa/x"
 	mock.data.Filters = append(mock.data.Filters, "abc-([0-9.]*?).txt")
 	mock.matches = []string{"v2.3.0", "v2.3.0"}
+	mock.payload = client.payload
+	o, err := r.Filtered(fetch.Context{Name: "aljfao"}, mock)
+	if err != nil {
+		t.Errorf("invalid error: %v", err)
+	}
+	if o == nil {
+		t.Error("invalid asset")
+	} else {
+		if o.Tag != "v2.3.0" {
+			t.Errorf("invalid tag: %s", o.Tag)
+		}
+		if o.URL != "oijoefa/x" || o.File != "x" {
+			t.Errorf("invalid asset: %s %s", o.URL, o.File)
+		}
+	}
+}
+
+func TestFilteredSemVer(t *testing.T) {
+	r := &retriever.ResourceFetcher{}
+	client := &mockFilterable{}
+	client.payload = []byte("abc-0.1.2.txt\nabc-2.3.0.txt\n\nabc-aaa-1.2.3\nabc-1.1.2.txt")
+	r.Backend = client
+	mock := &mockFilterable{}
+	mock.upstream = "a/xyz"
+	mock.data = &core.Filtered{}
+	mock.data.Download = "oijoefa/x"
+	mock.data.Filters = append(mock.data.Filters, "abc-([0-9.]*?).txt")
+	mock.data.SemVer = true
+	mock.matches = []string{"v2.3.0", "v1.1.1"}
 	mock.payload = client.payload
 	o, err := r.Filtered(fetch.Context{Name: "aljfao"}, mock)
 	if err != nil {

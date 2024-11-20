@@ -22,37 +22,6 @@ func (m *mock) Output(string, ...string) ([]byte, error) {
 	return m.payload, nil
 }
 
-func TestTaggedValidate(t *testing.T) {
-	r := &retriever.ResourceFetcher{}
-	if _, err := git.Tagged(r, fetch.Context{Name: "abc"}, core.GitMode{}); err == nil || err.Error() != "tagged definition is nil" {
-		t.Errorf("invalid error: %v", err)
-	}
-	if _, err := git.Tagged(r, fetch.Context{Name: "xyz"}, core.GitMode{Tagged: &core.Filtered{}}); err == nil || err.Error() != "no upstream for tagged mode" {
-		t.Errorf("invalid error: %v", err)
-	}
-	if _, err := git.Tagged(r, fetch.Context{Name: "xyz"}, core.GitMode{Repository: "xyz", Tagged: &core.Filtered{}}); err == nil || err.Error() != "no download URL for tagged mode" {
-		t.Errorf("invalid error: %v", err)
-	}
-	if _, err := git.Tagged(r, fetch.Context{Name: "xxx"}, core.GitMode{Repository: "xyz", Tagged: &core.Filtered{Download: "111"}}); err == nil || err.Error() != "application lacks filters" {
-		t.Errorf("invalid error: %v", err)
-	}
-	client := &mock{}
-	client.payload = []byte("")
-	r.Backend = client
-	if _, err := git.Tagged(r, fetch.Context{Name: "j1o2i"}, core.GitMode{Repository: "xyz", Tagged: &core.Filtered{Download: "oijoj1", Filters: []string{"TEST"}}}); err == nil || err.Error() != "no tags matched" {
-		t.Errorf("invalid error: %v", err)
-	}
-	client = &mock{}
-	client.payload = []byte("a")
-	r.Backend = client
-	if _, err := git.Tagged(r, fetch.Context{Name: "xxx"}, core.GitMode{Repository: "xyz", Tagged: &core.Filtered{Download: "Oijeoa", Filters: []string{"TEST"}}}); err == nil || err.Error() != "matching version line can not be parsed: a" {
-		t.Errorf("invalid error: %v", err)
-	}
-	if _, err := git.Tagged(r, fetch.Context{}, core.GitMode{Repository: "a/xyz", Tagged: &core.Filtered{Download: "y", Filters: []string{"TEST"}}}); err == nil || err.Error() != "context missing name" {
-		t.Errorf("invalid error: %v", err)
-	}
-}
-
 func TestTagged(t *testing.T) {
 	client := &mock{}
 	client.payload = []byte("TESD\ta")
@@ -64,7 +33,7 @@ func TestTagged(t *testing.T) {
 	client = &mock{}
 	client.payload = []byte("TEST\ta")
 	r.Backend = client
-	if _, err := git.Tagged(r, fetch.Context{Name: "aaa"}, core.GitMode{Repository: "xyz", Tagged: &core.Filtered{Download: "y", Filters: []string{"TEST"}}}); err == nil || err.Error() != "no tags matched" {
+	if _, err := git.Tagged(r, fetch.Context{Name: "aaa"}, core.GitMode{Repository: "xyz", Tagged: &core.Filtered{Download: "y", Filters: []string{"TEST"}}}); err == nil || err.Error() != "no tags found" {
 		t.Errorf("invalid error: %v", err)
 	}
 	client = &mock{}

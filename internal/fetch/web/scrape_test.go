@@ -34,19 +34,19 @@ func TestScrape(t *testing.T) {
 	client.payload = []byte("TESD\ta")
 	r := &retriever.ResourceFetcher{}
 	r.Backend = client
-	if _, err := web.Scrape(r, fetch.Context{Name: "afa"}, core.WebMode{URL: "xyz", Scrape: &core.Filtered{Download: "ajfaeaijo", Filters: []string{"(TEST?)"}}}); err != nil {
+	if _, err := web.Scrape(r, fetch.Context{Name: "afa"}, core.WebMode{URL: "xyz", Scrape: &core.Filtered{SemVer: true, Download: "ajfaeaijo", Filters: []string{"(TEST?)"}}}); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	client = &mock{}
 	client.payload = []byte("v0.1.2\n2.3.0")
 	r.Backend = client
-	if _, err := web.Scrape(r, fetch.Context{Name: "aaa"}, core.WebMode{URL: "xyz", Scrape: &core.Filtered{Download: "oijaoeja", Filters: []string{"(TEST?)"}}}); err == nil || err.Error() != "no tags found" {
+	if _, err := web.Scrape(r, fetch.Context{Name: "aaa"}, core.WebMode{URL: "xyz", Scrape: &core.Filtered{SemVer: true, Download: "oijaoeja", Filters: []string{"(TEST?)"}}}); err == nil || err.Error() != "no tags found" {
 		t.Errorf("invalid error: %v", err)
 	}
 	client = &mock{}
 	client.payload = []byte("abc-0.1.2.txt\nabc-2.3.0.txt\n\nabc-aaa-1.2.3\nabc-1.1.2.txt")
 	r.Backend = client
-	o, err := web.Scrape(r, fetch.Context{Name: "aljfao"}, core.WebMode{URL: "a/xyz", Scrape: &core.Filtered{Download: "oijoefa/x", Filters: []string{"abc-([0-9.]*?).txt"}}})
+	o, err := web.Scrape(r, fetch.Context{Name: "aljfao"}, core.WebMode{URL: "a/xyz", Scrape: &core.Filtered{SemVer: true, Download: "oijoefa/x", Filters: []string{"abc-([0-9.]*?).txt"}}})
 	if err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
@@ -63,7 +63,7 @@ func TestScrape(t *testing.T) {
 	client = &mock{}
 	client.payload = []byte("abc-v0.1.2.txt\nabc-2.3.0.txt\n\nabc-aaa-1.2.3.txt\nabc-v1.1.2.txt")
 	r.Backend = client
-	o, err = web.Scrape(r, fetch.Context{Name: "aaa"}, core.WebMode{URL: "a/xyz", Scrape: &core.Filtered{Download: "xx/s/{{ $.Vars.Tag }}/abc/{{ $.Name }}", Filters: []string{`{{ if ne $.Arch "invalidarch" }}abc-v([0-9.]*?).txt{{end}}`}}})
+	o, err = web.Scrape(r, fetch.Context{Name: "aaa"}, core.WebMode{URL: "a/xyz", Scrape: &core.Filtered{SemVer: true, Download: "xx/s/{{ $.Vars.Tag }}/abc/{{ $.Name }}", Filters: []string{`{{ if ne $.Arch "invalidarch" }}abc-v([0-9.]*?).txt{{end}}`}}})
 	if err != nil {
 		t.Errorf("invalid error: %v", err)
 	}

@@ -35,8 +35,20 @@ func (s scrapeFilterable) Definition() *core.Filtered {
 	return s.data
 }
 
-func (s scrapeFilterable) Match(r *regexp.Regexp, line string) []string {
-	return r.FindStringSubmatch(line)
+func (s scrapeFilterable) Match(r []*regexp.Regexp, line string) ([]string, error) {
+	var results []string
+	for _, re := range r {
+		m := re.FindStringSubmatch(line)
+		if len(m) == 0 {
+			continue
+		}
+		matched := m[0]
+		if len(m) > 1 {
+			matched = m[1]
+		}
+		results = append(results, matched)
+	}
+	return results, nil
 }
 
 // Scrape will scrape a GET requested resource
