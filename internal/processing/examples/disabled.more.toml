@@ -22,3 +22,13 @@ release = { asset = "x86_64-unknown-linux-(.+?).tar.gz$" }
 [applications.rg.extract]
 # extraction can be skipped
 skip = true
+
+# applications can do web scraping
+[applications.bash.web]
+# given a url
+url = "https://ftp.gnu.org/gnu/bash/"
+# one (or more) regex filters to try and find versions
+scrape.filters = [
+    "<td><a href=\"bash-([0-9.]*?).tar.gz"
+]
+# scrape.download can be supplied, much like git tag downloads, to pull from if the url is different
