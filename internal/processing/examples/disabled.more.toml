@@ -34,5 +34,12 @@ scrape.filters = [
 # scrape.download can be supplied, much like git tag downloads, to pull from if the url is different
 scrape.download = "https://ftp.gnu.org/gnu/bash/{{ $.Vars.Tag }}"
 # if the scrape result is semver and should be sorted as such (and prefixed with 'v' as needed),
-# it should have semver turned on
-scrape.semver = true
+# by default it is assumed the pulled source, using the internal processing rules, will
+# result in the preferred version being the 'first' entry
+# the other options (beyond empty string = default) are:
+# - 'semver' =  prefix with 'v' and do a semver based sort
+# - 'rsemver' = same as ^ but reverse entry order after sort
+# - 'sort' = do a string-based sort
+# - 'rsort' = same as ^ but reverse entry order after sort
+# the first element will always be chosen from the list
+scrape.sort = "semver"

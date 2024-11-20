@@ -12,6 +12,8 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"slices"
+	"sort"
 	"strings"
 	"time"
 
@@ -218,6 +220,24 @@ func (r *ResourceFetcher) Filtered(ctx fetch.Context, filterable fetch.Filterabl
 	if len(f.Filters) == 0 {
 		return nil, errors.New("filters required")
 	}
+	const (
+		rSemVerType = "rsemver"
+		rSortType   = "rsort"
+		sortType    = "sort"
+		semVerType  = "semver"
+	)
+	isSemVer := false
+	isSort := false
+	switch f.Sort {
+	case "":
+		break
+	case rSortType, sortType:
+		isSort = true
+	case rSemVerType, semVerType:
+		isSemVer = true
+	default:
+		return nil, fmt.Errorf("unknown sort type: %s", f.Sort)
+	}
 	var re []*regexp.Regexp
 	for _, r := range f.Filters {
 		r, err := ctx.CompileRegexp(r, nil)
@@ -242,7 +262,7 @@ func (r *ResourceFetcher) Filtered(ctx fetch.Context, filterable fetch.Filterabl
 		}
 		for _, opt := range matches {
 			matched := opt
-			if f.SemVer {
+			if isSemVer {
 				if !strings.HasPrefix(matched, "v") {
 					matched = fmt.Sprintf("v%s", matched)
 				}
@@ -253,13 +273,17 @@ func (r *ResourceFetcher) Filtered(ctx fetch.Context, filterable fetch.Filterabl
 	if len(options) == 0 {
 		return nil, errors.New("no tags found")
 	}
-	var tag string
-	if f.SemVer {
+	if isSemVer {
 		semver.Sort(options)
-		tag = options[len(options)-1]
-	} else {
-		tag = options[0]
+	} else if isSort {
+		sort.Strings(options)
 	}
+	// this seems counter to what it should be but semver/sort should be defaults to get the newest version
+	// reversing should be a backup
+	if f.Sort != "" && !strings.HasPrefix(f.Sort, "r") {
+		slices.Reverse(options)
+	}
+	tag := options[0]
 	r.Debug("found tag: %s\n", tag)
 	tl, err := ctx.Templating(dl, &fetch.Template{Tag: fetch.Version(tag)})
 	if err != nil {

@@ -307,7 +307,7 @@ func TestFiltered(t *testing.T) {
 	mock.data = &core.Filtered{}
 	mock.data.Download = "oijoefa/x"
 	mock.data.Filters = append(mock.data.Filters, "abc-([0-9.]*?).txt")
-	mock.matches = []string{"v2.3.0", "v2.3.0"}
+	mock.matches = []string{"v2.3.0", "v4.3.0", "v3.2.1", "v1.2.3"}
 	mock.payload = client.payload
 	o, err := r.Filtered(fetch.Context{Name: "aljfao"}, mock)
 	if err != nil {
@@ -335,8 +335,37 @@ func TestFilteredSemVer(t *testing.T) {
 	mock.data = &core.Filtered{}
 	mock.data.Download = "oijoefa/x"
 	mock.data.Filters = append(mock.data.Filters, "abc-([0-9.]*?).txt")
-	mock.data.SemVer = true
-	mock.matches = []string{"v2.3.0", "v1.1.1"}
+	mock.data.Sort = "semver"
+	mock.matches = []string{"2.3.0", "2.31.0", "v2.10.0", "2.32.0"}
+	mock.payload = client.payload
+	o, err := r.Filtered(fetch.Context{Name: "aljfao"}, mock)
+	if err != nil {
+		t.Errorf("invalid error: %v", err)
+	}
+	if o == nil {
+		t.Error("invalid asset")
+	} else {
+		if o.Tag != "v2.32.0" {
+			t.Errorf("invalid tag: %s", o.Tag)
+		}
+		if o.URL != "oijoefa/x" || o.File != "x" {
+			t.Errorf("invalid asset: %s %s", o.URL, o.File)
+		}
+	}
+}
+
+func TestFilteredSemVerReverse(t *testing.T) {
+	r := &retriever.ResourceFetcher{}
+	client := &mockFilterable{}
+	client.payload = []byte("abc-0.1.2.txt\nabc-2.3.0.txt\n\nabc-aaa-1.2.3\nabc-1.1.2.txt")
+	r.Backend = client
+	mock := &mockFilterable{}
+	mock.upstream = "a/xyz"
+	mock.data = &core.Filtered{}
+	mock.data.Download = "oijoefa/x"
+	mock.data.Filters = append(mock.data.Filters, "abc-([0-9.]*?).txt")
+	mock.data.Sort = "rsemver"
+	mock.matches = []string{"2.3.0", "2.31.0", "v2.10.0", "2.32.0"}
 	mock.payload = client.payload
 	o, err := r.Filtered(fetch.Context{Name: "aljfao"}, mock)
 	if err != nil {
@@ -346,6 +375,64 @@ func TestFilteredSemVer(t *testing.T) {
 		t.Error("invalid asset")
 	} else {
 		if o.Tag != "v2.3.0" {
+			t.Errorf("invalid tag: %s", o.Tag)
+		}
+		if o.URL != "oijoefa/x" || o.File != "x" {
+			t.Errorf("invalid asset: %s %s", o.URL, o.File)
+		}
+	}
+}
+
+func TestFilteredSortReverse(t *testing.T) {
+	r := &retriever.ResourceFetcher{}
+	client := &mockFilterable{}
+	client.payload = []byte("abc-0.1.2.txt\nabc-2.3.0.txt\n\nabc-aaa-1.2.3\nabc-1.1.2.txt")
+	r.Backend = client
+	mock := &mockFilterable{}
+	mock.upstream = "a/xyz"
+	mock.data = &core.Filtered{}
+	mock.data.Download = "oijoefa/x"
+	mock.data.Filters = append(mock.data.Filters, "abc-([0-9.]*?).txt")
+	mock.data.Sort = "rsort"
+	mock.matches = []string{"2.3.0", "2.31.0", "2.10.0", "2.32.0"}
+	mock.payload = client.payload
+	o, err := r.Filtered(fetch.Context{Name: "aljfao"}, mock)
+	if err != nil {
+		t.Errorf("invalid error: %v", err)
+	}
+	if o == nil {
+		t.Error("invalid asset")
+	} else {
+		if o.Tag != "2.10.0" {
+			t.Errorf("invalid tag: %s", o.Tag)
+		}
+		if o.URL != "oijoefa/x" || o.File != "x" {
+			t.Errorf("invalid asset: %s %s", o.URL, o.File)
+		}
+	}
+}
+
+func TestFilteredSort(t *testing.T) {
+	r := &retriever.ResourceFetcher{}
+	client := &mockFilterable{}
+	client.payload = []byte("abc-0.1.2.txt\nabc-2.3.0.txt\n\nabc-aaa-1.2.3\nabc-1.1.2.txt")
+	r.Backend = client
+	mock := &mockFilterable{}
+	mock.upstream = "a/xyz"
+	mock.data = &core.Filtered{}
+	mock.data.Download = "oijoefa/x"
+	mock.data.Filters = append(mock.data.Filters, "abc-([0-9.]*?).txt")
+	mock.data.Sort = "sort"
+	mock.matches = []string{"2.3.0", "2.31.0", "2.10.0", "2.32.0"}
+	mock.payload = client.payload
+	o, err := r.Filtered(fetch.Context{Name: "aljfao"}, mock)
+	if err != nil {
+		t.Errorf("invalid error: %v", err)
+	}
+	if o == nil {
+		t.Error("invalid asset")
+	} else {
+		if o.Tag != "2.32.0" {
 			t.Errorf("invalid tag: %s", o.Tag)
 		}
 		if o.URL != "oijoefa/x" || o.File != "x" {

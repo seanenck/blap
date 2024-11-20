@@ -31,7 +31,7 @@ type (
 	Filtered struct {
 		Download string
 		Filters  []string
-		SemVer   bool
+		Sort     string
 	}
 	// GitHubReleaseMode are github modes operating on releases
 	GitHubReleaseMode struct {
