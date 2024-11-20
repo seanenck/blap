@@ -162,7 +162,10 @@ func TestProcess(t *testing.T) {
 	if _, err := f.Process(ctx, testIter(nil, &core.GitMode{})); err == nil || err.Error() != "unknown git mode for fetch processing" {
 		t.Errorf("invalid error: %v", err)
 	}
-	if _, err := f.Process(ctx, testIter(nil, nil, &core.GitMode{Tagged: &core.GitTaggedMode{}}, nil)); err == nil || err.Error() != "no upstream for tagged mode" {
+	if _, err := f.Process(ctx, testIter(nil, nil, &core.GitMode{Tagged: &core.Filtered{}}, nil)); err == nil || err.Error() != "no upstream for tagged mode" {
+		t.Errorf("invalid error: %v", err)
+	}
+	if _, err := f.Process(ctx, testIter(nil, nil, &core.WebMode{Scrape: &core.Filtered{}}, nil)); err == nil || err.Error() != "no URL configured" {
 		t.Errorf("invalid error: %v", err)
 	}
 }

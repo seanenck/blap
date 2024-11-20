@@ -30,6 +30,7 @@ type (
 		GitHubFetch(ownerRepo, call string, to any) error
 		Debug(string, ...any)
 		ExecuteCommand(cmd string, args ...string) (string, error)
+		Get(string) (*http.Response, error)
 	}
 	// Template are the parameters for templated items
 	Template struct {

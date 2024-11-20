@@ -27,8 +27,8 @@ type (
 	}
 	// Resolved will handle env-based strings for resolution of env vars
 	Resolved string
-	// GitTaggedMode means a repository+download is required to manage
-	GitTaggedMode struct {
+	// Filtered deals with modes that need to filters the results
+	Filtered struct {
 		Download string
 		Filters  []string
 	}
@@ -40,10 +40,15 @@ type (
 	GitHubBranchMode struct {
 		Name string
 	}
+	// WebMode represents web-based lookups
+	WebMode struct {
+		URL    string
+		Scrape *Filtered
+	}
 	// GitMode enables git-based fetches
 	GitMode struct {
 		Repository string
-		Tagged     *GitTaggedMode
+		Tagged     *Filtered
 	}
 	// GitHubMode indicates processing of a github project for upstreams
 	GitHubMode struct {
@@ -57,6 +62,7 @@ type (
 		Disable  bool
 		GitHub   *GitHubMode
 		Git      *GitMode
+		Web      *WebMode
 		Extract  Extraction
 		Commands struct {
 			Variables Variables
@@ -128,6 +134,10 @@ func (g GitHubMode) Is() {
 
 // Is toggles on source mode
 func (g GitMode) Is() {
+}
+
+// Is toggles on source mode
+func (w WebMode) Is() {
 }
 
 // Env will get the possible environment variables

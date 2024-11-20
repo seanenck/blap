@@ -17,6 +17,7 @@ import (
 	"github.com/seanenck/blap/internal/fetch"
 	"github.com/seanenck/blap/internal/fetch/git"
 	"github.com/seanenck/blap/internal/fetch/github"
+	"github.com/seanenck/blap/internal/fetch/web"
 	"github.com/seanenck/blap/internal/util"
 )
 
@@ -56,6 +57,11 @@ func (r *ResourceFetcher) Process(ctx fetch.Context, sources iter.Seq[any]) (*co
 			return github.Release(r, ctx, *t)
 		}
 		return nil, errors.New("github mode set but not configured")
+	case *core.WebMode:
+		if t.Scrape != nil {
+			return web.Scrape(r, ctx, *t)
+		}
+		return nil, errors.New("unknown web mode for fetch processing")
 	case *core.GitMode:
 		if t.Tagged != nil {
 			return git.Tagged(r, ctx, *t)
@@ -75,7 +81,7 @@ func (r *ResourceFetcher) GitHubFetch(ownerRepo, call string, to any) error {
 		return errors.New("result object must be set")
 	}
 	url := fmt.Sprintf("https://api.github.com/repos/%s/%s", ownerRepo, call)
-	resp, err := r.get(url)
+	resp, err := r.Get(url)
 	if err != nil {
 		return err
 	}
@@ -113,7 +119,7 @@ func (r *ResourceFetcher) Download(dryrun bool, url, dest string) (bool, error) 
 			return true, nil
 		}
 		r.Context.LogDebug("downloading asset: %s\n", url)
-		resp, err := r.get(url)
+		resp, err := r.Get(url)
 		if err != nil {
 			return false, err
 		}
@@ -130,7 +136,8 @@ func (r *ResourceFetcher) Download(dryrun bool, url, dest string) (bool, error) 
 	return did, nil
 }
 
-func (r ResourceFetcher) get(url string) (*http.Response, error) {
+// Get performs a simple URL 'GET'
+func (r ResourceFetcher) Get(url string) (*http.Response, error) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err

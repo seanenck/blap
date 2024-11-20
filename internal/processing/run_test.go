@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"iter"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -106,6 +107,10 @@ func (m *mockExecutor) ExecuteCommand(string, ...string) (string, error) {
 
 func (m *mockExecutor) GitHubFetch(string, string, any) error {
 	return nil
+}
+
+func (m *mockExecutor) Get(string) (*http.Response, error) {
+	return nil, nil
 }
 
 func TestProcessUpdate(t *testing.T) {
