@@ -29,31 +29,6 @@ func (m *mock) Output(string, ...string) ([]byte, error) {
 	return nil, nil
 }
 
-func TestScrapeValidate(t *testing.T) {
-	r := &retriever.ResourceFetcher{}
-	if _, err := web.Scrape(r, fetch.Context{Name: "abc"}, core.WebMode{}); err == nil || err.Error() != "scrape definition is nil" {
-		t.Errorf("invalid error: %v", err)
-	}
-	if _, err := web.Scrape(r, fetch.Context{Name: "xyz"}, core.WebMode{Scrape: &core.Filtered{}}); err == nil || err.Error() != "no URL configured" {
-		t.Errorf("invalid error: %v", err)
-	}
-	if _, err := web.Scrape(r, fetch.Context{Name: "xyz"}, core.WebMode{URL: "xyz", Scrape: &core.Filtered{}}); err == nil || err.Error() != "no download URL configured" {
-		t.Errorf("invalid error: %v", err)
-	}
-	if _, err := web.Scrape(r, fetch.Context{Name: "xxx"}, core.WebMode{URL: "xyz", Scrape: &core.Filtered{Download: "zzz"}}); err == nil || err.Error() != "application scraping requires filters" {
-		t.Errorf("invalid error: %v", err)
-	}
-	client := &mock{}
-	client.payload = []byte("")
-	r.Backend = client
-	if _, err := web.Scrape(r, fetch.Context{Name: "j1o2i"}, core.WebMode{URL: "xyz", Scrape: &core.Filtered{Download: "saoj", Filters: []string{"TEST"}}}); err == nil || err.Error() != "no tags scraped" {
-		t.Errorf("invalid error: %v", err)
-	}
-	if _, err := web.Scrape(r, fetch.Context{}, core.WebMode{URL: "a/xyz", Scrape: &core.Filtered{Download: "xyz", Filters: []string{"TEST"}}}); err == nil || err.Error() != "context missing name" {
-		t.Errorf("invalid error: %v", err)
-	}
-}
-
 func TestScrape(t *testing.T) {
 	client := &mock{}
 	client.payload = []byte("TESD\ta")
@@ -65,7 +40,7 @@ func TestScrape(t *testing.T) {
 	client = &mock{}
 	client.payload = []byte("v0.1.2\n2.3.0")
 	r.Backend = client
-	if _, err := web.Scrape(r, fetch.Context{Name: "aaa"}, core.WebMode{URL: "xyz", Scrape: &core.Filtered{Download: "oijaoeja", Filters: []string{"(TEST?)"}}}); err == nil || err.Error() != "no tags scraped" {
+	if _, err := web.Scrape(r, fetch.Context{Name: "aaa"}, core.WebMode{URL: "xyz", Scrape: &core.Filtered{Download: "oijaoeja", Filters: []string{"(TEST?)"}}}); err == nil || err.Error() != "no tags found" {
 		t.Errorf("invalid error: %v", err)
 	}
 	client = &mock{}

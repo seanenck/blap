@@ -113,6 +113,10 @@ func (m *mockExecutor) Get(string) (*http.Response, error) {
 	return nil, nil
 }
 
+func (m *mockExecutor) Filtered(fetch.Context, fetch.Filterable) (*core.Resource, error) {
+	return nil, nil
+}
+
 func TestProcessUpdate(t *testing.T) {
 	cfg := processing.Configuration{}
 	m := &mockExecutor{}

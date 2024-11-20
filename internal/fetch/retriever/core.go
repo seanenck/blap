@@ -10,6 +10,9 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/seanenck/blap/internal/cli"
@@ -19,6 +22,7 @@ import (
 	"github.com/seanenck/blap/internal/fetch/github"
 	"github.com/seanenck/blap/internal/fetch/web"
 	"github.com/seanenck/blap/internal/util"
+	"golang.org/x/mod/semver"
 )
 
 type (
@@ -195,4 +199,68 @@ func (r *ResourceFetcher) ExecuteCommand(cmd string, args ...string) (string, er
 		return "", err
 	}
 	return string(out), nil
+}
+
+// Filtered handles common filtered commands that have return lists of semver versions
+func (r *ResourceFetcher) Filtered(ctx fetch.Context, filterable fetch.Filterable) (*core.Resource, error) {
+	f := filterable.Definition()
+	if f == nil {
+		return nil, errors.New("filter definition is nil")
+	}
+	up := strings.TrimSpace(filterable.Upstream())
+	if up == "" {
+		return nil, errors.New("no upstream configured")
+	}
+	dl := strings.TrimSpace(f.Download)
+	if dl == "" {
+		return nil, errors.New("no download URL configured")
+	}
+	if len(f.Filters) == 0 {
+		return nil, errors.New("filters required")
+	}
+	var re []*regexp.Regexp
+	for _, r := range f.Filters {
+		r, err := ctx.CompileRegexp(r, nil)
+		if err != nil {
+			return nil, err
+		}
+		re = append(re, r)
+	}
+	b, err := filterable.Get(r, up)
+	if err != nil {
+		return nil, err
+	}
+	var options []string
+	for _, line := range strings.Split(string(b), "\n") {
+		t := strings.TrimSpace(line)
+		if t == "" {
+			continue
+		}
+		for _, r := range re {
+			m := filterable.Match(r, t)
+			if len(m) == 0 {
+				continue
+			}
+			matched := m[0]
+			if len(m) > 1 {
+				matched = m[1]
+			}
+			if !strings.HasPrefix(matched, "v") {
+				matched = fmt.Sprintf("v%s", matched)
+			}
+			options = append(options, matched)
+		}
+	}
+	if len(options) == 0 {
+		return nil, errors.New("no tags found")
+	}
+	semver.Sort(options)
+	tag := options[len(options)-1]
+	r.Debug("found tag: %s\n", tag)
+	tl, err := ctx.Templating(dl, &fetch.Template{Tag: fetch.Version(tag)})
+	if err != nil {
+		return nil, err
+	}
+	url := strings.TrimSpace(tl)
+	return &core.Resource{URL: url, File: filepath.Base(url), Tag: tag}, nil
 }
