@@ -25,7 +25,7 @@ func Scrape(caller fetch.Retriever, ctx fetch.Context, a core.WebMode) (*core.Re
 	}
 	dl := strings.TrimSpace(a.Scrape.Download)
 	if dl == "" {
-		dl = up
+		return nil, errors.New("no download URL configured")
 	}
 	if len(a.Scrape.Filters) == 0 {
 		return nil, errors.New("application scraping requires filters")

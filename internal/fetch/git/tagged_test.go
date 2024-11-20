@@ -30,19 +30,25 @@ func TestTaggedValidate(t *testing.T) {
 	if _, err := git.Tagged(r, fetch.Context{Name: "xyz"}, core.GitMode{Tagged: &core.Filtered{}}); err == nil || err.Error() != "no upstream for tagged mode" {
 		t.Errorf("invalid error: %v", err)
 	}
-	if _, err := git.Tagged(r, fetch.Context{Name: "xxx"}, core.GitMode{Repository: "xyz", Tagged: &core.Filtered{}}); err == nil || err.Error() != "application lacks filters" {
+	if _, err := git.Tagged(r, fetch.Context{Name: "xyz"}, core.GitMode{Repository: "xyz", Tagged: &core.Filtered{}}); err == nil || err.Error() != "no download URL for tagged mode" {
+		t.Errorf("invalid error: %v", err)
+	}
+	if _, err := git.Tagged(r, fetch.Context{Name: "xxx"}, core.GitMode{Repository: "xyz", Tagged: &core.Filtered{Download: "111"}}); err == nil || err.Error() != "application lacks filters" {
 		t.Errorf("invalid error: %v", err)
 	}
 	client := &mock{}
 	client.payload = []byte("")
 	r.Backend = client
-	if _, err := git.Tagged(r, fetch.Context{Name: "j1o2i"}, core.GitMode{Repository: "xyz", Tagged: &core.Filtered{Filters: []string{"TEST"}}}); err == nil || err.Error() != "no tags matched" {
+	if _, err := git.Tagged(r, fetch.Context{Name: "j1o2i"}, core.GitMode{Repository: "xyz", Tagged: &core.Filtered{Download: "oijoj1", Filters: []string{"TEST"}}}); err == nil || err.Error() != "no tags matched" {
 		t.Errorf("invalid error: %v", err)
 	}
 	client = &mock{}
 	client.payload = []byte("a")
 	r.Backend = client
-	if _, err := git.Tagged(r, fetch.Context{Name: "xxx"}, core.GitMode{Repository: "xyz", Tagged: &core.Filtered{Filters: []string{"TEST"}}}); err == nil || err.Error() != "matching version line can not be parsed: a" {
+	if _, err := git.Tagged(r, fetch.Context{Name: "xxx"}, core.GitMode{Repository: "xyz", Tagged: &core.Filtered{Download: "Oijeoa", Filters: []string{"TEST"}}}); err == nil || err.Error() != "matching version line can not be parsed: a" {
+		t.Errorf("invalid error: %v", err)
+	}
+	if _, err := git.Tagged(r, fetch.Context{}, core.GitMode{Repository: "a/xyz", Tagged: &core.Filtered{Download: "y", Filters: []string{"TEST"}}}); err == nil || err.Error() != "context missing name" {
 		t.Errorf("invalid error: %v", err)
 	}
 }
@@ -52,19 +58,19 @@ func TestTagged(t *testing.T) {
 	client.payload = []byte("TESD\ta")
 	r := &retriever.ResourceFetcher{}
 	r.Backend = client
-	if _, err := git.Tagged(r, fetch.Context{Name: "afa"}, core.GitMode{Repository: "xyz", Tagged: &core.Filtered{Filters: []string{"TEST"}}}); err != nil {
+	if _, err := git.Tagged(r, fetch.Context{Name: "afa"}, core.GitMode{Repository: "xyz", Tagged: &core.Filtered{Download: "x", Filters: []string{"TEST"}}}); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	client = &mock{}
 	client.payload = []byte("TEST\ta")
 	r.Backend = client
-	if _, err := git.Tagged(r, fetch.Context{Name: "aaa"}, core.GitMode{Repository: "xyz", Tagged: &core.Filtered{Filters: []string{"TEST"}}}); err == nil || err.Error() != "no tags matched" {
+	if _, err := git.Tagged(r, fetch.Context{Name: "aaa"}, core.GitMode{Repository: "xyz", Tagged: &core.Filtered{Download: "y", Filters: []string{"TEST"}}}); err == nil || err.Error() != "no tags matched" {
 		t.Errorf("invalid error: %v", err)
 	}
 	client = &mock{}
 	client.payload = []byte("TEST\t1\nTEST\t2\nXYZ\t3\nZZZ\t4")
 	r.Backend = client
-	o, err := git.Tagged(r, fetch.Context{Name: "aljfao"}, core.GitMode{Repository: "a/xyz", Tagged: &core.Filtered{Filters: []string{"TEST"}}})
+	o, err := git.Tagged(r, fetch.Context{Name: "aljfao"}, core.GitMode{Repository: "a/xyz", Tagged: &core.Filtered{Download: "y/abc", Filters: []string{"TEST"}}})
 	if err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
@@ -74,7 +80,7 @@ func TestTagged(t *testing.T) {
 		if o.Tag != "3" {
 			t.Errorf("invalid tag: %s", o.Tag)
 		}
-		if o.URL != "a/xyz" || o.File != "xyz" {
+		if o.URL != "y/abc" || o.File != "abc" {
 			t.Errorf("invalid asset: %s %s", o.URL, o.File)
 		}
 	}
@@ -94,8 +100,5 @@ func TestTagged(t *testing.T) {
 		if o.URL != "xx/s/3/abc/aaa" || o.File != "aaa" {
 			t.Errorf("invalid asset: %s %s", o.URL, o.File)
 		}
-	}
-	if _, err = git.Tagged(r, fetch.Context{}, core.GitMode{Repository: "a/xyz", Tagged: &core.Filtered{Filters: []string{"TEST"}}}); err == nil || err.Error() != "context missing name" {
-		t.Errorf("invalid error: %v", err)
 	}
 }

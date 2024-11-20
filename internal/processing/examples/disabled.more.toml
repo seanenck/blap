@@ -32,3 +32,4 @@ scrape.filters = [
     "<td><a href=\"bash-([0-9.]*?).tar.gz"
 ]
 # scrape.download can be supplied, much like git tag downloads, to pull from if the url is different
+scrape.download = "https://ftp.gnu.org/gnu/bash/{{ $.Vars.Tag }}"

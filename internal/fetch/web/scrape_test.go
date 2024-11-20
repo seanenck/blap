@@ -37,13 +37,19 @@ func TestScrapeValidate(t *testing.T) {
 	if _, err := web.Scrape(r, fetch.Context{Name: "xyz"}, core.WebMode{Scrape: &core.Filtered{}}); err == nil || err.Error() != "no URL configured" {
 		t.Errorf("invalid error: %v", err)
 	}
-	if _, err := web.Scrape(r, fetch.Context{Name: "xxx"}, core.WebMode{URL: "xyz", Scrape: &core.Filtered{}}); err == nil || err.Error() != "application scraping requires filters" {
+	if _, err := web.Scrape(r, fetch.Context{Name: "xyz"}, core.WebMode{URL: "xyz", Scrape: &core.Filtered{}}); err == nil || err.Error() != "no download URL configured" {
+		t.Errorf("invalid error: %v", err)
+	}
+	if _, err := web.Scrape(r, fetch.Context{Name: "xxx"}, core.WebMode{URL: "xyz", Scrape: &core.Filtered{Download: "zzz"}}); err == nil || err.Error() != "application scraping requires filters" {
 		t.Errorf("invalid error: %v", err)
 	}
 	client := &mock{}
 	client.payload = []byte("")
 	r.Backend = client
-	if _, err := web.Scrape(r, fetch.Context{Name: "j1o2i"}, core.WebMode{URL: "xyz", Scrape: &core.Filtered{Filters: []string{"TEST"}}}); err == nil || err.Error() != "no tags scraped" {
+	if _, err := web.Scrape(r, fetch.Context{Name: "j1o2i"}, core.WebMode{URL: "xyz", Scrape: &core.Filtered{Download: "saoj", Filters: []string{"TEST"}}}); err == nil || err.Error() != "no tags scraped" {
+		t.Errorf("invalid error: %v", err)
+	}
+	if _, err := web.Scrape(r, fetch.Context{}, core.WebMode{URL: "a/xyz", Scrape: &core.Filtered{Download: "xyz", Filters: []string{"TEST"}}}); err == nil || err.Error() != "context missing name" {
 		t.Errorf("invalid error: %v", err)
 	}
 }
@@ -53,19 +59,19 @@ func TestScrape(t *testing.T) {
 	client.payload = []byte("TESD\ta")
 	r := &retriever.ResourceFetcher{}
 	r.Backend = client
-	if _, err := web.Scrape(r, fetch.Context{Name: "afa"}, core.WebMode{URL: "xyz", Scrape: &core.Filtered{Filters: []string{"(TEST?)"}}}); err != nil {
+	if _, err := web.Scrape(r, fetch.Context{Name: "afa"}, core.WebMode{URL: "xyz", Scrape: &core.Filtered{Download: "ajfaeaijo", Filters: []string{"(TEST?)"}}}); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	client = &mock{}
 	client.payload = []byte("v0.1.2\n2.3.0")
 	r.Backend = client
-	if _, err := web.Scrape(r, fetch.Context{Name: "aaa"}, core.WebMode{URL: "xyz", Scrape: &core.Filtered{Filters: []string{"(TEST?)"}}}); err == nil || err.Error() != "no tags scraped" {
+	if _, err := web.Scrape(r, fetch.Context{Name: "aaa"}, core.WebMode{URL: "xyz", Scrape: &core.Filtered{Download: "oijaoeja", Filters: []string{"(TEST?)"}}}); err == nil || err.Error() != "no tags scraped" {
 		t.Errorf("invalid error: %v", err)
 	}
 	client = &mock{}
 	client.payload = []byte("abc-0.1.2.txt\nabc-2.3.0.txt\n\nabc-aaa-1.2.3\nabc-1.1.2.txt")
 	r.Backend = client
-	o, err := web.Scrape(r, fetch.Context{Name: "aljfao"}, core.WebMode{URL: "a/xyz", Scrape: &core.Filtered{Filters: []string{"abc-([0-9.]*?).txt"}}})
+	o, err := web.Scrape(r, fetch.Context{Name: "aljfao"}, core.WebMode{URL: "a/xyz", Scrape: &core.Filtered{Download: "oijoefa/x", Filters: []string{"abc-([0-9.]*?).txt"}}})
 	if err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
@@ -75,7 +81,7 @@ func TestScrape(t *testing.T) {
 		if o.Tag != "v2.3.0" {
 			t.Errorf("invalid tag: %s", o.Tag)
 		}
-		if o.URL != "a/xyz" || o.File != "xyz" {
+		if o.URL != "oijoefa/x" || o.File != "x" {
 			t.Errorf("invalid asset: %s %s", o.URL, o.File)
 		}
 	}
@@ -95,8 +101,5 @@ func TestScrape(t *testing.T) {
 		if o.URL != "xx/s/v1.1.2/abc/aaa" || o.File != "aaa" {
 			t.Errorf("invalid asset: %s %s", o.URL, o.File)
 		}
-	}
-	if _, err = web.Scrape(r, fetch.Context{}, core.WebMode{URL: "a/xyz", Scrape: &core.Filtered{Filters: []string{"TEST"}}}); err == nil || err.Error() != "context missing name" {
-		t.Errorf("invalid error: %v", err)
 	}
 }

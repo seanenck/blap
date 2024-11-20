@@ -23,7 +23,7 @@ func Tagged(caller fetch.Retriever, ctx fetch.Context, a core.GitMode) (*core.Re
 	}
 	dl := strings.TrimSpace(a.Tagged.Download)
 	if dl == "" {
-		dl = up
+		return nil, errors.New("no download URL for tagged mode")
 	}
 	if len(a.Tagged.Filters) == 0 {
 		return nil, errors.New("application lacks filters")
