@@ -221,10 +221,11 @@ func (r *ResourceFetcher) Filtered(ctx fetch.Context, filterable fetch.Filterabl
 		return nil, errors.New("filters required")
 	}
 	const (
-		rSemVerType = "rsemver"
-		rSortType   = "rsort"
-		sortType    = "sort"
-		semVerType  = "semver"
+		reversePrefix = "r"
+		rSemVerType   = reversePrefix + "semver"
+		rSortType     = reversePrefix + "sort"
+		sortType      = "sort"
+		semVerType    = "semver"
 	)
 	isSemVer := false
 	isSort := false
@@ -280,7 +281,7 @@ func (r *ResourceFetcher) Filtered(ctx fetch.Context, filterable fetch.Filterabl
 	}
 	// this seems counter to what it should be but semver/sort should be defaults to get the newest version
 	// reversing should be a backup
-	if f.Sort != "" && !strings.HasPrefix(f.Sort, "r") {
+	if f.Sort != "" && !strings.HasPrefix(f.Sort, reversePrefix) {
 		slices.Reverse(options)
 	}
 	tag := options[0]
