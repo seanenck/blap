@@ -15,7 +15,6 @@ import (
 	"github.com/seanenck/blap/internal/cli"
 	"github.com/seanenck/blap/internal/core"
 	"github.com/seanenck/blap/internal/fetch"
-	"github.com/seanenck/blap/internal/fetch/filtered"
 	"github.com/seanenck/blap/internal/fetch/git"
 	"github.com/seanenck/blap/internal/fetch/github"
 	"github.com/seanenck/blap/internal/fetch/web"
@@ -196,9 +195,4 @@ func (r *ResourceFetcher) ExecuteCommand(cmd string, args ...string) (string, er
 		return "", err
 	}
 	return string(out), nil
-}
-
-// Filtered calls underlying filter handling
-func (r *ResourceFetcher) Filtered(ctx fetch.Context, f fetch.Filterable) (*core.Resource, error) {
-	return filtered.Get(r, ctx, f)
 }

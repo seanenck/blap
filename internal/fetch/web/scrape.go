@@ -45,7 +45,9 @@ func (s scrapeFilterable) Match(r []*regexp.Regexp, line string) ([]string, erro
 
 // Scrape will scrape a GET requested resource
 func Scrape(caller fetch.Retriever, ctx fetch.Context, a core.WebMode) (*core.Resource, error) {
-	f := scrapeFilterable{}
-	f.Base = filtered.NewBase(a.URL, a.Scrape)
-	return caller.Filtered(ctx, f)
+	b, err := filtered.NewBase(a.URL, a.Scrape, scrapeFilterable{})
+	if err != nil {
+		return nil, err
+	}
+	return b.Get(caller, ctx)
 }

@@ -30,14 +30,11 @@ type (
 		GitHubFetch(ownerRepo, call string, to any) error
 		Debug(string, ...any)
 		ExecuteCommand(cmd string, args ...string) (string, error)
-		Filtered(Context, Filterable) (*core.Resource, error)
 		Get(string) (*http.Response, error)
 	}
 	// Filterable is an interface to support arbitrary inputs that need to filter to tag sets
 	Filterable interface {
-		Upstream() string
 		Get(Retriever, string) ([]byte, error)
-		Definition() *core.Filtered
 		Match([]*regexp.Regexp, string) ([]string, error)
 	}
 	// Template are the parameters for templated items

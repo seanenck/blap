@@ -15,10 +15,8 @@ import (
 
 type (
 	mockFilterable struct {
-		data     *core.Filtered
-		upstream string
-		payload  []byte
-		matches  []string
+		payload []byte
+		matches []string
 	}
 )
 
@@ -35,63 +33,57 @@ func (s *mockFilterable) Output(string, ...string) ([]byte, error) {
 	return s.payload, nil
 }
 
-func (s *mockFilterable) Upstream() string {
-	return s.upstream
-}
-
 func (s *mockFilterable) Get(r fetch.Retriever, url string) ([]byte, error) {
 	return s.payload, nil
-}
-
-func (s *mockFilterable) Definition() *core.Filtered {
-	return s.data
 }
 
 func (s *mockFilterable) Match(r []*regexp.Regexp, line string) ([]string, error) {
 	return s.matches, nil
 }
 
-func TestNewBase(t *testing.T) {
+func TestNewBaseInvalid(t *testing.T) {
 	b := filtered.Base{}
-	if b.Upstream() != "" || b.Definition() != nil {
-		t.Errorf("invalid base: %v", b)
-	}
-	b = filtered.NewBase("abc", nil)
-	if b.Upstream() != "abc" || b.Definition() != nil {
-		t.Errorf("invalid base: %v", b)
-	}
-	b = filtered.NewBase("xyz", &core.Filtered{})
-	if b.Upstream() != "xyz" || b.Definition() == nil {
-		t.Errorf("invalid base: %v", b)
+	if _, err := b.Get(&retriever.ResourceFetcher{}, fetch.Context{}); err == nil || err.Error() != "invalid base is not configured" {
+		t.Errorf("invalid error: %v", err)
 	}
 }
 
-func TestValidate(t *testing.T) {
+func TestNewBaseValidate(t *testing.T) {
+	if _, err := filtered.NewBase("", nil, nil); err == nil || err.Error() != "filterable interface is nil" {
+		t.Errorf("invalid error: %v", err)
+	}
+	if _, err := filtered.NewBase("", nil, &mockFilterable{}); err == nil || err.Error() != "filter definition is nil" {
+		t.Errorf("invalid error: %v", err)
+	}
+	data := &core.Filtered{}
+	if _, err := filtered.NewBase("", data, &mockFilterable{}); err == nil || err.Error() != "no upstream configured" {
+		t.Errorf("invalid error: %v", err)
+	}
+	if _, err := filtered.NewBase("aaa", data, &mockFilterable{}); err == nil || err.Error() != "no download URL configured" {
+		t.Errorf("invalid error: %v", err)
+	}
+	data.Download = "aa"
+	if _, err := filtered.NewBase("yao", data, &mockFilterable{}); err == nil || err.Error() != "filters required" {
+		t.Errorf("invalid error: %v", err)
+	}
+}
+
+func TestGetErrors(t *testing.T) {
 	r := &retriever.ResourceFetcher{}
-	mock := &mockFilterable{}
-	if _, err := filtered.Get(r, fetch.Context{Name: "abc"}, mock); err == nil || err.Error() != "filter definition is nil" {
-		t.Errorf("invalid error: %v", err)
-	}
-	mock.data = &core.Filtered{}
-	if _, err := filtered.Get(r, fetch.Context{Name: "xyz"}, mock); err == nil || err.Error() != "no upstream configured" {
-		t.Errorf("invalid error: %v", err)
-	}
-	mock.upstream = "aaa"
-	if _, err := filtered.Get(r, fetch.Context{Name: "xyz"}, mock); err == nil || err.Error() != "no download URL configured" {
-		t.Errorf("invalid error: %v", err)
-	}
-	mock.data.Download = "xxx"
-	if _, err := filtered.Get(r, fetch.Context{Name: "xxx"}, mock); err == nil || err.Error() != "filters required" {
-		t.Errorf("invalid error: %v", err)
-	}
-	mock.data.Filters = append(mock.data.Filters, "aa")
+	data := &core.Filtered{}
+	data.Download = "xxx"
+	data.Filters = append(data.Filters, "aa")
 	client := &mockFilterable{}
 	client.payload = []byte("")
 	r.Backend = client
-	if _, err := filtered.Get(r, fetch.Context{Name: "j1o2i"}, mock); err == nil || err.Error() != "no tags found" {
+	b, err := filtered.NewBase("aaa", data, &mockFilterable{})
+	if err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
-	if _, err := filtered.Get(r, fetch.Context{}, mock); err == nil || err.Error() != "context missing name" {
+	if _, err := b.Get(r, fetch.Context{Name: "j1o2i"}); err == nil || err.Error() != "no tags found" {
+		t.Errorf("invalid error: %v", err)
+	}
+	if _, err := b.Get(r, fetch.Context{}); err == nil || err.Error() != "context missing name" {
 		t.Errorf("invalid error: %v", err)
 	}
 }
@@ -102,13 +94,16 @@ func TestBasicFilters(t *testing.T) {
 	client.payload = []byte("abc-0.1.2.txt\nabc-2.3.0.txt\n\nabc-aaa-1.2.3\nabc-1.1.2.txt")
 	r.Backend = client
 	mock := &mockFilterable{}
-	mock.upstream = "a/xyz"
-	mock.data = &core.Filtered{}
-	mock.data.Download = "oijoefa/x"
-	mock.data.Filters = append(mock.data.Filters, "abc-([0-9.]*?).txt")
+	data := &core.Filtered{}
+	data.Download = "oijoefa/x"
+	data.Filters = append(data.Filters, "abc-([0-9.]*?).txt")
 	mock.matches = []string{"v2.3.0", "v4.3.0", "v3.2.1", "v1.2.3"}
 	mock.payload = client.payload
-	o, err := filtered.Get(r, fetch.Context{Name: "aljfao"}, mock)
+	b, err := filtered.NewBase("a/xyz", data, mock)
+	if err != nil {
+		t.Errorf("invalid error: %v", err)
+	}
+	o, err := b.Get(r, fetch.Context{Name: "aljfao"})
 	if err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
@@ -130,14 +125,17 @@ func TestSemVer(t *testing.T) {
 	client.payload = []byte("abc-0.1.2.txt\nabc-2.3.0.txt\n\nabc-aaa-1.2.3\nabc-1.1.2.txt")
 	r.Backend = client
 	mock := &mockFilterable{}
-	mock.upstream = "a/xyz"
-	mock.data = &core.Filtered{}
-	mock.data.Download = "oijoefa/x"
-	mock.data.Filters = append(mock.data.Filters, "abc-([0-9.]*?).txt")
-	mock.data.Sort = "semver"
+	data := &core.Filtered{}
+	data.Download = "oijoefa/x"
+	data.Filters = append(data.Filters, "abc-([0-9.]*?).txt")
+	data.Sort = "semver"
 	mock.matches = []string{"2.3.0", "2.31.0", "v2.10.0", "2.32.0"}
 	mock.payload = client.payload
-	o, err := filtered.Get(r, fetch.Context{Name: "aljfao"}, mock)
+	b, err := filtered.NewBase("a/xyz", data, mock)
+	if err != nil {
+		t.Errorf("invalid error: %v", err)
+	}
+	o, err := b.Get(r, fetch.Context{Name: "aljfao"})
 	if err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
@@ -159,14 +157,17 @@ func TestSemVerReverse(t *testing.T) {
 	client.payload = []byte("abc-0.1.2.txt\nabc-2.3.0.txt\n\nabc-aaa-1.2.3\nabc-1.1.2.txt")
 	r.Backend = client
 	mock := &mockFilterable{}
-	mock.upstream = "a/xyz"
-	mock.data = &core.Filtered{}
-	mock.data.Download = "oijoefa/x"
-	mock.data.Filters = append(mock.data.Filters, "abc-([0-9.]*?).txt")
-	mock.data.Sort = "rsemver"
+	data := &core.Filtered{}
+	data.Download = "oijoefa/x"
+	data.Filters = append(data.Filters, "abc-([0-9.]*?).txt")
+	data.Sort = "rsemver"
 	mock.matches = []string{"2.3.0", "2.31.0", "v2.10.0", "2.32.0"}
 	mock.payload = client.payload
-	o, err := filtered.Get(r, fetch.Context{Name: "aljfao"}, mock)
+	b, err := filtered.NewBase("a/xyz", data, mock)
+	if err != nil {
+		t.Errorf("invalid error: %v", err)
+	}
+	o, err := b.Get(r, fetch.Context{Name: "aljfao"})
 	if err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
@@ -188,14 +189,17 @@ func TestSortReverse(t *testing.T) {
 	client.payload = []byte("abc-0.1.2.txt\nabc-2.3.0.txt\n\nabc-aaa-1.2.3\nabc-1.1.2.txt")
 	r.Backend = client
 	mock := &mockFilterable{}
-	mock.upstream = "a/xyz"
-	mock.data = &core.Filtered{}
-	mock.data.Download = "oijoefa/x"
-	mock.data.Filters = append(mock.data.Filters, "abc-([0-9.]*?).txt")
-	mock.data.Sort = "rsort"
+	data := &core.Filtered{}
+	data.Download = "oijoefa/x"
+	data.Filters = append(data.Filters, "abc-([0-9.]*?).txt")
+	data.Sort = "rsort"
 	mock.matches = []string{"2.3.0", "2.31.0", "2.10.0", "2.32.0"}
 	mock.payload = client.payload
-	o, err := filtered.Get(r, fetch.Context{Name: "aljfao"}, mock)
+	b, err := filtered.NewBase("a/xyz", data, mock)
+	if err != nil {
+		t.Errorf("invalid error: %v", err)
+	}
+	o, err := b.Get(r, fetch.Context{Name: "aljfao"})
 	if err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
@@ -217,14 +221,17 @@ func TestSort(t *testing.T) {
 	client.payload = []byte("abc-0.1.2.txt\nabc-2.3.0.txt\n\nabc-aaa-1.2.3\nabc-1.1.2.txt")
 	r.Backend = client
 	mock := &mockFilterable{}
-	mock.upstream = "a/xyz"
-	mock.data = &core.Filtered{}
-	mock.data.Download = "oijoefa/x"
-	mock.data.Filters = append(mock.data.Filters, "abc-([0-9.]*?).txt")
-	mock.data.Sort = "sort"
+	data := &core.Filtered{}
+	data.Download = "oijoefa/x"
+	data.Filters = append(data.Filters, "abc-([0-9.]*?).txt")
+	data.Sort = "sort"
 	mock.matches = []string{"2.3.0", "2.31.0", "2.10.0", "2.32.0"}
 	mock.payload = client.payload
-	o, err := filtered.Get(r, fetch.Context{Name: "aljfao"}, mock)
+	b, err := filtered.NewBase("a/xyz", data, mock)
+	if err != nil {
+		t.Errorf("invalid error: %v", err)
+	}
+	o, err := b.Get(r, fetch.Context{Name: "aljfao"})
 	if err != nil {
 		t.Errorf("invalid error: %v", err)
 	}

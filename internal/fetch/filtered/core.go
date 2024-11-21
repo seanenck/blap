@@ -18,43 +18,40 @@ import (
 type (
 	// Base are wrappers for filtering components
 	Base struct {
-		upstream string
-		data     *core.Filtered
+		upstream   string
+		data       *core.Filtered
+		filterable fetch.Filterable
+		valid      bool
 	}
 )
 
 // NewBase creates a new baseline for filtering
-func NewBase(upstream string, d *core.Filtered) Base {
-	return Base{upstream: upstream, data: d}
-}
-
-// Upstream returns the underlying upstream
-func (b Base) Upstream() string {
-	return b.upstream
-}
-
-// Definition returns the filter definition
-func (b Base) Definition() *core.Filtered {
-	return b.data
+func NewBase(upstream string, d *core.Filtered, i fetch.Filterable) (Base, error) {
+	if i == nil {
+		return Base{}, errors.New("filterable interface is nil")
+	}
+	if d == nil {
+		return Base{}, errors.New("filter definition is nil")
+	}
+	if upstream == "" {
+		return Base{}, errors.New("no upstream configured")
+	}
+	dl := strings.TrimSpace(d.Download)
+	if dl == "" {
+		return Base{}, errors.New("no download URL configured")
+	}
+	if len(d.Filters) == 0 {
+		return Base{}, errors.New("filters required")
+	}
+	return Base{upstream: upstream, data: d, filterable: i, valid: true}, nil
 }
 
 // Get handles common filtered commands that have return lists of semver versions
-func Get(r fetch.Retriever, ctx fetch.Context, filterable fetch.Filterable) (*core.Resource, error) {
-	f := filterable.Definition()
-	if f == nil {
-		return nil, errors.New("filter definition is nil")
+func (b Base) Get(r fetch.Retriever, ctx fetch.Context) (*core.Resource, error) {
+	if !b.valid {
+		return nil, errors.New("invalid base is not configured")
 	}
-	up := strings.TrimSpace(filterable.Upstream())
-	if up == "" {
-		return nil, errors.New("no upstream configured")
-	}
-	dl := strings.TrimSpace(f.Download)
-	if dl == "" {
-		return nil, errors.New("no download URL configured")
-	}
-	if len(f.Filters) == 0 {
-		return nil, errors.New("filters required")
-	}
+	filterable := b.filterable
 	const (
 		reversePrefix = "r"
 		rSemVerType   = reversePrefix + "semver"
@@ -64,7 +61,7 @@ func Get(r fetch.Retriever, ctx fetch.Context, filterable fetch.Filterable) (*co
 	)
 	isSemVer := false
 	isSort := false
-	switch f.Sort {
+	switch b.data.Sort {
 	case "":
 		break
 	case rSortType, sortType:
@@ -72,22 +69,22 @@ func Get(r fetch.Retriever, ctx fetch.Context, filterable fetch.Filterable) (*co
 	case rSemVerType, semVerType:
 		isSemVer = true
 	default:
-		return nil, fmt.Errorf("unknown sort type: %s", f.Sort)
+		return nil, fmt.Errorf("unknown sort type: %s", b.data.Sort)
 	}
 	var re []*regexp.Regexp
-	for _, r := range f.Filters {
+	for _, r := range b.data.Filters {
 		r, err := ctx.CompileRegexp(r, nil)
 		if err != nil {
 			return nil, err
 		}
 		re = append(re, r)
 	}
-	b, err := filterable.Get(r, up)
+	data, err := filterable.Get(r, b.upstream)
 	if err != nil {
 		return nil, err
 	}
 	var options []string
-	for _, line := range strings.Split(string(b), "\n") {
+	for _, line := range strings.Split(string(data), "\n") {
 		t := strings.TrimSpace(line)
 		if t == "" {
 			continue
@@ -120,12 +117,12 @@ func Get(r fetch.Retriever, ctx fetch.Context, filterable fetch.Filterable) (*co
 	}
 	// this seems counter to what it should be but semver/sort should be defaults to get the newest version
 	// reversing should be a backup
-	if f.Sort != "" && !strings.HasPrefix(f.Sort, reversePrefix) {
+	if b.data.Sort != "" && !strings.HasPrefix(b.data.Sort, reversePrefix) {
 		slices.Reverse(options)
 	}
 	tag := options[0]
 	r.Debug("found tag: %s\n", tag)
-	tl, err := ctx.Templating(dl, &fetch.Template{Tag: fetch.Version(tag)})
+	tl, err := ctx.Templating(b.data.Download, &fetch.Template{Tag: fetch.Version(tag)})
 	if err != nil {
 		return nil, err
 	}
