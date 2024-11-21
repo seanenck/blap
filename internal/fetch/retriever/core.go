@@ -10,21 +10,16 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
-	"path/filepath"
-	"regexp"
-	"slices"
-	"sort"
-	"strings"
 	"time"
 
 	"github.com/seanenck/blap/internal/cli"
 	"github.com/seanenck/blap/internal/core"
 	"github.com/seanenck/blap/internal/fetch"
+	"github.com/seanenck/blap/internal/fetch/filtered"
 	"github.com/seanenck/blap/internal/fetch/git"
 	"github.com/seanenck/blap/internal/fetch/github"
 	"github.com/seanenck/blap/internal/fetch/web"
 	"github.com/seanenck/blap/internal/util"
-	"golang.org/x/mod/semver"
 )
 
 type (
@@ -203,97 +198,7 @@ func (r *ResourceFetcher) ExecuteCommand(cmd string, args ...string) (string, er
 	return string(out), nil
 }
 
-// Filtered handles common filtered commands that have return lists of semver versions
-func (r *ResourceFetcher) Filtered(ctx fetch.Context, filterable fetch.Filterable) (*core.Resource, error) {
-	f := filterable.Definition()
-	if f == nil {
-		return nil, errors.New("filter definition is nil")
-	}
-	up := strings.TrimSpace(filterable.Upstream())
-	if up == "" {
-		return nil, errors.New("no upstream configured")
-	}
-	dl := strings.TrimSpace(f.Download)
-	if dl == "" {
-		return nil, errors.New("no download URL configured")
-	}
-	if len(f.Filters) == 0 {
-		return nil, errors.New("filters required")
-	}
-	const (
-		reversePrefix = "r"
-		rSemVerType   = reversePrefix + "semver"
-		rSortType     = reversePrefix + "sort"
-		sortType      = "sort"
-		semVerType    = "semver"
-	)
-	isSemVer := false
-	isSort := false
-	switch f.Sort {
-	case "":
-		break
-	case rSortType, sortType:
-		isSort = true
-	case rSemVerType, semVerType:
-		isSemVer = true
-	default:
-		return nil, fmt.Errorf("unknown sort type: %s", f.Sort)
-	}
-	var re []*regexp.Regexp
-	for _, r := range f.Filters {
-		r, err := ctx.CompileRegexp(r, nil)
-		if err != nil {
-			return nil, err
-		}
-		re = append(re, r)
-	}
-	b, err := filterable.Get(r, up)
-	if err != nil {
-		return nil, err
-	}
-	var options []string
-	for _, line := range strings.Split(string(b), "\n") {
-		t := strings.TrimSpace(line)
-		if t == "" {
-			continue
-		}
-		matches, err := filterable.Match(re, t)
-		if err != nil {
-			return nil, err
-		}
-		for _, opt := range matches {
-			matched := opt
-			if isSemVer {
-				if !strings.HasPrefix(matched, "v") {
-					matched = fmt.Sprintf("v%s", matched)
-				}
-				if !semver.IsValid(matched) {
-					r.Debug("semver found an invalid match: %s\n", matched)
-					continue
-				}
-			}
-			options = append(options, matched)
-		}
-	}
-	if len(options) == 0 {
-		return nil, errors.New("no tags found")
-	}
-	if isSemVer {
-		semver.Sort(options)
-	} else if isSort {
-		sort.Strings(options)
-	}
-	// this seems counter to what it should be but semver/sort should be defaults to get the newest version
-	// reversing should be a backup
-	if f.Sort != "" && !strings.HasPrefix(f.Sort, reversePrefix) {
-		slices.Reverse(options)
-	}
-	tag := options[0]
-	r.Debug("found tag: %s\n", tag)
-	tl, err := ctx.Templating(dl, &fetch.Template{Tag: fetch.Version(tag)})
-	if err != nil {
-		return nil, err
-	}
-	url := strings.TrimSpace(tl)
-	return &core.Resource{URL: url, File: filepath.Base(url), Tag: tag}, nil
+// Filtered calls underlying filter handling
+func (r *ResourceFetcher) Filtered(ctx fetch.Context, f fetch.Filterable) (*core.Resource, error) {
+	return filtered.Get(r, ctx, f)
 }

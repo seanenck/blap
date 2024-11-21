@@ -7,15 +7,11 @@ import (
 
 	"github.com/seanenck/blap/internal/core"
 	"github.com/seanenck/blap/internal/fetch"
+	"github.com/seanenck/blap/internal/fetch/filtered"
 )
 
 type scrapeFilterable struct {
-	data     *core.Filtered
-	upstream string
-}
-
-func (s scrapeFilterable) Upstream() string {
-	return s.upstream
+	filtered.Base
 }
 
 func (s scrapeFilterable) Get(r fetch.Retriever, url string) ([]byte, error) {
@@ -29,10 +25,6 @@ func (s scrapeFilterable) Get(r fetch.Retriever, url string) ([]byte, error) {
 		return nil, err
 	}
 	return b, nil
-}
-
-func (s scrapeFilterable) Definition() *core.Filtered {
-	return s.data
 }
 
 func (s scrapeFilterable) Match(r []*regexp.Regexp, line string) ([]string, error) {
@@ -53,6 +45,7 @@ func (s scrapeFilterable) Match(r []*regexp.Regexp, line string) ([]string, erro
 
 // Scrape will scrape a GET requested resource
 func Scrape(caller fetch.Retriever, ctx fetch.Context, a core.WebMode) (*core.Resource, error) {
-	f := scrapeFilterable{data: a.Scrape, upstream: a.URL}
+	f := scrapeFilterable{}
+	f.Base = filtered.NewBase(a.URL, a.Scrape)
 	return caller.Filtered(ctx, f)
 }

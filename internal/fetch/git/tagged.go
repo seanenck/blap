@@ -8,15 +8,11 @@ import (
 
 	"github.com/seanenck/blap/internal/core"
 	"github.com/seanenck/blap/internal/fetch"
+	"github.com/seanenck/blap/internal/fetch/filtered"
 )
 
 type taggedFilterable struct {
-	data     *core.Filtered
-	upstream string
-}
-
-func (t taggedFilterable) Upstream() string {
-	return t.upstream
+	filtered.Base
 }
 
 func (t taggedFilterable) Get(r fetch.Retriever, url string) ([]byte, error) {
@@ -25,10 +21,6 @@ func (t taggedFilterable) Get(r fetch.Retriever, url string) ([]byte, error) {
 		return nil, err
 	}
 	return []byte(s), nil
-}
-
-func (t taggedFilterable) Definition() *core.Filtered {
-	return t.data
 }
 
 func (t taggedFilterable) Match(r []*regexp.Regexp, line string) ([]string, error) {
@@ -46,6 +38,7 @@ func (t taggedFilterable) Match(r []*regexp.Regexp, line string) ([]string, erro
 
 // Tagged gets a tagged (git tag) release
 func Tagged(caller fetch.Retriever, ctx fetch.Context, a core.GitMode) (*core.Resource, error) {
-	t := taggedFilterable{upstream: a.Repository, data: a.Tagged}
-	return caller.Filtered(ctx, t)
+	f := taggedFilterable{}
+	f.Base = filtered.NewBase(a.Repository, a.Tagged)
+	return caller.Filtered(ctx, f)
 }
