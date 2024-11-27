@@ -71,8 +71,9 @@ type (
 			Steps     []Step
 		}
 		Platforms []struct {
-			Value  Resolved
-			Target string
+			Disable bool
+			Value   Resolved
+			Target  string
 		}
 	}
 	// Step is a build process step
@@ -265,8 +266,7 @@ func (a Application) Enabled() bool {
 		allowed = false
 		for _, p := range a.Platforms {
 			if p.Value.String() == p.Target {
-				allowed = true
-				break
+				return !p.Disable
 			}
 		}
 	}

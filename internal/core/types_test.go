@@ -139,8 +139,9 @@ func TestEnabled(t *testing.T) {
 	}
 	a.Disable = false
 	a.Platforms = append(a.Platforms, struct {
-		Value  core.Resolved
-		Target string
+		Disable bool
+		Value   core.Resolved
+		Target  string
 	}{})
 	if !a.Enabled() {
 		t.Error("should be enabled")
@@ -150,10 +151,19 @@ func TestEnabled(t *testing.T) {
 		t.Error("should be disabled")
 	}
 	a.Platforms = append(a.Platforms, struct {
-		Value  core.Resolved
-		Target string
-	}{"a", "a"})
+		Disable bool
+		Value   core.Resolved
+		Target  string
+	}{false, "a", "a"})
 	if !a.Enabled() {
 		t.Error("should be enabled")
+	}
+	a.Platforms[1] = struct {
+		Disable bool
+		Value   core.Resolved
+		Target  string
+	}{true, "a", "a"}
+	if a.Enabled() {
+		t.Error("should be disabled")
 	}
 }

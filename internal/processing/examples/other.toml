@@ -4,7 +4,9 @@
 [applications.lockbox]
 platforms = [
   { value = "customs", target = "custom" },
-  { value = "customs", target = "customs" }
+  { value = "customs", target = "customs" },
+  # platform matching can also be negated via disable'ing them
+  { value = "customs", target = "customs", disable = true }
 ]
 [applications.lockbox.github]
 project = "seanenck/lockbox"
