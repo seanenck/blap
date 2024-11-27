@@ -168,6 +168,9 @@ func TestProcess(t *testing.T) {
 	if _, err := f.Process(ctx, testIter(nil, nil, &core.WebMode{Scrape: &core.Filtered{}}, nil)); err == nil || err.Error() != "no upstream configured" {
 		t.Errorf("invalid error: %v", err)
 	}
+	if _, err := f.Process(ctx, testIter(nil, nil, &core.StaticMode{}, nil)); err == nil || err.Error() != "upstream URL not set" {
+		t.Errorf("invalid error: %v", err)
+	}
 }
 
 func TestGitHubFetch(t *testing.T) {

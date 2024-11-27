@@ -1,0 +1,30 @@
+# a static download url can also be set
+[applications.alpinerss.static]
+# requires a url (will be used to download)
+url = "https://www.alpinelinux.org/atom.xml"
+# a tag is also required
+tag = "abc"
+# a file can be set to specify how or what is downloaded
+# an unset file will prefix tag-base(url)
+# file = "mypath.{{ $.Vars.Tags }}.tar.gz"
+
+# applications can do web scraping
+[applications.bash.web]
+# given a url
+url = "https://ftp.gnu.org/gnu/bash/"
+# one (or more) regex filters to try and find versions
+scrape.filters = [
+    "<td><a href=\"bash-([0-9.]*?).tar.gz"
+]
+# scrape.download can be supplied, much like git tag downloads, to pull from if the url is different
+scrape.download = "https://ftp.gnu.org/gnu/bash/{{ $.Vars.Tag }}"
+# if the scrape result is semver and should be sorted as such (and prefixed with 'v' as needed),
+# by default it is assumed the pulled source, using the internal processing rules, will
+# result in the preferred version being the 'first' entry
+# the other options (beyond empty string = default) are:
+# - 'semver' =  prefix with 'v' and do a semver based sort
+# - 'rsemver' = same as ^ but reverse entry order after sort
+# - 'sort' = do a string-based sort
+# - 'rsort' = same as ^ but reverse entry order after sort
+# the first element will always be chosen from the list
+scrape.sort = "semver"

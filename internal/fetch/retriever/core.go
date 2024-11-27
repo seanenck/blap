@@ -17,6 +17,7 @@ import (
 	"github.com/seanenck/blap/internal/fetch"
 	"github.com/seanenck/blap/internal/fetch/git"
 	"github.com/seanenck/blap/internal/fetch/github"
+	"github.com/seanenck/blap/internal/fetch/static"
 	"github.com/seanenck/blap/internal/fetch/web"
 	"github.com/seanenck/blap/internal/util"
 )
@@ -67,6 +68,8 @@ func (r *ResourceFetcher) Process(ctx fetch.Context, sources iter.Seq[any]) (*co
 			return git.Tagged(r, ctx, *t)
 		}
 		return nil, errors.New("unknown git mode for fetch processing")
+	case *core.StaticMode:
+		return static.New(ctx, *t)
 	default:
 		return nil, errors.New("unknown mode for fetch processing")
 	}

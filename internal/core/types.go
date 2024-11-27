@@ -57,6 +57,12 @@ type (
 		Release *GitHubReleaseMode
 		Branch  *GitHubBranchMode
 	}
+	// StaticMode allows for downloading a static asset
+	StaticMode struct {
+		URL  string
+		File string
+		Tag  string
+	}
 	// Application defines how an application is downloaded, unpacked, and deployed
 	Application struct {
 		Priority int
@@ -64,6 +70,7 @@ type (
 		GitHub   *GitHubMode
 		Git      *GitMode
 		Web      *WebMode
+		Static   *StaticMode
 		Extract  Extraction
 		Commands struct {
 			Variables Variables
@@ -140,6 +147,10 @@ func (g GitMode) Is() {
 
 // Is toggles on source mode
 func (w WebMode) Is() {
+}
+
+// Is toggles on for static mode
+func (s StaticMode) Is() {
 }
 
 // Env will get the possible environment variables

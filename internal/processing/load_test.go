@@ -38,7 +38,7 @@ func TestLoad(t *testing.T) {
 	if err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
-	if len(c.Applications) != 5 {
+	if len(c.Applications) != 7 {
 		t.Errorf("invalid apps: %d", len(c.Applications))
 	}
 	if len(c.Pinned) != 4 {
@@ -55,7 +55,7 @@ func TestLoadFilter(t *testing.T) {
 	if err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
-	if len(c.Applications) != 3 {
+	if len(c.Applications) != 4 {
 		t.Errorf("invalid apps: %d", len(c.Applications))
 	}
 	s.CompileApplicationFilter("l", false)
@@ -63,7 +63,7 @@ func TestLoadFilter(t *testing.T) {
 	if err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
-	if len(c.Applications) != 2 {
+	if len(c.Applications) != 3 {
 		t.Errorf("invalid apps: %d", len(c.Applications))
 	}
 }

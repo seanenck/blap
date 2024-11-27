@@ -14,7 +14,7 @@ func TestSourceItems(t *testing.T) {
 	for range s.Items() {
 		cnt++
 	}
-	if cnt != 3 {
+	if cnt != 4 {
 		t.Errorf("invalid reflection count %d", cnt)
 	}
 }
