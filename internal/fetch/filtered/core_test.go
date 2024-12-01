@@ -246,3 +246,32 @@ func TestSort(t *testing.T) {
 		}
 	}
 }
+
+func TestTemplate(t *testing.T) {
+	r := &retriever.ResourceFetcher{}
+	client := &mockFilterable{}
+	client.payload = []byte("abc-0.1.2.txt\nabc-2.3.0.txt\n\nabc-aaa-1.2.3\nabc-1.1.2.txt")
+	r.Backend = client
+	mock := &mockFilterable{}
+	data := &core.Filtered{}
+	data.Download = "{{ $.Vars.URL }}/{{ $.Vars.Tag }}"
+	data.Filters = append(data.Filters, "abc-([0-9.]*?).txt")
+	data.Sort = "sort"
+	mock.matches = []string{"2.3.0", "2.31.0", "2.10.0", "2.32.0"}
+	mock.payload = client.payload
+	b, err := filtered.NewBase("a/xyz", data, mock)
+	if err != nil {
+		t.Errorf("invalid error: %v", err)
+	}
+	o, err := b.Get(r, fetch.Context{Name: "aljfao"})
+	if err != nil {
+		t.Errorf("invalid error: %v", err)
+	}
+	if o == nil {
+		t.Error("invalid asset")
+	} else {
+		if o.URL != "a/xyz/2.32.0" || o.File != "2.32.0" {
+			t.Errorf("invalid asset: %s %s", o.URL, o.File)
+		}
+	}
+}

@@ -104,7 +104,7 @@ func (v Version) parse() (string, string, string, string) {
 }
 
 // CompileRegexp will allow compiling a regex with specific settings
-func (ctx Context) CompileRegexp(re string, vals *Template) (*regexp.Regexp, error) {
+func (ctx Context) CompileRegexp(re string, vals any) (*regexp.Regexp, error) {
 	t, err := ctx.Templating(re, vals)
 	if err != nil {
 		return nil, err
@@ -113,7 +113,7 @@ func (ctx Context) CompileRegexp(re string, vals *Template) (*regexp.Regexp, err
 }
 
 // Templating handles common templating for various fetch strings
-func (ctx Context) Templating(in string, vals *Template) (string, error) {
+func (ctx Context) Templating(in string, vals any) (string, error) {
 	if ctx.Name == "" {
 		return "", errors.New("context missing name")
 	}
