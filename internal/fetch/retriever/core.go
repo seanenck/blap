@@ -15,6 +15,7 @@ import (
 	"github.com/seanenck/blap/internal/cli"
 	"github.com/seanenck/blap/internal/core"
 	"github.com/seanenck/blap/internal/fetch"
+	"github.com/seanenck/blap/internal/fetch/command"
 	"github.com/seanenck/blap/internal/fetch/git"
 	"github.com/seanenck/blap/internal/fetch/github"
 	"github.com/seanenck/blap/internal/fetch/static"
@@ -57,22 +58,22 @@ func (r *ResourceFetcher) Process(ctx fetch.Context, sources iter.Seq[any]) (*co
 		if t.Release != nil {
 			return github.Release(r, ctx, *t)
 		}
-		return nil, errors.New("github mode set but not configured")
 	case *core.WebMode:
 		if t.Scrape != nil {
 			return web.Scrape(r, ctx, *t)
 		}
-		return nil, errors.New("unknown web mode for fetch processing")
 	case *core.GitMode:
 		if t.Tagged != nil {
 			return git.Tagged(r, ctx, *t)
 		}
-		return nil, errors.New("unknown git mode for fetch processing")
+	case *core.RunMode:
+		if t.Fetch != nil {
+			return command.Run(r, ctx, *t)
+		}
 	case *core.StaticMode:
 		return static.New(ctx, *t)
-	default:
-		return nil, errors.New("unknown mode for fetch processing")
 	}
+	return nil, errors.New("unknown mode for fetch processing")
 }
 
 // GitHubFetch performs a github fetch operations

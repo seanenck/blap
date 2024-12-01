@@ -51,6 +51,12 @@ type (
 		Repository string
 		Tagged     *Filtered
 	}
+	// RunMode indicates running an executable
+	RunMode struct {
+		Executable string
+		Arguments  []string
+		Fetch      *Filtered
+	}
 	// GitHubMode indicates processing of a github project for upstreams
 	GitHubMode struct {
 		Project string
@@ -70,6 +76,7 @@ type (
 		GitHub   *GitHubMode
 		Git      *GitMode
 		Web      *WebMode
+		Command  *RunMode
 		Static   *StaticMode
 		Extract  Extraction
 		Commands struct {
@@ -151,6 +158,10 @@ func (w WebMode) Is() {
 
 // Is toggles on for static mode
 func (s StaticMode) Is() {
+}
+
+// Is toggles running a command mode
+func (r RunMode) Is() {
 }
 
 // Env will get the possible environment variables

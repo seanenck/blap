@@ -28,3 +28,11 @@ scrape.download = "https://ftp.gnu.org/gnu/bash/{{ $.Vars.Tag }}"
 # - 'rsort' = same as ^ but reverse entry order after sort
 # the first element will always be chosen from the list
 scrape.sort = "semver"
+
+[applications.custom.command]
+executable = "echo"
+arguments = ["abc"]
+fetch.filters = [
+  "xyz"
+]
+fetch.download = "https://google.com"

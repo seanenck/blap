@@ -147,7 +147,7 @@ func TestProcess(t *testing.T) {
 	m := &mockClient{}
 	f.Backend = m
 	ctx := fetch.Context{Name: "a"}
-	if _, err := f.Process(ctx, testIter(&core.GitHubMode{}, nil)); err == nil || err.Error() != "github mode set but not configured" {
+	if _, err := f.Process(ctx, testIter(&core.GitHubMode{}, nil)); err == nil || err.Error() != "unknown mode for fetch processing" {
 		t.Errorf("invalid error: %v", err)
 	}
 	if _, err := f.Process(ctx, testIter(&core.GitHubMode{Release: &core.GitHubReleaseMode{}, Branch: &core.GitHubBranchMode{}}, nil)); err == nil || err.Error() != "only one github mode is allowed" {
@@ -159,7 +159,7 @@ func TestProcess(t *testing.T) {
 	if _, err := f.Process(ctx, testIter(&core.GitHubMode{Release: &core.GitHubReleaseMode{}}, nil)); err == nil || err.Error() != "release mode requires a project" {
 		t.Errorf("invalid error: %v", err)
 	}
-	if _, err := f.Process(ctx, testIter(nil, &core.GitMode{})); err == nil || err.Error() != "unknown git mode for fetch processing" {
+	if _, err := f.Process(ctx, testIter(nil, &core.GitMode{})); err == nil || err.Error() != "unknown mode for fetch processing" {
 		t.Errorf("invalid error: %v", err)
 	}
 	if _, err := f.Process(ctx, testIter(nil, nil, &core.GitMode{Tagged: &core.Filtered{}}, nil)); err == nil || err.Error() != "no upstream configured" {
@@ -169,6 +169,9 @@ func TestProcess(t *testing.T) {
 		t.Errorf("invalid error: %v", err)
 	}
 	if _, err := f.Process(ctx, testIter(nil, nil, &core.StaticMode{}, nil)); err == nil || err.Error() != "upstream URL not set" {
+		t.Errorf("invalid error: %v", err)
+	}
+	if _, err := f.Process(ctx, testIter(nil, nil, &core.RunMode{Fetch: &core.Filtered{}}, nil)); err == nil || err.Error() != "command not set" {
 		t.Errorf("invalid error: %v", err)
 	}
 }

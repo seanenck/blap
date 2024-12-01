@@ -147,7 +147,7 @@ func TestProcessUpdate(t *testing.T) {
 	if err := cfg.Process(m, m, m); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
-	m.calledMulti = 7
+	m.calledMulti = 8
 	if err := m.expectCount(1, 0); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
@@ -479,7 +479,7 @@ func setupTestIndex(do int, setup func(), afterDone, afterDryRun func(bool) erro
 func TestConfigurationIndexProcessNoOrEmptyFile(t *testing.T) {
 	purgeIndex := filepath.Join("testdata", ".blap.purge.index")
 	updateIndex := filepath.Join("testdata", ".blap.update.index")
-	if err := setupTestIndex(16, func() {}, func(purge bool) error {
+	if err := setupTestIndex(18, func() {}, func(purge bool) error {
 		for _, file := range []string{purgeIndex, updateIndex} {
 			if util.PathExists(file) {
 				return fmt.Errorf("run: %s should not exist (%v)", purgeIndex, purge)
@@ -505,7 +505,7 @@ func TestConfigurationIndexProcessNoOrEmptyFile(t *testing.T) {
 	}); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
-	if err := setupTestIndex(16, func() {
+	if err := setupTestIndex(18, func() {
 		for _, file := range []string{purgeIndex, updateIndex} {
 			os.WriteFile(file, []byte("{}"), 0o644)
 		}
@@ -540,7 +540,7 @@ func TestConfigurationIndexProcessNoOrEmptyFile(t *testing.T) {
 func TestConfigurationIndexProcessSet(t *testing.T) {
 	purgeIndex := filepath.Join("testdata", ".blap.purge.index")
 	updateIndex := filepath.Join("testdata", ".blap.update.index")
-	if err := setupTestIndex(9, func() {
+	if err := setupTestIndex(10, func() {
 		for _, file := range []string{purgeIndex, updateIndex} {
 			os.WriteFile(file, []byte(`{"names": ["abc", "nvim"]}`), 0o644)
 		}

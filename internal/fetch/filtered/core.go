@@ -140,6 +140,7 @@ func (b Base) Get(r fetch.Retriever, ctx fetch.Context) (*core.Resource, error) 
 	return &core.Resource{URL: url, File: filepath.Base(url), Tag: tag}, nil
 }
 
+// MatchLine will return all matches for the line given the regexp input set
 func MatchLine(r []*regexp.Regexp, line string) []string {
 	var results []string
 	for _, re := range r {
