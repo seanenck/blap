@@ -134,7 +134,7 @@ func (c Configuration) Do(ctx Context) error {
 	if ctx.Application.Extract.Skip {
 		c.context.LogDebug("no extraction, done: %s\n", rsrc.File)
 		if len(ctx.Application.Commands.Steps) > 0 {
-			c.context.LogCore("steps set for %s, but extraction disabled", ctx.Name)
+			c.context.LogCore("steps set for %s, but extraction disabled\n", ctx.Name)
 		}
 		return nil
 	}
