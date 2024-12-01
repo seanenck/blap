@@ -36,6 +36,7 @@ type (
 	Filterable interface {
 		Get(Retriever, string) ([]byte, error)
 		Match([]*regexp.Regexp, string) ([]string, error)
+		Arguments() []string
 	}
 	// Template are the parameters for templated items
 	Template struct {

@@ -22,6 +22,7 @@ type (
 		data       *core.Filtered
 		filterable fetch.Filterable
 		valid      bool
+		args       []string
 	}
 )
 
@@ -43,7 +44,7 @@ func NewBase(upstream string, d *core.Filtered, i fetch.Filterable) (Base, error
 	if len(d.Filters) == 0 {
 		return Base{}, errors.New("filters required")
 	}
-	return Base{upstream: upstream, data: d, filterable: i, valid: true}, nil
+	return Base{upstream: upstream, data: d, filterable: i, valid: true, args: i.Arguments()}, nil
 }
 
 // Get handles common filtered commands that have return lists of semver versions
@@ -124,11 +125,13 @@ func (b Base) Get(r fetch.Retriever, ctx fetch.Context) (*core.Resource, error) 
 	r.Debug("found tag: %s\n", tag)
 	type filterTemplate struct {
 		*fetch.Template
-		Source string
+		Source    string
+		Arguments []string
 	}
 	t := filterTemplate{}
 	t.Template = &fetch.Template{Tag: fetch.Version(tag)}
 	t.Source = b.upstream
+	t.Arguments = b.args
 	tl, err := ctx.Templating(b.data.Download, t)
 	if err != nil {
 		return nil, err

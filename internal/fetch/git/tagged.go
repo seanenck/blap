@@ -34,6 +34,10 @@ func (t taggedFilterable) Match(r []*regexp.Regexp, line string) ([]string, erro
 	return []string{strings.TrimPrefix(parts[1], "refs/tags/")}, nil
 }
 
+func (t taggedFilterable) Arguments() []string {
+	return nil
+}
+
 // Tagged gets a tagged (git tag) release
 func Tagged(caller fetch.Retriever, ctx fetch.Context, a core.GitMode) (*core.Resource, error) {
 	b, err := filtered.NewBase(a.Repository, a.Tagged, taggedFilterable{})

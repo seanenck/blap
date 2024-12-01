@@ -17,6 +17,7 @@ type (
 	mockFilterable struct {
 		payload []byte
 		matches []string
+		args    []string
 	}
 )
 
@@ -39,6 +40,10 @@ func (s *mockFilterable) Get(r fetch.Retriever, url string) ([]byte, error) {
 
 func (s *mockFilterable) Match(r []*regexp.Regexp, line string) ([]string, error) {
 	return s.matches, nil
+}
+
+func (s *mockFilterable) Arguments() []string {
+	return s.args
 }
 
 func TestNewBaseInvalid(t *testing.T) {
@@ -254,7 +259,7 @@ func TestTemplate(t *testing.T) {
 	r.Backend = client
 	mock := &mockFilterable{}
 	data := &core.Filtered{}
-	data.Download = "{{ $.Vars.Source }}/{{ $.Vars.Tag }}"
+	data.Download = "{{ $.Vars.Source }}{{ $.Vars.Arguments }}/{{ $.Vars.Tag }}"
 	data.Filters = append(data.Filters, "abc-([0-9.]*?).txt")
 	data.Sort = "sort"
 	mock.matches = []string{"2.3.0", "2.31.0", "2.10.0", "2.32.0"}
@@ -270,7 +275,23 @@ func TestTemplate(t *testing.T) {
 	if o == nil {
 		t.Error("invalid asset")
 	} else {
-		if o.URL != "a/xyz/2.32.0" || o.File != "2.32.0" {
+		if o.URL != "a/xyz[]/2.32.0" || o.File != "2.32.0" {
+			t.Errorf("invalid asset: %s %s", o.URL, o.File)
+		}
+	}
+	mock.args = []string{"111", "222"}
+	b, err = filtered.NewBase("a/xyz", data, mock)
+	if err != nil {
+		t.Errorf("invalid error: %v", err)
+	}
+	o, err = b.Get(r, fetch.Context{Name: "aljfao"})
+	if err != nil {
+		t.Errorf("invalid error: %v", err)
+	}
+	if o == nil {
+		t.Error("invalid asset")
+	} else {
+		if o.URL != "a/xyz[111 222]/2.32.0" || o.File != "2.32.0" {
 			t.Errorf("invalid asset: %s %s", o.URL, o.File)
 		}
 	}
