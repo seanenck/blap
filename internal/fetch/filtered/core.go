@@ -124,11 +124,11 @@ func (b Base) Get(r fetch.Retriever, ctx fetch.Context) (*core.Resource, error) 
 	r.Debug("found tag: %s\n", tag)
 	type filterTemplate struct {
 		*fetch.Template
-		URL string
+		Source string
 	}
 	t := filterTemplate{}
 	t.Template = &fetch.Template{Tag: fetch.Version(tag)}
-	t.URL = b.upstream
+	t.Source = b.upstream
 	tl, err := ctx.Templating(b.data.Download, t)
 	if err != nil {
 		return nil, err

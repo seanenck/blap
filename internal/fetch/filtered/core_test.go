@@ -254,7 +254,7 @@ func TestTemplate(t *testing.T) {
 	r.Backend = client
 	mock := &mockFilterable{}
 	data := &core.Filtered{}
-	data.Download = "{{ $.Vars.URL }}/{{ $.Vars.Tag }}"
+	data.Download = "{{ $.Vars.Source }}/{{ $.Vars.Tag }}"
 	data.Filters = append(data.Filters, "abc-([0-9.]*?).txt")
 	data.Sort = "sort"
 	mock.matches = []string{"2.3.0", "2.31.0", "2.10.0", "2.32.0"}
