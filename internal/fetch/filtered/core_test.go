@@ -296,3 +296,27 @@ func TestTemplate(t *testing.T) {
 		}
 	}
 }
+
+func TestMatchLine(t *testing.T) {
+	matches := filtered.MatchLine(nil, "")
+	if len(matches) != 0 {
+		t.Error("should have no matches")
+	}
+	matches = filtered.MatchLine([]*regexp.Regexp{}, "")
+	if len(matches) != 0 {
+		t.Error("should have no matches")
+	}
+	matches = filtered.MatchLine([]*regexp.Regexp{
+		regexp.MustCompile(".*"),
+	}, "")
+	if len(matches) != 1 {
+		t.Error("should have matches")
+	}
+	matches = filtered.MatchLine([]*regexp.Regexp{
+		regexp.MustCompile("[0-9.]*"),
+		regexp.MustCompile("[0-9.]*"),
+	}, "0.1\n0.2")
+	if len(matches) != 2 {
+		t.Error("should have matches")
+	}
+}

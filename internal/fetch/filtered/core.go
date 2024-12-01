@@ -139,3 +139,19 @@ func (b Base) Get(r fetch.Retriever, ctx fetch.Context) (*core.Resource, error) 
 	url := strings.TrimSpace(tl)
 	return &core.Resource{URL: url, File: filepath.Base(url), Tag: tag}, nil
 }
+
+func MatchLine(r []*regexp.Regexp, line string) []string {
+	var results []string
+	for _, re := range r {
+		m := re.FindStringSubmatch(line)
+		if len(m) == 0 {
+			continue
+		}
+		matched := m[0]
+		if len(m) > 1 {
+			matched = m[1]
+		}
+		results = append(results, matched)
+	}
+	return results
+}
