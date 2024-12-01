@@ -17,7 +17,7 @@ scrape.filters = [
     "<td><a href=\"bash-([0-9.]*?).tar.gz"
 ]
 # scrape.download can be supplied, much like git tag downloads, to pull from if the url is different
-scrape.download = "{{ $.Source }}{{ $.Vars.Tag }}"
+scrape.download = "{{ $.Vars.Source }}{{ $.Vars.Tag }}"
 # if the scrape result is semver and should be sorted as such (and prefixed with 'v' as needed),
 # by default it is assumed the pulled source, using the internal processing rules, will
 # result in the preferred version being the 'first' entry
