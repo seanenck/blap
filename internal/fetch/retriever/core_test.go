@@ -14,6 +14,7 @@ import (
 	"github.com/seanenck/blap/internal/core"
 	"github.com/seanenck/blap/internal/fetch"
 	"github.com/seanenck/blap/internal/fetch/retriever"
+	"github.com/seanenck/blap/internal/logging"
 )
 
 type (
@@ -210,15 +211,15 @@ func TestDebug(t *testing.T) {
 	r := retriever.ResourceFetcher{}
 	r.Context.Verbosity = 0
 	r.Context.Writer = &buf
-	r.Debug("abc")
+	r.Debug(logging.FetchCategory, "abc")
 	s := buf.String()
 	if s != "" {
 		t.Errorf("invalid buffer: %s", s)
 	}
 	r.Context.Verbosity = 100
-	r.Debug("abc")
+	r.Debug(logging.GitHubCategory, "abc")
 	s = buf.String()
-	if s != "abc" {
+	if s != "[github] abc" {
 		t.Errorf("invalid buffer: %s", s)
 	}
 }

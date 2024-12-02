@@ -14,6 +14,7 @@ import (
 	"github.com/seanenck/blap/internal/cli"
 	"github.com/seanenck/blap/internal/core"
 	"github.com/seanenck/blap/internal/fetch"
+	"github.com/seanenck/blap/internal/logging"
 	"github.com/seanenck/blap/internal/processing"
 	"github.com/seanenck/blap/internal/steps"
 	"github.com/seanenck/blap/internal/util"
@@ -98,7 +99,7 @@ func (m *mockExecutor) Changed() []processing.Change {
 	return []processing.Change{{Name: "abc", Details: "1 details"}, {Name: "xyz", Details: "other"}}
 }
 
-func (m *mockExecutor) Debug(string, ...any) {
+func (m *mockExecutor) Debug(logging.Category, string, ...any) {
 }
 
 func (m *mockExecutor) ExecuteCommand(string, ...string) (string, error) {

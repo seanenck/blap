@@ -20,6 +20,7 @@ import (
 	"github.com/seanenck/blap/internal/fetch/github"
 	"github.com/seanenck/blap/internal/fetch/static"
 	"github.com/seanenck/blap/internal/fetch/web"
+	"github.com/seanenck/blap/internal/logging"
 	"github.com/seanenck/blap/internal/util"
 )
 
@@ -122,7 +123,7 @@ func (r *ResourceFetcher) Download(dryrun bool, url, dest string) (bool, error) 
 		if dryrun {
 			return true, nil
 		}
-		r.Context.LogDebug("downloading asset: %s\n", url)
+		r.Debug(logging.FetchCategory, "downloading asset: %s\n", url)
 		resp, err := r.Get(url)
 		if err != nil {
 			return false, err
@@ -178,8 +179,8 @@ func (r *ResourceFetcher) tokenHeader(req *http.Request) error {
 }
 
 // Debug prints a debug message
-func (r *ResourceFetcher) Debug(msg string, args ...any) {
-	r.Context.LogDebug(msg, args...)
+func (r *ResourceFetcher) Debug(cat logging.Category, msg string, args ...any) {
+	r.Context.LogDebug(cat, msg, args...)
 }
 
 // SetConnections will configure connection information for the fetcher

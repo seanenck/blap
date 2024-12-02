@@ -13,6 +13,7 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/seanenck/blap/internal/cli"
 	"github.com/seanenck/blap/internal/core"
+	"github.com/seanenck/blap/internal/logging"
 )
 
 func doDecode[T any](in string, o T) error {
@@ -52,13 +53,16 @@ func Load(input string, context cli.Settings) (Configuration, error) {
 		}
 		return a.Enabled(), nil
 	}
+	logDebug := func(msg string, args ...any) {
+		c.context.LogDebug(logging.ConfigCategory, msg, args...)
+	}
 	if len(c.Include) > 0 {
 		hasIncludefilter := context.Include != nil
 		var including []string
 		for _, i := range c.Include {
 			r := i.String()
 			res := []string{r}
-			c.context.LogDebug("including: %s\n", i)
+			logDebug("including: %s\n", i)
 			if strings.Contains(r, "*") {
 				globbed, err := filepath.Glob(r)
 				if err != nil {
@@ -69,10 +73,10 @@ func Load(input string, context cli.Settings) (Configuration, error) {
 			including = append(including, res...)
 		}
 		for _, include := range including {
-			c.context.LogDebug("loading included: %s\n", include)
+			logDebug("loading included: %s\n", include)
 			if hasIncludefilter {
 				if !context.Include.MatchString(include) {
-					c.context.LogDebug("file does not match include filter\n")
+					logDebug("file does not match include filter\n")
 					continue
 				}
 			}

@@ -11,6 +11,7 @@ import (
 	"sync"
 
 	"github.com/seanenck/blap/internal/core"
+	"github.com/seanenck/blap/internal/logging"
 	"github.com/seanenck/blap/internal/util"
 )
 
@@ -121,20 +122,20 @@ func (s *Settings) CompileApplicationFilter(filter string, negate bool) error {
 	return nil
 }
 
-func (s Settings) log(level int, msg string, a ...any) {
+func (s Settings) log(level int, cat logging.Category, msg string, a ...any) {
 	settingsLock.Lock()
 	defer settingsLock.Unlock()
 	if s.Writer != nil && s.Verbosity > level {
-		fmt.Fprintf(s.Writer, msg, a...)
+		fmt.Fprintf(s.Writer, "[%s] %s", cat, fmt.Sprintf(msg, a...))
 	}
 }
 
 // LogDebug handles debug logging
-func (s Settings) LogDebug(msg string, a ...any) {
-	s.log(4, msg, a...)
+func (s Settings) LogDebug(cat logging.Category, msg string, a ...any) {
+	s.log(4, cat, msg, a...)
 }
 
 // LogCore logs a core message
-func (s Settings) LogCore(msg string, a ...any) {
-	s.log(0, msg, a...)
+func (s Settings) LogCore(cat logging.Category, msg string, a ...any) {
+	s.log(0, cat, msg, a...)
 }

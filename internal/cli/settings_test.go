@@ -9,14 +9,15 @@ import (
 
 	"github.com/seanenck/blap/internal/cli"
 	"github.com/seanenck/blap/internal/core"
+	"github.com/seanenck/blap/internal/logging"
 )
 
 func TestLogging(t *testing.T) {
 	c := cli.Settings{}
-	c.LogCore("abc")
+	c.LogCore(logging.BuildCategory, "abc")
 	var buf bytes.Buffer
 	c.Writer = &buf
-	c.LogCore("xyz")
+	c.LogCore(logging.FetchCategory, "xyz")
 	s := buf.String()
 	if s != "" {
 		t.Errorf("invalid buffer result: %s", s)
@@ -24,28 +25,28 @@ func TestLogging(t *testing.T) {
 	buf = bytes.Buffer{}
 	c.Writer = &buf
 	c.Verbosity = 1
-	c.LogCore("a11")
-	c.LogDebug("xyz")
+	c.LogCore(logging.BuildCategory, "a11")
+	c.LogDebug(logging.BuildCategory, "xyz")
 	s = buf.String()
-	if s != "a11" {
+	if s != "[build] a11" {
 		t.Errorf("invalid buffer result: %s", s)
 	}
 	buf = bytes.Buffer{}
 	c.Writer = &buf
 	c.Verbosity = 2
-	c.LogCore("a11")
-	c.LogDebug("xyz")
+	c.LogCore(logging.FetchCategory, "a11")
+	c.LogDebug(logging.FetchCategory, "xyz")
 	s = buf.String()
-	if s != "a11" {
+	if s != "[fetch] a11" {
 		t.Errorf("invalid buffer result: %s", s)
 	}
 	buf = bytes.Buffer{}
 	c.Writer = &buf
 	c.Verbosity = 100
-	c.LogCore("a11")
-	c.LogDebug("xyz")
+	c.LogCore(logging.IndexCategory, "a11")
+	c.LogDebug(logging.BuildCategory, "xyz")
 	s = buf.String()
-	if s != "a11xyz" {
+	if s != "[index] a11[build] xyz" {
 		t.Errorf("invalid buffer result: %s", s)
 	}
 }

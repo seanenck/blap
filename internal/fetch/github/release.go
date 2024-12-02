@@ -9,6 +9,7 @@ import (
 
 	"github.com/seanenck/blap/internal/core"
 	"github.com/seanenck/blap/internal/fetch"
+	"github.com/seanenck/blap/internal/logging"
 )
 
 // Release handles GitHub-based releases
@@ -25,7 +26,7 @@ func Release(caller fetch.Retriever, ctx fetch.Context, a core.GitHubMode) (*cor
 		return nil, errors.New("release mode requires an asset filter (regex)")
 	}
 	tarSource := regex == "tarball"
-	caller.Debug("getting github release: %s\n", up)
+	caller.Debug(logging.GitHubCategory, "getting github release: %s\n", up)
 	tag, assets, err := latestRelease(caller, a, tarSource)
 	if err != nil {
 		return nil, err

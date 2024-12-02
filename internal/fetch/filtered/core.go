@@ -12,6 +12,7 @@ import (
 
 	"github.com/seanenck/blap/internal/core"
 	"github.com/seanenck/blap/internal/fetch"
+	"github.com/seanenck/blap/internal/logging"
 	"golang.org/x/mod/semver"
 )
 
@@ -102,11 +103,11 @@ func (b Base) Get(r fetch.Retriever, ctx fetch.Context) (*core.Resource, error) 
 					matched = fmt.Sprintf("v%s", matched)
 				}
 				if !semver.IsValid(matched) {
-					r.Debug("semver found an invalid match: %s\n", matched)
+					r.Debug(logging.FilteringCategory, "semver found an invalid match: %s\n", matched)
 					continue
 				}
 			}
-			r.Debug("matched version: %s\n", matched)
+			r.Debug(logging.FilteringCategory, "matched version: %s\n", matched)
 			options = append(options, matched)
 		}
 	}
@@ -124,7 +125,7 @@ func (b Base) Get(r fetch.Retriever, ctx fetch.Context) (*core.Resource, error) 
 		slices.Reverse(options)
 	}
 	tag := options[0]
-	r.Debug("found tag: %s\n", tag)
+	r.Debug(logging.FilteringCategory, "found tag: %s\n", tag)
 	type filterTemplate struct {
 		*fetch.Template
 		Source    string

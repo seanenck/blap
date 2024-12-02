@@ -1,14 +1,16 @@
-package util
+package logging
 
 import (
 	"fmt"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/seanenck/blap/internal/util"
 )
 
-// AppendToLog handles simple log writing
-func AppendToLog(logFile, msg string, parts ...any) error {
+// Append handles simple log writing
+func Append(logFile, msg string, parts ...any) error {
 	if logFile != "" {
 		f, err := os.OpenFile(logFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 		if err != nil {
@@ -25,9 +27,9 @@ func AppendToLog(logFile, msg string, parts ...any) error {
 	return nil
 }
 
-// RotateLog handles a very simple log rotation
-func RotateLog(logFile string, inSize int64, callback func()) error {
-	if logFile != "" && PathExists(logFile) {
+// Rotate handles a very simple log rotation
+func Rotate(logFile string, inSize int64, callback func()) error {
+	if logFile != "" && util.PathExists(logFile) {
 		info, err := os.Stat(logFile)
 		if err != nil {
 			return err

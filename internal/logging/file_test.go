@@ -1,4 +1,4 @@
-package util_test
+package logging_test
 
 import (
 	"os"
@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/seanenck/blap/internal/util"
+	"github.com/seanenck/blap/internal/logging"
 )
 
 func setupTeardown() func() {
@@ -19,7 +19,7 @@ func setupTeardown() func() {
 
 func TestAppendTo(t *testing.T) {
 	defer setupTeardown()()
-	if err := util.AppendToLog("", "ab"); err != nil {
+	if err := logging.Append("", "ab"); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	files, _ := os.ReadDir("testdata")
@@ -27,7 +27,7 @@ func TestAppendTo(t *testing.T) {
 		t.Errorf("invalid dir: %v", files)
 	}
 	log := filepath.Join("testdata", "log")
-	if err := util.AppendToLog(log, "ab"); err != nil {
+	if err := logging.Append(log, "ab"); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	files, _ = os.ReadDir("testdata")
@@ -35,10 +35,10 @@ func TestAppendTo(t *testing.T) {
 		t.Errorf("invalid dir: %v", files)
 	}
 	logTwo := filepath.Join("testdata", "log2")
-	if err := util.AppendToLog(logTwo, "ab"); err != nil {
+	if err := logging.Append(logTwo, "ab"); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
-	if err := util.AppendToLog(logTwo, "xy"); err != nil {
+	if err := logging.Append(logTwo, "xy"); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	files, _ = os.ReadDir("testdata")
@@ -59,22 +59,22 @@ func TestAppendTo(t *testing.T) {
 
 func TestRotate(t *testing.T) {
 	defer setupTeardown()()
-	if err := util.RotateLog("", -1, func() {}); err != nil {
+	if err := logging.Rotate("", -1, func() {}); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	log := filepath.Join("testdata", "log")
-	if err := util.RotateLog(log, -1, func() {}); err != nil {
+	if err := logging.Rotate(log, -1, func() {}); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	os.WriteFile(log, []byte{}, 0o644)
-	if err := util.RotateLog(log, -1, func() {}); err == nil || err.Error() != "invalid log roll size, < 0 (have: -1)" {
+	if err := logging.Rotate(log, -1, func() {}); err == nil || err.Error() != "invalid log roll size, < 0 (have: -1)" {
 		t.Errorf("invalid error: %v", err)
 	}
 	rotated := false
 	rotate := func() {
 		rotated = true
 	}
-	if err := util.RotateLog(log, 0, rotate); err != nil {
+	if err := logging.Rotate(log, 0, rotate); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	if rotated {
@@ -91,7 +91,7 @@ func TestRotate(t *testing.T) {
 		i++
 	}
 	os.WriteFile(log, buf, 0o644)
-	if err := util.RotateLog(log, 1, rotate); err != nil {
+	if err := logging.Rotate(log, 1, rotate); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	if !rotated {

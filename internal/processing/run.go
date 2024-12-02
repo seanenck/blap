@@ -14,6 +14,7 @@ import (
 
 	"github.com/seanenck/blap/internal/core"
 	"github.com/seanenck/blap/internal/fetch"
+	"github.com/seanenck/blap/internal/logging"
 	"github.com/seanenck/blap/internal/steps"
 	"github.com/seanenck/blap/internal/util"
 )
@@ -86,7 +87,7 @@ func (c Configuration) Do(ctx Context) error {
 			return nil
 		}
 		if !c.context.DryRun {
-			c.context.LogDebug("making subdirectory: %s\n", to)
+			c.context.LogDebug(logging.ProcessCategory, "making subdirectory: %s\n", to)
 			if err := os.Mkdir(to, 0o755); err != nil {
 				return err
 			}
@@ -132,16 +133,16 @@ func (c Configuration) Do(ctx Context) error {
 	}
 
 	if ctx.Application.Extract.Skip {
-		c.context.LogDebug("no extraction, done: %s\n", rsrc.File)
+		c.context.LogDebug(logging.ExtractCategory, "no extraction, done: %s\n", rsrc.File)
 		if len(ctx.Application.Commands.Steps) > 0 {
-			c.context.LogCore("steps set for %s, but extraction disabled\n", ctx.Name)
+			c.context.LogCore(logging.ExtractCategory, "steps set for %s, but extraction disabled\n", ctx.Name)
 		}
 		return nil
 	}
 
 	dest := rsrc.Paths.Unpack
 	if !util.PathExists(dest) {
-		c.context.LogDebug("extracting: %s\n", rsrc.File)
+		c.context.LogDebug(logging.ExtractCategory, "extracting: %s\n", rsrc.File)
 		if err := rsrc.Extract(ctx.Runner); err != nil {
 			return err
 		}
@@ -263,8 +264,8 @@ func (c Configuration) Process(executor Executor, fetcher fetch.Retriever, runne
 	if c.context.Purge {
 		mode = "purge"
 	}
-	if err := util.RotateLog(c.logFile, c.Logging.Size, func() {
-		c.context.LogDebug("rotating log file")
+	if err := logging.Rotate(c.logFile, c.Logging.Size, func() {
+		c.context.LogDebug(logging.SelfCategory, "rotating log file")
 	}); err != nil {
 		return err
 	}
@@ -287,7 +288,7 @@ func (c Configuration) Process(executor Executor, fetcher fetch.Retriever, runne
 				}
 			}
 		}
-		c.context.LogDebug("index: %v\n", idx)
+		c.context.LogDebug(logging.IndexCategory, "index: %v\n", idx)
 	}
 	hasIndex := len(idx.Names) > 0
 	fetcher.SetConnections(c.Connections)
@@ -405,6 +406,6 @@ func (c Configuration) log(debug bool, msg string, parts ...any) error {
 	if debug {
 		fxn = c.context.LogDebug
 	}
-	fxn(msg, parts...)
-	return util.AppendToLog(c.logFile, msg, parts...)
+	fxn(logging.ProcessCategory, msg, parts...)
+	return logging.Append(c.logFile, msg, parts...)
 }

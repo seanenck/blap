@@ -7,6 +7,7 @@ import (
 
 	"github.com/seanenck/blap/internal/core"
 	"github.com/seanenck/blap/internal/fetch"
+	"github.com/seanenck/blap/internal/logging"
 )
 
 // Branch will get an asset from a branch
@@ -31,6 +32,6 @@ func Branch(caller fetch.Retriever, _ fetch.Context, a core.GitHubMode) (*core.R
 		return nil, fmt.Errorf("invalid sha detected: %s", commit.Sha)
 	}
 	tag := commit.Sha[0:7]
-	caller.Debug("found sha: %s\n", tag)
+	caller.Debug(logging.GitHubCategory, "found sha: %s\n", tag)
 	return &core.Resource{URL: fmt.Sprintf("https://github.com/%s/archive/%s.tar.gz", a.Project, a.Branch.Name), File: fmt.Sprintf("%s-%s.tar.gz", tag, a.Branch.Name), Tag: tag}, nil
 }

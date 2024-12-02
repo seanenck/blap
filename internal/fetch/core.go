@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/seanenck/blap/internal/core"
+	"github.com/seanenck/blap/internal/logging"
 )
 
 type (
@@ -28,7 +29,7 @@ type (
 		SetConnections(core.Connections)
 		Process(Context, iter.Seq[any]) (*core.Resource, error)
 		GitHubFetch(ownerRepo, call string, to any) error
-		Debug(string, ...any)
+		Debug(logging.Category, string, ...any)
 		ExecuteCommand(cmd string, args ...string) (string, error)
 		Get(string) (*http.Response, error)
 	}

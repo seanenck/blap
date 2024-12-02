@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/seanenck/blap/internal/core"
+	"github.com/seanenck/blap/internal/logging"
 	"github.com/seanenck/blap/internal/util"
 )
 
@@ -72,7 +73,7 @@ func runStep(ctx Context, builder util.Runner, to, exe string, args []string, en
 	if doClear {
 		run.Env.Clear = true
 	}
-	ctx.Settings.LogDebug("run: %v\n", run)
-	ctx.Settings.LogDebug("command: %s (%v)\n", exe, args)
+	ctx.Settings.LogDebug(logging.BuildCategory, "run: %v\n", run)
+	ctx.Settings.LogDebug(logging.BuildCategory, "command: %s (%v)\n", exe, args)
 	return builder.Run(run, exe, args...)
 }
