@@ -3,7 +3,6 @@ package git
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
 
 	"github.com/seanenck/blap/internal/core"
@@ -21,17 +20,12 @@ func (t taggedFilterable) Get(r fetch.Retriever, url string) ([]byte, error) {
 	return []byte(s), nil
 }
 
-func (t taggedFilterable) Match(r []*regexp.Regexp, line string) ([]string, error) {
-	for _, re := range r {
-		if re.MatchString(line) {
-			return []string{}, nil
-		}
-	}
+func (t taggedFilterable) NewLine(line string) (string, error) {
 	parts := strings.Split(line, "\t")
 	if len(parts) != 2 {
-		return nil, fmt.Errorf("matching version line can not be parsed: %s", line)
+		return "", fmt.Errorf("matching version line can not be parsed: %s", line)
 	}
-	return []string{strings.TrimPrefix(parts[1], "refs/tags/")}, nil
+	return strings.TrimPrefix(parts[1], "refs/tags/"), nil
 }
 
 func (t taggedFilterable) Arguments() []string {

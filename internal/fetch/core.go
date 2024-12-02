@@ -35,8 +35,8 @@ type (
 	// Filterable is an interface to support arbitrary inputs that need to filter to tag sets
 	Filterable interface {
 		Get(Retriever, string) ([]byte, error)
-		Match([]*regexp.Regexp, string) ([]string, error)
 		Arguments() []string
+		NewLine(string) (string, error)
 	}
 	// Template are the parameters for templated items
 	Template struct {

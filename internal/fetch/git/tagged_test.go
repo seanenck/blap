@@ -27,7 +27,7 @@ func TestTagged(t *testing.T) {
 	client.payload = []byte("TESD\ta")
 	r := &retriever.ResourceFetcher{}
 	r.Backend = client
-	if _, err := git.Tagged(r, fetch.Context{Name: "afa"}, core.GitMode{Repository: "xyz", Tagged: &core.Filtered{Download: "x", Filters: []string{"TEST"}}}); err != nil {
+	if _, err := git.Tagged(r, fetch.Context{Name: "afa"}, core.GitMode{Repository: "xyz", Tagged: &core.Filtered{Download: "x", Filters: []string{"a"}}}); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	client = &mock{}
@@ -37,16 +37,16 @@ func TestTagged(t *testing.T) {
 		t.Errorf("invalid error: %v", err)
 	}
 	client = &mock{}
-	client.payload = []byte("TEST\t1\nTEST\t2\nXYZ\t3\nZZZ\t4")
+	client.payload = []byte("1\tTEST1\n2\tTEST2\n3\tXYZ3\n4\tZZZ4")
 	r.Backend = client
-	o, err := git.Tagged(r, fetch.Context{Name: "aljfao"}, core.GitMode{Repository: "a/xyz", Tagged: &core.Filtered{Download: "y/abc", Filters: []string{"TEST"}}})
+	o, err := git.Tagged(r, fetch.Context{Name: "aljfao"}, core.GitMode{Repository: "a/xyz", Tagged: &core.Filtered{Download: "y/abc", Filters: []string{"(XYZ[0-9])"}}})
 	if err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	if o == nil {
 		t.Error("invalid asset")
 	} else {
-		if o.Tag != "3" {
+		if o.Tag != "XYZ3" {
 			t.Errorf("invalid tag: %s", o.Tag)
 		}
 		if o.URL != "y/abc" || o.File != "abc" {
@@ -54,19 +54,19 @@ func TestTagged(t *testing.T) {
 		}
 	}
 	client = &mock{}
-	client.payload = []byte("TEST\t1\nTEST\t2\nXYZ\t3\nZZZ\t4")
+	client.payload = []byte("TEST\t1\n1\trefs/tags/XYZ2\nXYZ\t3\nZZZ\t4")
 	r.Backend = client
-	o, err = git.Tagged(r, fetch.Context{Name: "aaa"}, core.GitMode{Repository: "a/xyz", Tagged: &core.Filtered{Download: "xx/s/{{ $.Vars.Tag }}/abc/{{ $.Name }}", Filters: []string{`{{ if ne $.Arch "invalidarch" }}TEST{{end}}`}}})
+	o, err = git.Tagged(r, fetch.Context{Name: "aaa"}, core.GitMode{Repository: "a/xyz", Tagged: &core.Filtered{Download: "xx/s/{{ $.Vars.Tag }}/abc/{{ $.Name }}", Filters: []string{`{{ if ne $.Arch "invalidarch" }}XYZ{{end}}`}}})
 	if err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	if o == nil {
 		t.Error("invalid asset")
 	} else {
-		if o.Tag != "3" {
+		if o.Tag != "XYZ" {
 			t.Errorf("invalid tag: %s", o.Tag)
 		}
-		if o.URL != "xx/s/3/abc/aaa" || o.File != "aaa" {
+		if o.URL != "xx/s/XYZ/abc/aaa" || o.File != "aaa" {
 			t.Errorf("invalid asset: %s %s", o.URL, o.File)
 		}
 	}

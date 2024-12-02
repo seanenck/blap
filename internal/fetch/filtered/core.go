@@ -90,11 +90,12 @@ func (b Base) Get(r fetch.Retriever, ctx fetch.Context) (*core.Resource, error) 
 		if t == "" {
 			continue
 		}
-		matches, err := filterable.Match(re, t)
+		parsed, err := filterable.NewLine(t)
 		if err != nil {
 			return nil, err
 		}
-		for _, opt := range matches {
+		t = parsed
+		for _, opt := range matchLine(re, t) {
 			matched := opt
 			if isSemVer {
 				if !strings.HasPrefix(matched, "v") {
@@ -105,6 +106,7 @@ func (b Base) Get(r fetch.Retriever, ctx fetch.Context) (*core.Resource, error) 
 					continue
 				}
 			}
+			r.Debug("matched version: %s\n", matched)
 			options = append(options, matched)
 		}
 	}
@@ -140,8 +142,7 @@ func (b Base) Get(r fetch.Retriever, ctx fetch.Context) (*core.Resource, error) 
 	return &core.Resource{URL: url, File: filepath.Base(url), Tag: tag}, nil
 }
 
-// MatchLine will return all matches for the line given the regexp input set
-func MatchLine(r []*regexp.Regexp, line string) []string {
+func matchLine(r []*regexp.Regexp, line string) []string {
 	var results []string
 	for _, re := range r {
 		m := re.FindStringSubmatch(line)

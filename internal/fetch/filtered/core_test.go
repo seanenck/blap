@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"io"
 	"net/http"
-	"regexp"
 	"testing"
 
 	"github.com/seanenck/blap/internal/core"
@@ -16,7 +15,6 @@ import (
 type (
 	mockFilterable struct {
 		payload []byte
-		matches []string
 		args    []string
 	}
 )
@@ -38,8 +36,8 @@ func (s *mockFilterable) Get(r fetch.Retriever, url string) ([]byte, error) {
 	return s.payload, nil
 }
 
-func (s *mockFilterable) Match(r []*regexp.Regexp, line string) ([]string, error) {
-	return s.matches, nil
+func (s *mockFilterable) NewLine(line string) (string, error) {
+	return line, nil
 }
 
 func (s *mockFilterable) Arguments() []string {
@@ -96,13 +94,12 @@ func TestGetErrors(t *testing.T) {
 func TestBasicFilters(t *testing.T) {
 	r := &retriever.ResourceFetcher{}
 	client := &mockFilterable{}
-	client.payload = []byte("abc-0.1.2.txt\nabc-2.3.0.txt\n\nabc-aaa-1.2.3\nabc-1.1.2.txt")
+	client.payload = []byte("abc-v2.3.0.txt\nabc-v4.3.0.txt\n\nabc-v3.2.1.txt\nabc-v1.2.3.txt")
 	r.Backend = client
 	mock := &mockFilterable{}
 	data := &core.Filtered{}
 	data.Download = "oijoefa/x"
-	data.Filters = append(data.Filters, "abc-([0-9.]*?).txt")
-	mock.matches = []string{"v2.3.0", "v4.3.0", "v3.2.1", "v1.2.3"}
+	data.Filters = append(data.Filters, "abc-(v?[0-9.]+).txt")
 	mock.payload = client.payload
 	b, err := filtered.NewBase("a/xyz", data, mock)
 	if err != nil {
@@ -127,14 +124,13 @@ func TestBasicFilters(t *testing.T) {
 func TestSemVer(t *testing.T) {
 	r := &retriever.ResourceFetcher{}
 	client := &mockFilterable{}
-	client.payload = []byte("abc-0.1.2.txt\nabc-2.3.0.txt\n\nabc-aaa-1.2.3\nabc-1.1.2.txt")
+	client.payload = []byte("abc-2.3.0.txt\nabc-2.31.0.txt\n\nabc-v2.10.0.txt\nabc-2.32.0.txt")
 	r.Backend = client
 	mock := &mockFilterable{}
 	data := &core.Filtered{}
 	data.Download = "oijoefa/x"
-	data.Filters = append(data.Filters, "abc-([0-9.]*?).txt")
+	data.Filters = append(data.Filters, "abc-(v?[0-9.]+).txt")
 	data.Sort = "semver"
-	mock.matches = []string{"2.3.0", "2.31.0", "v2.10.0", "2.32.0"}
 	mock.payload = client.payload
 	b, err := filtered.NewBase("a/xyz", data, mock)
 	if err != nil {
@@ -159,14 +155,13 @@ func TestSemVer(t *testing.T) {
 func TestSemVerReverse(t *testing.T) {
 	r := &retriever.ResourceFetcher{}
 	client := &mockFilterable{}
-	client.payload = []byte("abc-0.1.2.txt\nabc-2.3.0.txt\n\nabc-aaa-1.2.3\nabc-1.1.2.txt")
+	client.payload = []byte("abc-2.3.0.txt\nabc-2.31.0.txt\n\nabc-v2.10.0txt\nabc-2.32.0.txt")
 	r.Backend = client
 	mock := &mockFilterable{}
 	data := &core.Filtered{}
 	data.Download = "oijoefa/x"
-	data.Filters = append(data.Filters, "abc-([0-9.]*?).txt")
+	data.Filters = append(data.Filters, "abc-(v?[0-9.]+).txt")
 	data.Sort = "rsemver"
-	mock.matches = []string{"2.3.0", "2.31.0", "v2.10.0", "2.32.0"}
 	mock.payload = client.payload
 	b, err := filtered.NewBase("a/xyz", data, mock)
 	if err != nil {
@@ -191,14 +186,13 @@ func TestSemVerReverse(t *testing.T) {
 func TestSortReverse(t *testing.T) {
 	r := &retriever.ResourceFetcher{}
 	client := &mockFilterable{}
-	client.payload = []byte("abc-0.1.2.txt\nabc-2.3.0.txt\n\nabc-aaa-1.2.3\nabc-1.1.2.txt")
+	client.payload = []byte("abc-2.3.0.txt\nabc-2.31.0.txt\n\nabc-2.10.0.txt\nabc-2.32.0.txt")
 	r.Backend = client
 	mock := &mockFilterable{}
 	data := &core.Filtered{}
 	data.Download = "oijoefa/x"
-	data.Filters = append(data.Filters, "abc-([0-9.]*?).txt")
+	data.Filters = append(data.Filters, "abc-(v?[0-9.]+).txt")
 	data.Sort = "rsort"
-	mock.matches = []string{"2.3.0", "2.31.0", "2.10.0", "2.32.0"}
 	mock.payload = client.payload
 	b, err := filtered.NewBase("a/xyz", data, mock)
 	if err != nil {
@@ -223,14 +217,13 @@ func TestSortReverse(t *testing.T) {
 func TestSort(t *testing.T) {
 	r := &retriever.ResourceFetcher{}
 	client := &mockFilterable{}
-	client.payload = []byte("abc-0.1.2.txt\nabc-2.3.0.txt\n\nabc-aaa-1.2.3\nabc-1.1.2.txt")
+	client.payload = []byte("abc-2.3.0.txt\nabc-2.31.0.txt\n\nabc-2.10.0.txt\nabc-2.32.0.txt")
 	r.Backend = client
 	mock := &mockFilterable{}
 	data := &core.Filtered{}
 	data.Download = "oijoefa/x"
-	data.Filters = append(data.Filters, "abc-([0-9.]*?).txt")
+	data.Filters = append(data.Filters, "abc-(v?[0-9.]+).txt")
 	data.Sort = "sort"
-	mock.matches = []string{"2.3.0", "2.31.0", "2.10.0", "2.32.0"}
 	mock.payload = client.payload
 	b, err := filtered.NewBase("a/xyz", data, mock)
 	if err != nil {
@@ -255,14 +248,13 @@ func TestSort(t *testing.T) {
 func TestTemplate(t *testing.T) {
 	r := &retriever.ResourceFetcher{}
 	client := &mockFilterable{}
-	client.payload = []byte("abc-0.1.2.txt\nabc-2.3.0.txt\n\nabc-aaa-1.2.3\nabc-1.1.2.txt")
+	client.payload = []byte("abc-2.3.0.txt\nabc-2.31.0.txt\n\nabc-2.10.0.txt\nabc-2.32.0.txt")
 	r.Backend = client
 	mock := &mockFilterable{}
 	data := &core.Filtered{}
 	data.Download = "{{ $.Vars.Source }}{{ $.Vars.Arguments }}/{{ $.Vars.Tag }}"
-	data.Filters = append(data.Filters, "abc-([0-9.]*?).txt")
+	data.Filters = append(data.Filters, "abc-(v?[0-9.]+).txt")
 	data.Sort = "sort"
-	mock.matches = []string{"2.3.0", "2.31.0", "2.10.0", "2.32.0"}
 	mock.payload = client.payload
 	b, err := filtered.NewBase("a/xyz", data, mock)
 	if err != nil {
@@ -294,29 +286,5 @@ func TestTemplate(t *testing.T) {
 		if o.URL != "a/xyz[111 222]/2.32.0" || o.File != "2.32.0" {
 			t.Errorf("invalid asset: %s %s", o.URL, o.File)
 		}
-	}
-}
-
-func TestMatchLine(t *testing.T) {
-	matches := filtered.MatchLine(nil, "")
-	if len(matches) != 0 {
-		t.Error("should have no matches")
-	}
-	matches = filtered.MatchLine([]*regexp.Regexp{}, "")
-	if len(matches) != 0 {
-		t.Error("should have no matches")
-	}
-	matches = filtered.MatchLine([]*regexp.Regexp{
-		regexp.MustCompile(".*"),
-	}, "")
-	if len(matches) != 1 {
-		t.Error("should have matches")
-	}
-	matches = filtered.MatchLine([]*regexp.Regexp{
-		regexp.MustCompile("[0-9.]*"),
-		regexp.MustCompile("[0-9.]*"),
-	}, "0.1\n0.2")
-	if len(matches) != 2 {
-		t.Error("should have matches")
 	}
 }

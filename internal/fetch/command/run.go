@@ -3,7 +3,6 @@ package command
 
 import (
 	"errors"
-	"regexp"
 
 	"github.com/seanenck/blap/internal/core"
 	"github.com/seanenck/blap/internal/fetch"
@@ -23,12 +22,12 @@ func (run runFilterable) Get(r fetch.Retriever, cmd string) ([]byte, error) {
 	return []byte(out), nil
 }
 
-func (run runFilterable) Match(r []*regexp.Regexp, line string) ([]string, error) {
-	return filtered.MatchLine(r, line), nil
-}
-
 func (run runFilterable) Arguments() []string {
 	return run.args
+}
+
+func (run runFilterable) NewLine(line string) (string, error) {
+	return line, nil
 }
 
 // Run will execute the given command+args

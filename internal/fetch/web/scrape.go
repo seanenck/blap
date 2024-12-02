@@ -3,7 +3,6 @@ package web
 
 import (
 	"io"
-	"regexp"
 
 	"github.com/seanenck/blap/internal/core"
 	"github.com/seanenck/blap/internal/fetch"
@@ -27,8 +26,8 @@ func (s scrapeFilterable) Get(r fetch.Retriever, url string) ([]byte, error) {
 	return b, nil
 }
 
-func (s scrapeFilterable) Match(r []*regexp.Regexp, line string) ([]string, error) {
-	return filtered.MatchLine(r, line), nil
+func (s scrapeFilterable) NewLine(line string) (string, error) {
+	return line, nil
 }
 
 func (s scrapeFilterable) Arguments() []string {
