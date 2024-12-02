@@ -137,6 +137,10 @@ func TestValidDisable(t *testing.T) {
 	if !a.ValidDisable() {
 		t.Error("should be valid")
 	}
+	a.Disable = "yes"
+	if !a.ValidDisable() {
+		t.Error("should be valid")
+	}
 	a.Disable = "pin"
 	if !a.ValidDisable() {
 		t.Error("should be valid")
@@ -153,6 +157,10 @@ func TestEnabled(t *testing.T) {
 		t.Error("should be enabled")
 	}
 	a.Disable = "aoijafae"
+	if a.Enabled() {
+		t.Error("should be disabled")
+	}
+	a.Disable = "yes"
 	if a.Enabled() {
 		t.Error("should be disabled")
 	}
@@ -192,5 +200,28 @@ func TestEnabled(t *testing.T) {
 	}{true, "a", "a"}
 	if a.Enabled() {
 		t.Error("should be disabled")
+	}
+}
+
+func TestIsPin(t *testing.T) {
+	a := core.Application{}
+	if a.Pin() {
+		t.Error("no pin")
+	}
+	a.Disable = "prune"
+	if a.Pin() {
+		t.Error("no pin")
+	}
+	a.Disable = "yes"
+	if !a.Pin() {
+		t.Error("pin")
+	}
+	a.Disable = "pin"
+	if !a.Pin() {
+		t.Error("pin")
+	}
+	a.Disable = "aofjea"
+	if a.Pin() {
+		t.Error("no pin")
 	}
 }

@@ -15,8 +15,9 @@ import (
 )
 
 const (
-	pruneMode = "prune"
-	pinMode   = "pin"
+	pruneDisableMode = "prune"
+	pinDisableMode   = "pin"
+	yesDisableMode   = "yes"
 )
 
 type (
@@ -285,12 +286,12 @@ func (v SetVariables) Unset() {
 
 // ValidDisable will indicate if a known disable value is set (empty is valid, unset)
 func (a Application) ValidDisable() bool {
-	return a.Disable == "" || a.Disable == pruneMode || a.Disable == pinMode
+	return a.Disable == "" || a.Disable == pruneDisableMode || a.Disable == pinDisableMode || a.Disable == yesDisableMode
 }
 
 // Pin will indicate the app is disabled in a 'pin' mode
 func (a Application) Pin() bool {
-	return a.Disable == pinMode
+	return a.Disable == pinDisableMode || a.Disable == yesDisableMode
 }
 
 // Enabled indicates if an application is enabled for use
