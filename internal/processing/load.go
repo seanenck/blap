@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/BurntSushi/toml"
@@ -42,6 +43,15 @@ func Load(input string, context cli.Settings) (Configuration, error) {
 	}
 	c.logFile = c.Logging.File.String()
 	c.dir = c.Directory.String()
+	checkAddApp := func(name string, a core.Application) (bool, error) {
+		if !a.ValidDisable() {
+			return false, fmt.Errorf("unknown disable mode: %s -> %s", name, a.Disable)
+		}
+		if a.Pin() {
+			c.Pinned = append(c.Pinned, name)
+		}
+		return a.Enabled(), nil
+	}
 	if len(c.Include) > 0 {
 		hasIncludefilter := context.Include != nil
 		var including []string
@@ -80,7 +90,11 @@ func Load(input string, context cli.Settings) (Configuration, error) {
 			}
 			c.Pinned = append(c.Pinned, apps.Pinned...)
 			for k, v := range apps.Applications {
-				if !v.Enabled() {
+				ok, err := checkAddApp(k, v)
+				if err != nil {
+					return Configuration{}, err
+				}
+				if !ok {
 					continue
 				}
 				if _, ok := c.Applications[k]; ok {
@@ -93,7 +107,11 @@ func Load(input string, context cli.Settings) (Configuration, error) {
 	canFilter := context.FilterApplications()
 	sub := make(map[string]core.Application)
 	for n, a := range c.Applications {
-		if !a.Enabled() {
+		ok, err := checkAddApp(n, a)
+		if err != nil {
+			return Configuration{}, err
+		}
+		if !ok {
 			continue
 		}
 		allowed := true
@@ -105,13 +123,19 @@ func Load(input string, context cli.Settings) (Configuration, error) {
 		}
 	}
 	var re []*regexp.Regexp
+	var knownPins []string
 	for _, p := range c.Pinned {
+		if slices.Contains(knownPins, p) {
+			continue
+		}
 		r, err := regexp.Compile(p)
 		if err != nil {
 			return c, err
 		}
 		re = append(re, r)
+		knownPins = append(knownPins, p)
 	}
+	c.Pinned = knownPins
 	c.pinnedMatchers = re
 	c.Applications = sub
 	return c, nil

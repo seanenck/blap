@@ -6,6 +6,10 @@ pinned = [
   "123"
 ]
 
+[applications.go]
+# if this application was allowed by the config, it would be disabled
+# AND directories would be pruned unless pinned in the array structures
+disable = "prune"
 [applications.go.git]
 repository = "https://github.com/golang/go"
 [applications.go.git.tagged]

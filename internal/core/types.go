@@ -14,6 +14,11 @@ import (
 	"github.com/seanenck/blap/internal/util"
 )
 
+const (
+	pruneMode = "prune"
+	pinMode   = "pin"
+)
+
 type (
 	// Variables define os environment variables to set
 	Variables []struct {
@@ -72,7 +77,7 @@ type (
 	// Application defines how an application is downloaded, unpacked, and deployed
 	Application struct {
 		Priority int
-		Disable  bool
+		Disable  string
 		GitHub   *GitHubMode
 		Git      *GitMode
 		Web      *WebMode
@@ -278,9 +283,22 @@ func (v SetVariables) Unset() {
 	}
 }
 
+// ValidDisable will indicate if a known disable value is set (empty is valid, unset)
+func (a Application) ValidDisable() bool {
+	return a.Disable == "" || a.Disable == pruneMode || a.Disable == pinMode
+}
+
+// Pin will indicate the app is disabled in a 'pin' mode
+func (a Application) Pin() bool {
+	return a.Disable == pinMode
+}
+
 // Enabled indicates if an application is enabled for use
 func (a Application) Enabled() bool {
-	if a.Disable {
+	if !a.ValidDisable() {
+		return false
+	}
+	if a.Disable != "" {
 		return false
 	}
 	allowed := true

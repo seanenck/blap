@@ -128,16 +128,43 @@ func TestCommandEnv(t *testing.T) {
 	}
 }
 
+func TestValidDisable(t *testing.T) {
+	a := core.Application{}
+	if !a.ValidDisable() {
+		t.Error("should be valid")
+	}
+	a.Disable = "prune"
+	if !a.ValidDisable() {
+		t.Error("should be valid")
+	}
+	a.Disable = "pin"
+	if !a.ValidDisable() {
+		t.Error("should be valid")
+	}
+	a.Disable = "oaj"
+	if a.ValidDisable() {
+		t.Error("should be invalid")
+	}
+}
+
 func TestEnabled(t *testing.T) {
 	a := core.Application{}
 	if !a.Enabled() {
 		t.Error("should be enabled")
 	}
-	a.Disable = true
+	a.Disable = "aoijafae"
 	if a.Enabled() {
 		t.Error("should be disabled")
 	}
-	a.Disable = false
+	a.Disable = "pin"
+	if a.Enabled() {
+		t.Error("should be disabled")
+	}
+	a.Disable = "prune"
+	if a.Enabled() {
+		t.Error("should be disabled")
+	}
+	a.Disable = ""
 	a.Platforms = append(a.Platforms, struct {
 		Disable bool
 		Value   core.Resolved
