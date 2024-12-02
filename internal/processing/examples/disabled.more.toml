@@ -1,7 +1,8 @@
 # included file, define applications
 # this _whole file_ is disable BUT allows generic includes without opting files in/out
 # given that this file is duplicative of others, it is best it is disabled (apps can't be duplicated)
-disable = true
+# it is also flagged as disabled (and not pinned) which means apps will be pruned)
+flags = ["disabled"]
 pinned = [
   "123"
 ]
@@ -9,7 +10,7 @@ pinned = [
 [applications.go]
 # if this application was allowed by the config, it would be disabled
 # AND directories would be pruned unless pinned in the array structures
-disable = "prune"
+flags = ["disabled"]
 [applications.go.git]
 repository = "https://github.com/golang/go"
 [applications.go.git.tagged]
@@ -21,9 +22,9 @@ filters = [
 ]
 
 [applications.rg]
-# alternatively disable can be set to 'yes'
-# this implies 'pin'
-disable = "yes"
+# an application can be disabled itself as well
+# this will result in pruning of directories
+flags= ["disabled"]
 [applications.rg.github]
 project = "BurntSushi/ripgrep"
 release = { asset = "x86_64-unknown-linux-(.+?).tar.gz$" }

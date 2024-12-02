@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"strings"
 	"text/template"
 
@@ -15,12 +16,13 @@ import (
 )
 
 const (
-	pruneDisableMode = "prune"
-	pinDisableMode   = "pin"
-	yesDisableMode   = "yes"
+	disableFlag = "disabled"
+	pinFlag     = "pinned"
 )
 
 type (
+	// FlagSet is a simple string array to control application rules
+	FlagSet []string
 	// Variables define os environment variables to set
 	Variables []struct {
 		Key   string
@@ -78,7 +80,7 @@ type (
 	// Application defines how an application is downloaded, unpacked, and deployed
 	Application struct {
 		Priority int
-		Disable  string
+		Flags    FlagSet
 		GitHub   *GitHubMode
 		Git      *GitMode
 		Web      *WebMode
@@ -284,22 +286,43 @@ func (v SetVariables) Unset() {
 	}
 }
 
-// ValidDisable will indicate if a known disable value is set (empty is valid, unset)
-func (a Application) ValidDisable() bool {
-	return a.Disable == "" || a.Disable == pruneDisableMode || a.Disable == pinDisableMode || a.Disable == yesDisableMode
+// Check will validate a flag set
+func (f FlagSet) Check() error {
+	switch len(f) {
+	case 0:
+		break
+	case 1:
+		if !f.Skipped() {
+			return fmt.Errorf("invalid flags, unknown value: %s", f[0])
+		}
+	default:
+		return fmt.Errorf("invalid flags, flag set not supported: %s", strings.Join(f, ","))
+	}
+	return nil
 }
 
-// Pin will indicate the app is disabled in a 'pin' mode
-func (a Application) Pin() bool {
-	return a.Disable == pinDisableMode || a.Disable == yesDisableMode
+// Pin indicates if the flag means something should be pinned (not updated/disabled but not pruned)
+func (f FlagSet) Pin() bool {
+	return f.has(pinFlag)
+}
+
+// Skipped indicates a flag wants an actual disabled activity
+func (f FlagSet) Skipped() bool {
+	return f.has(pinFlag, disableFlag)
+}
+
+func (f FlagSet) has(flags ...string) bool {
+	return slices.ContainsFunc(f, func(item string) bool {
+		return slices.Contains(flags, item)
+	})
 }
 
 // Enabled indicates if an application is enabled for use
 func (a Application) Enabled() bool {
-	if !a.ValidDisable() {
+	if err := a.Flags.Check(); err != nil {
 		return false
 	}
-	if a.Disable != "" {
+	if a.Flags.Skipped() {
 		return false
 	}
 	allowed := true

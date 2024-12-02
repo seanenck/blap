@@ -128,51 +128,28 @@ func TestCommandEnv(t *testing.T) {
 	}
 }
 
-func TestValidDisable(t *testing.T) {
-	a := core.Application{}
-	if !a.ValidDisable() {
-		t.Error("should be valid")
-	}
-	a.Disable = "prune"
-	if !a.ValidDisable() {
-		t.Error("should be valid")
-	}
-	a.Disable = "yes"
-	if !a.ValidDisable() {
-		t.Error("should be valid")
-	}
-	a.Disable = "pin"
-	if !a.ValidDisable() {
-		t.Error("should be valid")
-	}
-	a.Disable = "oaj"
-	if a.ValidDisable() {
-		t.Error("should be invalid")
-	}
-}
-
 func TestEnabled(t *testing.T) {
 	a := core.Application{}
 	if !a.Enabled() {
 		t.Error("should be enabled")
 	}
-	a.Disable = "aoijafae"
+	a.Flags = []string{"alojfa"}
 	if a.Enabled() {
 		t.Error("should be disabled")
 	}
-	a.Disable = "yes"
+	a.Flags = []string{"pinned"}
 	if a.Enabled() {
 		t.Error("should be disabled")
 	}
-	a.Disable = "pin"
+	a.Flags = []string{""}
 	if a.Enabled() {
 		t.Error("should be disabled")
 	}
-	a.Disable = "prune"
+	a.Flags = []string{"disabled"}
 	if a.Enabled() {
 		t.Error("should be disabled")
 	}
-	a.Disable = ""
+	a.Flags = []string{}
 	a.Platforms = append(a.Platforms, struct {
 		Disable bool
 		Value   core.Resolved
@@ -204,24 +181,66 @@ func TestEnabled(t *testing.T) {
 }
 
 func TestIsPin(t *testing.T) {
-	a := core.Application{}
-	if a.Pin() {
-		t.Error("no pin")
+	f := core.FlagSet{}
+	if f.Pin() {
+		t.Errorf("%s is not pin", f)
 	}
-	a.Disable = "prune"
-	if a.Pin() {
-		t.Error("no pin")
+	f = core.FlagSet{"pinned"}
+	if !f.Pin() {
+		t.Errorf("%s is pin", f)
 	}
-	a.Disable = "yes"
-	if !a.Pin() {
-		t.Error("pin")
+	f = core.FlagSet{"oafoeaj"}
+	if f.Pin() {
+		t.Errorf("%s is not pin", f)
 	}
-	a.Disable = "pin"
-	if !a.Pin() {
-		t.Error("pin")
+	f = core.FlagSet{"disabled"}
+	if f.Pin() {
+		t.Errorf("%s is not pin", f)
 	}
-	a.Disable = "aofjea"
-	if a.Pin() {
-		t.Error("no pin")
+}
+
+func TestIsSkipped(t *testing.T) {
+	f := core.FlagSet{}
+	if f.Skipped() {
+		t.Errorf("%s is not skipped", f)
+	}
+	f = core.FlagSet{"pinned"}
+	if !f.Skipped() {
+		t.Errorf("%s is skipped", f)
+	}
+	f = core.FlagSet{"disabled"}
+	if !f.Skipped() {
+		t.Errorf("%s is skipped", f)
+	}
+	f = core.FlagSet{"xyz", "disabled", "pinned"}
+	if !f.Skipped() {
+		t.Errorf("%s is skipped", f)
+	}
+	f = core.FlagSet{"xyz", "disabled"}
+	if !f.Skipped() {
+		t.Errorf("%s is skipped", f)
+	}
+	f = core.FlagSet{"odiajfea"}
+	if f.Skipped() {
+		t.Errorf("%s is not skipped", f)
+	}
+}
+
+func TestFlagCheck(t *testing.T) {
+	f := core.FlagSet{}
+	if err := f.Check(); err != nil {
+		t.Errorf("invalid error: %v", err)
+	}
+	f = core.FlagSet{""}
+	if err := f.Check(); err == nil || err.Error() != "invalid flags, unknown value: " {
+		t.Errorf("invalid error: %v", err)
+	}
+	f = core.FlagSet{"pinned"}
+	if err := f.Check(); err != nil {
+		t.Errorf("invalid error: %v", err)
+	}
+	f = core.FlagSet{"disabled", "xyz"}
+	if err := f.Check(); err == nil || err.Error() != "invalid flags, flag set not supported: disabled,xyz" {
+		t.Errorf("invalid error: %v", err)
 	}
 }

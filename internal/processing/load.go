@@ -44,10 +44,10 @@ func Load(input string, context cli.Settings) (Configuration, error) {
 	c.logFile = c.Logging.File.String()
 	c.dir = c.Directory.String()
 	checkAddApp := func(name string, a core.Application) (bool, error) {
-		if !a.ValidDisable() {
-			return false, fmt.Errorf("unknown disable mode: %s -> %s", name, a.Disable)
+		if err := a.Flags.Check(); err != nil {
+			return false, err
 		}
-		if a.Pin() {
+		if a.Flags.Pin() {
 			c.Pinned = append(c.Pinned, name)
 		}
 		return a.Enabled(), nil
@@ -78,14 +78,22 @@ func Load(input string, context cli.Settings) (Configuration, error) {
 			}
 			type included struct {
 				Applications core.AppSet
-				Disable      bool
+				Flags        core.FlagSet
 				Pinned       core.Pinned
 			}
 			var apps included
 			if err := doDecode(include, &apps); err != nil {
 				return c, err
 			}
-			if apps.Disable {
+			if err := apps.Flags.Check(); err != nil {
+				return Configuration{}, err
+			}
+			if apps.Flags.Skipped() {
+				if apps.Flags.Pin() {
+					for k := range apps.Applications {
+						c.Pinned = append(c.Pinned, k)
+					}
+				}
 				continue
 			}
 			c.Pinned = append(c.Pinned, apps.Pinned...)

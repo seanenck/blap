@@ -95,7 +95,7 @@ command = ["ln", "-sf", "target/blap", "~/.local/bin"]
 
 [applications.nvim2]
 # this app, specifically, is disabled but any directories are kept/pinned
-disable = "pin"
+flags = ["pinned"]
 # set an app to filter to platform (any matches will enable the app)
 platforms = [
   { value = "{{ $.Config.OS }}-abc", target = "os-abc" }
