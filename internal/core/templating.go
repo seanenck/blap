@@ -4,6 +4,7 @@ package core
 import (
 	"bytes"
 	"errors"
+	"os"
 	"regexp"
 	"runtime"
 	"text/template"
@@ -31,6 +32,11 @@ type (
 		Vars T
 	}
 )
+
+// Getenv allows for reading environment variable in templating
+func (baseValues) Getenv(key string) string {
+	return os.Getenv(key)
+}
 
 // NewValues create a new environment variable set
 func NewValues[T any](name string, in T) (Values[T], error) {

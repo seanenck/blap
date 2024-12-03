@@ -1,6 +1,7 @@
 package core_test
 
 import (
+	"os"
 	"testing"
 
 	"github.com/seanenck/blap/internal/core"
@@ -44,11 +45,13 @@ func TestNewValues(t *testing.T) {
 
 func TestTemplate(t *testing.T) {
 	o, _ := core.NewValues("abc", struct{ Tag string }{"a"})
-	v, err := o.Template("{{ $.Vars.Tag }}{{ $.Name }}")
+	defer os.Clearenv()
+	t.Setenv("TESTDATA", "TESTING")
+	v, err := o.Template("{{ $.Vars.Tag }}{{ $.Name }}{{ $.Getenv \"TESTDATA\" }}")
 	if err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
-	if v != "aabc" {
+	if v != "aabcTESTING" {
 		t.Errorf("invalid value: %s", v)
 	}
 }
