@@ -26,6 +26,7 @@ func run() error {
 	if len(args) < 2 {
 		return errors.New("invalid arguments, missing command")
 	}
+	isList := false
 	purging := false
 	cmd := args[1]
 	switch cmd {
@@ -35,6 +36,11 @@ func run() error {
 		return cli.Usage(os.Stdout)
 	case cli.PurgeCommand:
 		purging = true
+	case cli.ListCommand:
+		isList = true
+		if len(args) > 2 {
+			return fmt.Errorf("command %s does not take arguments", cmd)
+		}
 	case cli.VersionCommand:
 		fmt.Println(version)
 		return nil
@@ -65,6 +71,9 @@ func run() error {
 	cfg, err := processing.Load(input, *ctx)
 	if err != nil {
 		return err
+	}
+	if isList {
+		return cfg.List(os.Stdout)
 	}
 	return cfg.Process(cfg, &retriever.ResourceFetcher{Context: *ctx}, util.CommandRunner{})
 }

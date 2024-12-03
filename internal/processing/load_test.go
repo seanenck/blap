@@ -1,6 +1,7 @@
 package processing_test
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -80,5 +81,22 @@ func TestLoadInclude(t *testing.T) {
 	}
 	if len(c.Applications) != 3 {
 		t.Errorf("invalid apps: %d", len(c.Applications))
+	}
+}
+
+func TestList(t *testing.T) {
+	makeTestFile("disabled.more.toml")
+	example := filepath.Join("examples", "config.toml")
+	s := cli.Settings{}
+	c, err := processing.Load(example, s)
+	if err != nil {
+		t.Errorf("invalid error: %v", err)
+	}
+	var buf bytes.Buffer
+	if err := c.List(&buf); err != nil {
+		t.Errorf("invalid error: %v", err)
+	}
+	if s := buf.String(); s == "" {
+		t.Errorf("invalid buffer: %s", s)
 	}
 }

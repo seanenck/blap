@@ -47,6 +47,7 @@ func help(w io.Writer) error {
 	}
 	fmt.Fprintf(w, "%s\n", exe)
 	helpLine(w, false, VersionCommand, "display version information")
+	helpLine(w, false, ListCommand, "list managed package set")
 	helpLine(w, false, UpgradeCommand, "upgrade packages")
 	helpLine(w, true, displayApplicationsFlag, "specify a subset of packages (regex)")
 	helpLine(w, true, displayDisableFlag, "disable applications (regex)")

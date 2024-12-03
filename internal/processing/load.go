@@ -4,10 +4,12 @@ package processing
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"regexp"
 	"slices"
+	"sort"
 	"strings"
 
 	"github.com/BurntSushi/toml"
@@ -151,4 +153,33 @@ func Load(input string, context cli.Settings) (Configuration, error) {
 	c.pinnedMatchers = re
 	c.Applications = sub
 	return c, nil
+}
+
+// List will simply list information
+func (c Configuration) List(w io.Writer) error {
+	if c.Applications != nil {
+		var keys []string
+		for k := range c.Applications {
+			keys = append(keys, k)
+		}
+		if err := list(w, "applications", keys); err != nil {
+			return err
+		}
+	}
+	return list(w, "pinned", c.Pinned)
+}
+
+func list(w io.Writer, header string, keys []string) error {
+	sort.Strings(keys)
+	for idx, item := range keys {
+		if idx == 0 {
+			if _, err := fmt.Fprintf(w, "%s:\n", header); err != nil {
+				return err
+			}
+		}
+		if _, err := fmt.Fprintf(w, "-> %s\n", item); err != nil {
+			return err
+		}
+	}
+	return nil
 }

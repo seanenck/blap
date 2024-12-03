@@ -2,7 +2,7 @@ _{{ $.Executable }}() {
   local cur opts chosen sub
   cur=${COMP_WORDS[COMP_CWORD]}
   if [ "$COMP_CWORD" -eq 1 ]; then
-    opts="{{ $.Command.Upgrade }} {{ $.Command.Purge }}"
+    opts="{{ $.Command.Upgrade }} {{ $.Command.Purge }} {{ $.Command.List }}"
   else
     chosen=${COMP_WORDS[1]}
     case "$COMP_CWORD" in

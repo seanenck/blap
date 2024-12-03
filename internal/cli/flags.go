@@ -10,6 +10,8 @@ import (
 )
 
 const (
+	// ListCommand will list the active applications
+	ListCommand = "list"
 	// PurgeCommand is used to delete old artifacts/dirs/etc.
 	PurgeCommand = "purge"
 	// UpgradeCommand is used to update packages

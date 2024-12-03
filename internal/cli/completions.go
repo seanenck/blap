@@ -21,6 +21,7 @@ type (
 		Command    struct {
 			Purge   string
 			Upgrade string
+			List    string
 		}
 		Params struct {
 			Upgrade CompletionCommand
@@ -76,6 +77,7 @@ func GenerateCompletions(w io.Writer) error {
 	}
 	comp := Completion{}
 	comp.Executable = exe
+	comp.Command.List = ListCommand
 	comp.Command.Purge = PurgeCommand
 	comp.Command.Upgrade = UpgradeCommand
 	comp.Arg.Confirm = displayCommitFlag

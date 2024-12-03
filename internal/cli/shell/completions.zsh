@@ -12,7 +12,7 @@ _{{ $.Executable }}() {
   opts=""
   case $state in
     main)
-      args="{{ $.Command.Upgrade }} {{ $.Command.Purge }}"
+      args="{{ $.Command.Upgrade }} {{ $.Command.Purge }} {{ $.Command.List }}"
       _arguments "1:main:($args)"
     ;;
     *)
