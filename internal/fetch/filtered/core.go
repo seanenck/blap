@@ -113,6 +113,8 @@ func (b Base) Get(r fetch.Retriever, ctx fetch.Context) (*core.Resource, error) 
 		}
 		up = updated
 	}
+
+	r.Debug(logging.FilteringCategory, "url: %s\n", up)
 	data, err := filterable.Get(r, up)
 	if err != nil {
 		return nil, err
