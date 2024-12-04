@@ -36,7 +36,11 @@ func Run(caller fetch.Retriever, ctx fetch.Context, a core.RunMode) (*core.Resou
 	if a.Executable == "" {
 		return nil, errors.New("command not set")
 	}
-	b, err := filtered.NewBase(a.Executable, a.Fetch, runFilterable{args: a.Arguments})
+	var args []string
+	for _, a := range a.Arguments {
+		args = append(args, a.String())
+	}
+	b, err := filtered.NewBase(filtered.RawString(a.Executable.String()), a.Fetch, runFilterable{args: args})
 	if err != nil {
 		return nil, err
 	}

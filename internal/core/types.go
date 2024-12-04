@@ -21,6 +21,8 @@ const (
 )
 
 type (
+	// WebURL can be templated with settings from the host
+	WebURL string
 	// FlagSet is a simple string array to control application rules
 	FlagSet []string
 	// Variables define os environment variables to set
@@ -51,7 +53,7 @@ type (
 	}
 	// WebMode represents web-based lookups
 	WebMode struct {
-		URL    string
+		URL    WebURL
 		Scrape *Filtered
 	}
 	// GitMode enables git-based fetches
@@ -61,8 +63,8 @@ type (
 	}
 	// RunMode indicates running an executable
 	RunMode struct {
-		Executable string
-		Arguments  []string
+		Executable Resolved
+		Arguments  []Resolved
 		Fetch      *Filtered
 	}
 	// GitHubMode indicates processing of a github project for upstreams
@@ -73,7 +75,7 @@ type (
 	}
 	// StaticMode allows for downloading a static asset
 	StaticMode struct {
-		URL  string
+		URL  WebURL
 		File string
 		Tag  string
 	}
@@ -335,4 +337,14 @@ func (a Application) Enabled() bool {
 		}
 	}
 	return allowed
+}
+
+// String returns the string of the web URL
+func (w WebURL) String() string {
+	return string(w)
+}
+
+// CanTemplate indicates that this type can be templated (as it can)
+func (w WebURL) CanTemplate() bool {
+	return true
 }

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"io"
 	"net/http"
+	"os"
 	"testing"
 
 	"github.com/seanenck/blap/internal/core"
@@ -52,21 +53,21 @@ func TestNewBaseInvalid(t *testing.T) {
 }
 
 func TestNewBaseValidate(t *testing.T) {
-	if _, err := filtered.NewBase("", nil, nil); err == nil || err.Error() != "filterable interface is nil" {
+	if _, err := filtered.NewBase(filtered.RawString(""), nil, nil); err == nil || err.Error() != "filterable interface is nil" {
 		t.Errorf("invalid error: %v", err)
 	}
-	if _, err := filtered.NewBase("", nil, &mockFilterable{}); err == nil || err.Error() != "filter definition is nil" {
+	if _, err := filtered.NewBase(filtered.RawString(""), nil, &mockFilterable{}); err == nil || err.Error() != "filter definition is nil" {
 		t.Errorf("invalid error: %v", err)
 	}
 	data := &core.Filtered{}
-	if _, err := filtered.NewBase("", data, &mockFilterable{}); err == nil || err.Error() != "no upstream configured" {
+	if _, err := filtered.NewBase(filtered.RawString(""), data, &mockFilterable{}); err == nil || err.Error() != "no upstream configured" {
 		t.Errorf("invalid error: %v", err)
 	}
-	if _, err := filtered.NewBase("aaa", data, &mockFilterable{}); err == nil || err.Error() != "no download URL configured" {
+	if _, err := filtered.NewBase(filtered.RawString("aaa"), data, &mockFilterable{}); err == nil || err.Error() != "no download URL configured" {
 		t.Errorf("invalid error: %v", err)
 	}
 	data.Download = "aa"
-	if _, err := filtered.NewBase("yao", data, &mockFilterable{}); err == nil || err.Error() != "filters required" {
+	if _, err := filtered.NewBase(filtered.RawString("yao"), data, &mockFilterable{}); err == nil || err.Error() != "filters required" {
 		t.Errorf("invalid error: %v", err)
 	}
 }
@@ -79,7 +80,7 @@ func TestGetErrors(t *testing.T) {
 	client := &mockFilterable{}
 	client.payload = []byte("")
 	r.Backend = client
-	b, err := filtered.NewBase("aaa", data, &mockFilterable{})
+	b, err := filtered.NewBase(filtered.RawString("aaa"), data, &mockFilterable{})
 	if err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
@@ -101,7 +102,7 @@ func TestBasicFilters(t *testing.T) {
 	data.Download = "oijoefa/x"
 	data.Filters = append(data.Filters, "abc-(v?[0-9.]+).txt")
 	mock.payload = client.payload
-	b, err := filtered.NewBase("a/xyz", data, mock)
+	b, err := filtered.NewBase(filtered.RawString("a/xyz"), data, mock)
 	if err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
@@ -132,7 +133,7 @@ func TestSemVer(t *testing.T) {
 	data.Filters = append(data.Filters, "abc-(v?[0-9.]+).txt")
 	data.Sort = "semver"
 	mock.payload = client.payload
-	b, err := filtered.NewBase("a/xyz", data, mock)
+	b, err := filtered.NewBase(filtered.RawString("a/xyz"), data, mock)
 	if err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
@@ -163,7 +164,7 @@ func TestSemVerReverse(t *testing.T) {
 	data.Filters = append(data.Filters, "abc-(v?[0-9.]+).txt")
 	data.Sort = "rsemver"
 	mock.payload = client.payload
-	b, err := filtered.NewBase("a/xyz", data, mock)
+	b, err := filtered.NewBase(filtered.RawString("a/xyz"), data, mock)
 	if err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
@@ -194,7 +195,7 @@ func TestSortReverse(t *testing.T) {
 	data.Filters = append(data.Filters, "abc-(v?[0-9.]+).txt")
 	data.Sort = "rsort"
 	mock.payload = client.payload
-	b, err := filtered.NewBase("a/xyz", data, mock)
+	b, err := filtered.NewBase(filtered.RawString("a/xyz"), data, mock)
 	if err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
@@ -225,7 +226,7 @@ func TestSort(t *testing.T) {
 	data.Filters = append(data.Filters, "abc-(v?[0-9.]+).txt")
 	data.Sort = "sort"
 	mock.payload = client.payload
-	b, err := filtered.NewBase("a/xyz", data, mock)
+	b, err := filtered.NewBase(filtered.RawString("a/xyz"), data, mock)
 	if err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
@@ -256,7 +257,7 @@ func TestTemplate(t *testing.T) {
 	data.Filters = append(data.Filters, "abc-(v?[0-9.]+).txt")
 	data.Sort = "sort"
 	mock.payload = client.payload
-	b, err := filtered.NewBase("a/xyz", data, mock)
+	b, err := filtered.NewBase(filtered.RawString("a/xyz"), data, mock)
 	if err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
@@ -272,7 +273,7 @@ func TestTemplate(t *testing.T) {
 		}
 	}
 	mock.args = []string{"111", "222"}
-	b, err = filtered.NewBase("a/xyz", data, mock)
+	b, err = filtered.NewBase(filtered.RawString("a/xyz"), data, mock)
 	if err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
@@ -286,5 +287,42 @@ func TestTemplate(t *testing.T) {
 		if o.URL != "a/xyz[111 222]/2.32.0" || o.File != "2.32.0" {
 			t.Errorf("invalid asset: %s %s", o.URL, o.File)
 		}
+	}
+}
+
+func TestFilterTemplate(t *testing.T) {
+	r := &retriever.ResourceFetcher{}
+	client := &mockFilterable{}
+	client.payload = []byte("abc-2.3.0.txt\nabc-2.31.0.txt\n\nabc-2.10.0.txt\nabc-2.32.0.txt")
+	r.Backend = client
+	mock := &mockFilterable{}
+	data := &core.Filtered{}
+	data.Download = "{{ $.Vars.Source }}{{ $.Vars.Arguments }}/{{ $.Vars.Tag }}"
+	data.Filters = append(data.Filters, "abc-(v?[0-9.]+).txt")
+	data.Sort = "sort"
+	mock.payload = client.payload
+	defer os.Clearenv()
+	t.Setenv("TEST", "aaa")
+	b, err := filtered.NewBase(core.WebURL("{{ $.Getenv \"TEST\" }}/a/xyz"), data, mock)
+	if err != nil {
+		t.Errorf("invalid error: %v", err)
+	}
+	o, err := b.Get(r, fetch.Context{Name: "aljfao"})
+	if err != nil {
+		t.Errorf("invalid error: %v", err)
+	}
+	if o == nil {
+		t.Error("invalid asset")
+	} else {
+		if o.URL != "aaa/a/xyz[]/2.32.0" || o.File != "2.32.0" {
+			t.Errorf("invalid asset: %s %s", o.URL, o.File)
+		}
+	}
+}
+
+func TestRawString(t *testing.T) {
+	s := filtered.RawString("A")
+	if s.String() != "A" || s.CanTemplate() {
+		t.Errorf("invalid raw string")
 	}
 }

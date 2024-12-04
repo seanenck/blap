@@ -18,9 +18,13 @@ func New(ctx fetch.Context, a core.StaticMode) (*core.Resource, error) {
 	if a.Tag == "" {
 		return nil, errors.New("tag required for static mode")
 	}
+	upstream, err := ctx.Templating(a.URL.String(), struct{ Tag string }{a.Tag})
+	if err != nil {
+		return nil, err
+	}
 	file := a.File
 	if file == "" {
-		file = fmt.Sprintf("%s-%s", a.Tag, filepath.Base(a.URL))
+		file = fmt.Sprintf("%s-%s", a.Tag, filepath.Base(upstream))
 	} else {
 		tl, err := ctx.Templating(file, &fetch.Template{Tag: fetch.Version(a.Tag)})
 		if err != nil {
@@ -28,5 +32,5 @@ func New(ctx fetch.Context, a core.StaticMode) (*core.Resource, error) {
 		}
 		file = tl
 	}
-	return &core.Resource{URL: a.URL, Tag: a.Tag, File: file}, nil
+	return &core.Resource{URL: upstream, Tag: a.Tag, File: file}, nil
 }

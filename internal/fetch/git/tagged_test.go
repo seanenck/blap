@@ -27,7 +27,7 @@ func TestTagged(t *testing.T) {
 	client.payload = []byte("TESD\ta")
 	r := &retriever.ResourceFetcher{}
 	r.Backend = client
-	if _, err := git.Tagged(r, fetch.Context{Name: "afa"}, core.GitMode{Repository: "xyz", Tagged: &core.Filtered{Download: "x", Filters: []string{"a"}}}); err != nil {
+	if _, err := git.Tagged(r, fetch.Context{Name: "afa"}, core.GitMode{Repository: "{{end}}xyz", Tagged: &core.Filtered{Download: "x", Filters: []string{"a"}}}); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	client = &mock{}

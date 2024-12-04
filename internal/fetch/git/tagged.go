@@ -34,7 +34,7 @@ func (t taggedFilterable) Arguments() []string {
 
 // Tagged gets a tagged (git tag) release
 func Tagged(caller fetch.Retriever, ctx fetch.Context, a core.GitMode) (*core.Resource, error) {
-	b, err := filtered.NewBase(a.Repository, a.Tagged, taggedFilterable{})
+	b, err := filtered.NewBase(filtered.RawString(a.Repository), a.Tagged, taggedFilterable{})
 	if err != nil {
 		return nil, err
 	}

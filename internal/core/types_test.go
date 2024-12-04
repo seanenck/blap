@@ -244,3 +244,10 @@ func TestFlagCheck(t *testing.T) {
 		t.Errorf("invalid error: %v", err)
 	}
 }
+
+func TestWebURL(t *testing.T) {
+	s := core.WebURL("abc")
+	if s.String() != "abc" || !s.CanTemplate() {
+		t.Errorf("invalid web url: %s", s)
+	}
+}
