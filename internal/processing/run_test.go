@@ -144,7 +144,7 @@ func TestProcessUpdate(t *testing.T) {
 	if err := cfg.Process(m, m, m); err == nil || err.Error() != "parallelization must be >= 0 (have: -1)" {
 		t.Errorf("invalid error: %v", err)
 	}
-	cfg.Parallelization = 4
+	cfg.Parallelization = 0
 	if err := cfg.Process(m, m, m); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
@@ -192,6 +192,15 @@ func TestProcessUpdate(t *testing.T) {
 	}
 	if !m.env {
 		t.Errorf("env var not set")
+	}
+	m.calledDo = 0
+	cfg, _ = processing.Load(filepath.Join("examples", "config.toml"), s)
+	cfg.Parallelization = 4
+	if err := cfg.Process(m, m, m); err != nil {
+		t.Errorf("invalid error: %v", err)
+	}
+	if m.calledDo == 0 {
+		t.Error("processing should have happened")
 	}
 }
 
