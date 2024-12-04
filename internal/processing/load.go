@@ -162,22 +162,17 @@ func (c Configuration) List(w io.Writer) error {
 		for k := range c.Applications {
 			keys = append(keys, k)
 		}
-		if err := list(w, "applications", keys); err != nil {
+		if err := list(w, "app", keys); err != nil {
 			return err
 		}
 	}
-	return list(w, "pinned", c.Pinned)
+	return list(w, "pin", c.Pinned)
 }
 
 func list(w io.Writer, header string, keys []string) error {
 	sort.Strings(keys)
-	for idx, item := range keys {
-		if idx == 0 {
-			if _, err := fmt.Fprintf(w, "%s:\n", header); err != nil {
-				return err
-			}
-		}
-		if _, err := fmt.Fprintf(w, "-> %s\n", item); err != nil {
+	for _, item := range keys {
+		if _, err := fmt.Fprintf(w, "(%s) -> %s\n", header, item); err != nil {
 			return err
 		}
 	}
