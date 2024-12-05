@@ -40,9 +40,6 @@ func TestDo(t *testing.T) {
 	m := &mockRun{}
 	step := steps.Context{}
 	step.Settings = cli.Settings{}
-	if err := steps.Do([]core.Step{}, m, step, core.CommandEnv{}); err == nil || err.Error() != "no resource set" {
-		t.Errorf("invalid error: %v", err)
-	}
 	if err := steps.Do([]core.Step{}, nil, step, core.CommandEnv{}); err == nil || err.Error() != "builder is unset" {
 		t.Errorf("invalid error: %v", err)
 	}
@@ -50,16 +47,16 @@ func TestDo(t *testing.T) {
 	t.Setenv("HOME", "xyz")
 	vars := steps.Variables{}
 	vars.Directories.Root = "a"
-	vars.Resource = &core.Resource{File: "A"}
+	vars.File = "A"
 	e, _ := core.NewValues("xyz", vars)
 	step.Variables = e
-	if err := steps.Do([]core.Step{{}, {Directory: "{{ $.Name }}", Command: []core.Resolved{"~/exe/{{ $.Vars.Directories.Working }}", `~/{{ if eq $.Arch "fakearch" }}{{else}}{{ $.Vars.Resource.File }}{{end}}`}}}, m, step, core.CommandEnv{}); err != nil {
+	if err := steps.Do([]core.Step{{}, {Directory: "{{ $.Name }}", Command: []core.Resolved{"~/exe/{{ $.Vars.Directories.Working }}", `~/{{ if eq $.Arch "fakearch" }}{{else}}{{ $.Vars.File }}{{end}}`}}}, m, step, core.CommandEnv{}); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	if fmt.Sprintf("%v", m) != "&{a/xyz xyz/exe/a/xyz [xyz/A] [HOME=xyz] false}" {
 		t.Errorf("invalid result: %v", m)
 	}
-	vars.Resource = &core.Resource{File: "A"}
+	vars.File = "A"
 	e, _ = core.NewValues("A", vars)
 	step.Variables = e
 	if err := steps.Do([]core.Step{{}, {Command: []core.Resolved{"~/$HOME/exe", "~/{{ $.Name }}"}}}, m, step, core.CommandEnv{}); err != nil {
@@ -75,7 +72,7 @@ func TestEnv(t *testing.T) {
 	os.Clearenv()
 	vars := steps.Variables{}
 	vars.Directories.Root = "a"
-	vars.Resource = &core.Resource{File: "A"}
+	vars.File = "A"
 	e, _ := core.NewValues("a", vars)
 	step := steps.Context{}
 	step.Settings = cli.Settings{}

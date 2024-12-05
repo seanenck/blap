@@ -41,7 +41,7 @@ func Release(caller fetch.Retriever, ctx fetch.Context, a core.GitHubMode) (*cor
 		regex = ""
 	}
 
-	re, err := ctx.CompileRegexp(regex, &fetch.Template{Tag: fetch.Version(tag)})
+	re, err := ctx.CompileRegexp(regex, &fetch.Template{Tag: core.Version(tag)})
 	if err != nil {
 		return nil, err
 	}

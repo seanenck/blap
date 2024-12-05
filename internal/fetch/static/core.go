@@ -26,7 +26,7 @@ func New(ctx fetch.Context, a core.StaticMode) (*core.Resource, error) {
 	if file == "" {
 		file = fmt.Sprintf("%s-%s", a.Tag, filepath.Base(upstream))
 	} else {
-		tl, err := ctx.Templating(file, &fetch.Template{Tag: fetch.Version(a.Tag)})
+		tl, err := ctx.Templating(file, &fetch.Template{Tag: core.Version(a.Tag)})
 		if err != nil {
 			return nil, err
 		}

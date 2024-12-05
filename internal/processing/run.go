@@ -148,7 +148,10 @@ func (c Configuration) Do(ctx Context) error {
 		}
 	}
 	vars := steps.Variables{}
-	vars.Resource = rsrc
+	vars.Archive = rsrc.Paths.Archive
+	vars.File = rsrc.File
+	vars.Tag = rsrc.Tag
+	vars.URL = rsrc.URL
 	vars.Directories.Root = dest
 	e, err := core.NewValues(ctx.Name, vars)
 	if err != nil {

@@ -166,7 +166,7 @@ func (b Base) Get(r fetch.Retriever, ctx fetch.Context) (*core.Resource, error) 
 		Arguments []string
 	}
 	t := filterTemplate{}
-	t.Template = &fetch.Template{Tag: fetch.Version(tag)}
+	t.Template = &fetch.Template{Tag: core.Version(tag)}
 	t.Source = up
 	t.Arguments = b.args
 	tl, err := ctx.Templating(b.data.Download, t)

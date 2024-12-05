@@ -46,26 +46,3 @@ func TestCompileRegex(t *testing.T) {
 		t.Error("regex should match")
 	}
 }
-
-func TestVersion(t *testing.T) {
-	v := fetch.Version("")
-	if v.Major() != "" || v.Minor() != "" || v.Patch() != "" || v.Remainder() != "" || v.Version() != "" {
-		t.Errorf("invalid version: %v", v)
-	}
-	v = fetch.Version("v1")
-	if v.Major() != "1" || v.Minor() != "" || v.Patch() != "" || v.Remainder() != "" || v.Version() != "1" {
-		t.Errorf("invalid version: %v", v)
-	}
-	v = fetch.Version("1.2")
-	if v.Major() != "1" || v.Minor() != "2" || v.Patch() != "" || v.Remainder() != "" || v.Version() != "1.2" {
-		t.Errorf("invalid version: %v", v)
-	}
-	v = fetch.Version("v1.2.3")
-	if v.Major() != "1" || v.Minor() != "2" || v.Patch() != "3" || v.Remainder() != "" || v.Version() != "1.2.3" {
-		t.Errorf("invalid version: %v", v)
-	}
-	v = fetch.Version("v1.2.3.4.5")
-	if v.Major() != "1" || v.Minor() != "2" || v.Patch() != "3" || v.Remainder() != "4.5" || v.Version() != "1.2.3.4.5" {
-		t.Errorf("invalid version: %v", v)
-	}
-}
