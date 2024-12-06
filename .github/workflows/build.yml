@@ -17,14 +17,11 @@ jobs:
         os:
           - name: ubuntu-latest
             image: null
-            deps: "sudo apt-get update && sudo apt-get install just"
             display: ubuntu
           - name: ubuntu-latest
             image: alpine:latest
-            deps: "apk add just"
             display: alpine
           - name: macos-latest
-            deps: "brew install just"
             image: null
             display: macos
     runs-on: ${{ matrix.os.name }}
@@ -33,11 +30,10 @@ jobs:
       image: ${{ matrix.os.image }}
     steps:
       - uses: actions/checkout@v4
+      - uses: extractions/setup-just@v2
       - name: go
         uses: actions/setup-go@v5
         with:
           go-version: 1.23
-      - name: "deps"
-        run: ${{ matrix.os.deps }}
       - name: "check"
         run: just version=${GITHUB_SHA} check
