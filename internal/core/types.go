@@ -86,7 +86,7 @@ type (
 		GitHub   *GitHubMode
 		Git      *GitMode
 		Web      *WebMode
-		Command  *RunMode
+		Exec     *RunMode
 		Static   *StaticMode
 		Extract  Extraction
 		Commands struct {

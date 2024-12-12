@@ -29,7 +29,7 @@ scrape.download = "{{ $.Vars.Source }}{{ $.Vars.Tag }}"
 # the first element will always be chosen from the list
 scrape.sort = "semver"
 
-[applications.custom.command]
+[applications.custom.exec]
 executable = "echo"
 arguments = ["abc"]
 fetch.filters = [
