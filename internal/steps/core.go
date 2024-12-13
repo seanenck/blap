@@ -3,6 +3,8 @@ package steps
 
 import (
 	"errors"
+	"fmt"
+	"path/filepath"
 
 	"github.com/seanenck/blap/internal/cli"
 	"github.com/seanenck/blap/internal/core"
@@ -15,10 +17,12 @@ type (
 		Tag         string
 		File        string
 		Archive     string
-		Directories struct {
-			Root    string
-			Working string
-		}
+		Directories Directories
+	}
+	// Directories contain information about where the unpacked/working copy is stored
+	Directories struct {
+		Root    string
+		Working string
 	}
 	// Context are step settings/context
 	Context struct {
@@ -50,4 +54,18 @@ func (c Context) Valid() error {
 // Version will get the tag as a version
 func (v Variables) Version() core.Version {
 	return core.Version(v.Tag)
+}
+
+// Installed is used to indicate that an object is 'installed'
+func (d Directories) Installed() string {
+	return d.newMarker("installed")
+}
+
+// Data is a working/data/variable payload available to templating
+func (d Directories) Data() string {
+	return d.newMarker("data")
+}
+
+func (d Directories) newMarker(name string) string {
+	return filepath.Join(d.Root, fmt.Sprintf(".blap_%s", name))
 }

@@ -30,3 +30,11 @@ func TestClone(t *testing.T) {
 		t.Errorf("invalid clone: %v (%s)", n, n.Version())
 	}
 }
+
+func TestMarkers(t *testing.T) {
+	v := steps.Variables{}
+	v.Directories.Root = "xyz"
+	if v.Directories.Installed() != "xyz/.blap_installed" || v.Directories.Data() != "xyz/.blap_data" {
+		t.Error("invalid markers")
+	}
+}

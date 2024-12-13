@@ -147,12 +147,17 @@ func (c Configuration) Do(ctx Context) error {
 			return err
 		}
 	}
-	marker := filepath.Join(dest, ".blap_installed")
+	vars := steps.Variables{}
+	vars.Archive = rsrc.Paths.Archive
+	vars.File = rsrc.File
+	vars.Tag = rsrc.Tag
+	vars.URL = rsrc.URL
+	vars.Directories.Root = dest
+	marker := vars.Directories.Installed()
 	if !ctx.Application.Flags.ReDeploy() && util.PathExists(marker) {
 		c.log(true, "marked deployed: %s\n", marker)
 		return nil
 	}
-	vars := steps.Variables{}
 	vars.Archive = rsrc.Paths.Archive
 	vars.File = rsrc.File
 	vars.Tag = rsrc.Tag
