@@ -147,6 +147,11 @@ func (c Configuration) Do(ctx Context) error {
 			return err
 		}
 	}
+	marker := filepath.Join(dest, ".blap_installed")
+	if !ctx.Application.Flags.ReDeploy() && util.PathExists(marker) {
+		c.log(true, "marked deployed: %s\n", marker)
+		return nil
+	}
 	vars := steps.Variables{}
 	vars.Archive = rsrc.Paths.Archive
 	vars.File = rsrc.File
@@ -168,7 +173,7 @@ func (c Configuration) Do(ctx Context) error {
 		return err
 	}
 	c.log(true, "commit: %s\n", ctx.Name)
-	return nil
+	return os.WriteFile(marker, []byte(vars.Tag), 0o644)
 }
 
 // Purge will run purge on inputs

@@ -232,7 +232,7 @@ func TestFlagCheck(t *testing.T) {
 		t.Errorf("invalid error: %v", err)
 	}
 	f = core.FlagSet{""}
-	if err := f.Check(); err == nil || err.Error() != "invalid flags, unknown value: " {
+	if err := f.Check(); err == nil || err.Error() != "invalid flags, flag set not supported: " {
 		t.Errorf("invalid error: %v", err)
 	}
 	f = core.FlagSet{"pinned"}
@@ -241,6 +241,30 @@ func TestFlagCheck(t *testing.T) {
 	}
 	f = core.FlagSet{"disabled", "xyz"}
 	if err := f.Check(); err == nil || err.Error() != "invalid flags, flag set not supported: disabled,xyz" {
+		t.Errorf("invalid error: %v", err)
+	}
+	f = core.FlagSet{"pinned", "xyz"}
+	if err := f.Check(); err == nil || err.Error() != "invalid flags, flag set not supported: pinned,xyz" {
+		t.Errorf("invalid error: %v", err)
+	}
+	f = core.FlagSet{"redeploy", "xyz"}
+	if err := f.Check(); err == nil || err.Error() != "invalid flags, flag set not supported: redeploy,xyz" {
+		t.Errorf("invalid error: %v", err)
+	}
+	f = core.FlagSet{"disabled", "pinned"}
+	if err := f.Check(); err == nil || err.Error() != "invalid flags, flag set not supported: disabled,pinned" {
+		t.Errorf("invalid error: %v", err)
+	}
+	f = core.FlagSet{"disabled", "redeploy"}
+	if err := f.Check(); err != nil {
+		t.Errorf("invalid error: %v", err)
+	}
+	f = core.FlagSet{"pinned", "redeploy"}
+	if err := f.Check(); err != nil {
+		t.Errorf("invalid error: %v", err)
+	}
+	f = core.FlagSet{"pinned", "redeploy", "disabled"}
+	if err := f.Check(); err == nil || err.Error() != "invalid flags, flag set not supported: pinned,redeploy,disabled" {
 		t.Errorf("invalid error: %v", err)
 	}
 }

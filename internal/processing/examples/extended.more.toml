@@ -30,6 +30,9 @@ scrape.download = "{{ $.Vars.Source }}{{ $.Vars.Tag }}"
 scrape.sort = "semver"
 
 [applications.custom.exec]
+# by default blap tries to not redeploy applications (e.g. once deployed it is static until next release
+# but that may not be desired and can be overriden by application flags
+flags = ["redeploy"]
 executable = "echo"
 arguments = ["abc"]
 fetch.filters = [

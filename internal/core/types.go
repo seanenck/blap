@@ -16,8 +16,9 @@ import (
 )
 
 const (
-	disableFlag = "disabled"
-	pinFlag     = "pinned"
+	disableFlag  = "disabled"
+	pinFlag      = "pinned"
+	redeployFlag = "redeploy"
 )
 
 type (
@@ -290,17 +291,29 @@ func (v SetVariables) Unset() {
 
 // Check will validate a flag set
 func (f FlagSet) Check() error {
-	switch len(f) {
+	l := len(f)
+	switch l {
 	case 0:
-		break
-	case 1:
-		if !f.Skipped() {
-			return fmt.Errorf("invalid flags, unknown value: %s", f[0])
+		return nil
+	case 1, 2:
+		skipped := f.Skipped()
+		redeploy := f.ReDeploy()
+		if l == 1 {
+			if skipped || redeploy {
+				return nil
+			}
+		} else {
+			if skipped && redeploy {
+				return nil
+			}
 		}
-	default:
-		return fmt.Errorf("invalid flags, flag set not supported: %s", strings.Join(f, ","))
 	}
-	return nil
+	return fmt.Errorf("invalid flags, flag set not supported: %s", strings.Join(f, ","))
+}
+
+// ReDeploy indicates the application prefers to be redeployed
+func (f FlagSet) ReDeploy() bool {
+	return f.has(redeployFlag)
 }
 
 // Pin indicates if the flag means something should be pinned (not updated/disabled but not pruned)

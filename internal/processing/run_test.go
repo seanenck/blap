@@ -385,6 +385,53 @@ func TestConfigurationDo(t *testing.T) {
 	}
 }
 
+func TestReDeploy(t *testing.T) {
+	os.RemoveAll("testdata")
+	os.Mkdir("testdata", 0o755)
+	defer func() {
+		os.RemoveAll("testdata")
+	}()
+	s := cli.Settings{}
+	f := &mockExecutor{}
+	f.dl = true
+	f.rsrc = &core.Resource{File: "xyz.tar.xz", URL: "xxx", Tag: "123"}
+	cfg, _ := processing.Load(filepath.Join("examples", "config.toml"), s)
+	f.rsrc = &core.Resource{File: "xyz.tar.xz", URL: "xxx", Tag: "123"}
+	if err := cfg.Do(processing.Context{Fetcher: f, Name: "abc", Runner: &mockExecutor{}, Executor: &mockExecutor{}}); err != nil {
+		t.Errorf("invalid error: %v", err)
+	}
+	if len(cfg.Changed()) != 1 {
+		t.Error("unexpected updates")
+	}
+	s.Verbosity = 100
+	var buf bytes.Buffer
+	s.Writer = &buf
+	cfg, _ = processing.Load(filepath.Join("examples", "config.toml"), s)
+	f.rsrc = &core.Resource{File: "xyz.tar.xz", URL: "xxx", Tag: "123"}
+	if err := cfg.Do(processing.Context{Fetcher: f, Name: "abc", Runner: &mockExecutor{}, Executor: &mockExecutor{}}); err != nil {
+		t.Errorf("invalid error: %v", err)
+	}
+	if len(cfg.Changed()) != 1 {
+		t.Error("unexpected updates")
+	}
+	if s := buf.String(); !strings.Contains(s, "marked deployed") {
+		t.Errorf("invalid buffer: %s", s)
+	}
+	buf = bytes.Buffer{}
+	s.Writer = &buf
+	cfg, _ = processing.Load(filepath.Join("examples", "config.toml"), s)
+	f.rsrc = &core.Resource{File: "xyz.tar.xz", URL: "xxx", Tag: "123"}
+	if err := cfg.Do(processing.Context{Application: core.Application{Flags: []string{"redeploy"}}, Fetcher: f, Name: "abc", Runner: &mockExecutor{}, Executor: &mockExecutor{}}); err != nil {
+		t.Errorf("invalid error: %v", err)
+	}
+	if len(cfg.Changed()) != 1 {
+		t.Error("unexpected updates")
+	}
+	if s := buf.String(); strings.Contains(s, "marked deployed") {
+		t.Errorf("invalid buffer: %s", s)
+	}
+}
+
 func TestConfigurationBasicProcess(t *testing.T) {
 	defer genCleanup()()
 	m := &mockExecutor{}
