@@ -33,7 +33,7 @@ const (
 	// CleanDirFlag indicates directory cleanup should occur
 	CleanDirFlag = "directories"
 	// ReDeployFlag will indicate all apps should ignore the redeployment rules and force redeploy
-	ReDeployFlag            = "redeploy-all"
+	ReDeployFlag            = "force-redeploy"
 	isFlag                  = "--"
 	displayIncludeFlag      = isFlag + IncludeFlag
 	displayApplicationsFlag = isFlag + ApplicationsFlag
