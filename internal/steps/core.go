@@ -23,7 +23,7 @@ type (
 	Directories struct {
 		Root    string
 		Working string
-		Files   map[string]string
+		files   map[string]string
 	}
 	// Context are step settings/context
 	Context struct {
@@ -41,14 +41,24 @@ func (v Variables) Clone() Variables {
 	n.URL = v.URL
 	n.File = v.File
 	n.Archive = v.Archive
-	n.Directories.Files = v.Directories.Files
+	n.Directories.files = v.Directories.files
 	return n
+}
+
+// NewVariables will initialize the new variable for steps
+func NewVariables() Variables {
+	v := Variables{}
+	v.Directories.files = make(map[string]string)
+	return v
 }
 
 // Valid will check validity of the context
 func (c Context) Valid() error {
 	if c.Variables.Vars.Directories.Root == "" {
 		return errors.New("directory not set")
+	}
+	if c.Variables.Vars.Directories.files == nil {
+		return errors.New("files map not set")
 	}
 	return nil
 }
@@ -63,10 +73,18 @@ func (d Directories) Installed() string {
 	return d.newMarker("installed", "")
 }
 
+// GetFile will get a NewFile set file
+func (v Variables) GetFile(name string) string {
+	if v.Directories.files != nil {
+		return v.Directories.files[name]
+	}
+	return ""
+}
+
 // NewFile will create a 'blap'-based file path and add it to the markers for further use
-func (d Directories) NewFile(name string) string {
-	path := d.newMarker(name, "data_")
-	d.Files[name] = path
+func (v Variables) NewFile(name string) string {
+	path := v.Directories.newMarker(name, "data_")
+	v.Directories.files[name] = path
 	return path
 }
 

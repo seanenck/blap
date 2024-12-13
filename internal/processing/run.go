@@ -147,13 +147,12 @@ func (c Configuration) Do(ctx Context) error {
 			return err
 		}
 	}
-	vars := steps.Variables{}
+	vars := steps.NewVariables()
 	vars.Archive = rsrc.Paths.Archive
 	vars.File = rsrc.File
 	vars.Tag = rsrc.Tag
 	vars.URL = rsrc.URL
 	vars.Directories.Root = dest
-	vars.Directories.Files = make(map[string]string)
 	marker := vars.Directories.Installed()
 	if !ctx.Application.Flags.ReDeploy() && util.PathExists(marker) {
 		c.log(true, "marked deployed: %s\n", marker)
