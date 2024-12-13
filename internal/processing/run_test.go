@@ -430,6 +430,20 @@ func TestReDeploy(t *testing.T) {
 	if s := buf.String(); strings.Contains(s, "marked deployed") {
 		t.Errorf("invalid buffer: %s", s)
 	}
+	buf = bytes.Buffer{}
+	s.Writer = &buf
+	s.ReDeploy = true
+	cfg, _ = processing.Load(filepath.Join("examples", "config.toml"), s)
+	f.rsrc = &core.Resource{File: "xyz.tar.xz", URL: "xxx", Tag: "123"}
+	if err := cfg.Do(processing.Context{Application: core.Application{}, Fetcher: f, Name: "abc", Runner: &mockExecutor{}, Executor: &mockExecutor{}}); err != nil {
+		t.Errorf("invalid error: %v", err)
+	}
+	if len(cfg.Changed()) != 1 {
+		t.Error("unexpected updates")
+	}
+	if s := buf.String(); strings.Contains(s, "marked deployed") {
+		t.Errorf("invalid buffer: %s", s)
+	}
 }
 
 func TestConfigurationBasicProcess(t *testing.T) {

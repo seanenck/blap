@@ -33,6 +33,7 @@ type Settings struct {
 	}
 	Verbosity int
 	CleanDirs bool
+	ReDeploy  bool
 }
 
 // FilterApplications indicates if the

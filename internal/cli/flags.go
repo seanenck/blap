@@ -31,7 +31,9 @@ const (
 	// IncludeFlag allows for filtering included files
 	IncludeFlag = "include"
 	// CleanDirFlag indicates directory cleanup should occur
-	CleanDirFlag            = "directories"
+	CleanDirFlag = "directories"
+	// ReDeployFlag will indicate all apps should ignore the redeployment rules and force redeploy
+	ReDeployFlag            = "redeploy-all"
 	isFlag                  = "--"
 	displayIncludeFlag      = isFlag + IncludeFlag
 	displayApplicationsFlag = isFlag + ApplicationsFlag
@@ -39,6 +41,7 @@ const (
 	displayVerbosityFlag    = isFlag + VerbosityFlag
 	displayCommitFlag       = isFlag + CommitFlag
 	displayCleanDirFlag     = isFlag + CleanDirFlag
+	displayReDeployFlag     = isFlag + ReDeployFlag
 )
 
 // Parse will parse arguments to settings
@@ -47,6 +50,7 @@ func Parse(w io.Writer, purging bool, args []string) (*Settings, error) {
 	var negateFilter bool
 	var includeFilter string
 	var cleanDirs bool
+	var isReDeploy bool
 	dryRun := true
 	verbosity := InfoVerbosity
 	if len(args) > 0 {
@@ -54,6 +58,7 @@ func Parse(w io.Writer, purging bool, args []string) (*Settings, error) {
 		var apps *string
 		var disable *string
 		var include *string
+		var reDeploy *bool
 		var dirs *bool
 		if purging {
 			dirs = set.Bool(CleanDirFlag, false, "cleanup orphaned directories")
@@ -61,6 +66,7 @@ func Parse(w io.Writer, purging bool, args []string) (*Settings, error) {
 			apps = set.String(ApplicationsFlag, "", "limit application checks")
 			disable = set.String(DisableFlag, "", "disable applications")
 			include = set.String(IncludeFlag, "", "include only matched files")
+			reDeploy = set.Bool(ReDeployFlag, false, "redeploy all applications")
 		}
 		verbose := set.Int(VerbosityFlag, InfoVerbosity, "set verbosity level")
 		commit := set.Bool(CommitFlag, false, "confirm and commit changes")
@@ -90,8 +96,14 @@ func Parse(w io.Writer, purging bool, args []string) (*Settings, error) {
 					appFilter = d
 				}
 			}
+			if reDeploy != nil {
+				isReDeploy = *reDeploy
+			}
 		}
 		dryRun = !*commit
+		if dryRun && isReDeploy {
+			return nil, errors.New("can not redeploy and dry-run")
+		}
 	}
 	var includeReg *regexp.Regexp
 	if includeFilter != "" {
@@ -108,6 +120,7 @@ func Parse(w io.Writer, purging bool, args []string) (*Settings, error) {
 		Purge:     purging,
 		Writer:    w,
 		Include:   includeReg,
+		ReDeploy:  isReDeploy,
 	}
 	if err := ctx.CompileApplicationFilter(appFilter, negateFilter); err != nil {
 		return nil, err

@@ -154,9 +154,11 @@ func (c Configuration) Do(ctx Context) error {
 	vars.URL = rsrc.URL
 	vars.Directories.Root = dest
 	marker := vars.Directories.Installed()
-	if !ctx.Application.Flags.ReDeploy() && util.PathExists(marker) {
-		c.log(true, "marked deployed: %s\n", marker)
-		return nil
+	if !c.context.ReDeploy {
+		if !ctx.Application.Flags.ReDeploy() && util.PathExists(marker) {
+			c.log(true, "marked deployed: %s\n", marker)
+			return nil
+		}
 	}
 	vars.Archive = rsrc.Paths.Archive
 	vars.File = rsrc.File

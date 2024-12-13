@@ -46,6 +46,9 @@ func TestParseErrors(t *testing.T) {
 	if _, err := cli.Parse(nil, true, []string{"-applications", "-1"}); err == nil || !strings.Contains(err.Error(), "flag provided but not defined:") {
 		t.Errorf("invalid error: %v", err)
 	}
+	if _, err := cli.Parse(nil, false, []string{"-redeploy-all"}); err == nil || !strings.Contains(err.Error(), "not redeploy and dry-run") {
+		t.Errorf("invalid error: %v", err)
+	}
 }
 
 func TestParse(t *testing.T) {
