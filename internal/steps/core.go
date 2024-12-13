@@ -23,6 +23,7 @@ type (
 	Directories struct {
 		Root    string
 		Working string
+		Markers map[string]string
 	}
 	// Context are step settings/context
 	Context struct {
@@ -40,6 +41,7 @@ func (v Variables) Clone() Variables {
 	n.URL = v.URL
 	n.File = v.File
 	n.Archive = v.Archive
+	n.Directories.Markers = v.Directories.Markers
 	return n
 }
 
@@ -58,14 +60,19 @@ func (v Variables) Version() core.Version {
 
 // Installed is used to indicate that an object is 'installed'
 func (d Directories) Installed() string {
-	return d.newMarker("installed")
+	return d.newMarker("installed", "")
 }
 
-// Data is a working/data/variable payload available to templating
-func (d Directories) Data() string {
-	return d.newMarker("data")
+// NewFile will create a 'blap'-based file path and add it to the markers for further use
+func (d *Directories) NewFile(name string) string {
+	path := d.newMarker(name, "data_")
+	if d.Markers == nil {
+		d.Markers = make(map[string]string)
+	}
+	d.Markers[name] = path
+	return path
 }
 
-func (d Directories) newMarker(name string) string {
-	return filepath.Join(d.Root, fmt.Sprintf(".blap_%s", name))
+func (d Directories) newMarker(name, sub string) string {
+	return filepath.Join(d.Root, fmt.Sprintf(".blap_%s%s", sub, name))
 }
