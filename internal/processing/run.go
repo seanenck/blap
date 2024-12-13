@@ -153,7 +153,7 @@ func (c Configuration) Do(ctx Context) error {
 	vars.Tag = rsrc.Tag
 	vars.URL = rsrc.URL
 	vars.Directories.Root = dest
-	vars.Directories.Markers = make(map[string]string)
+	vars.Directories.Files = make(map[string]string)
 	marker := vars.Directories.Installed()
 	if !ctx.Application.Flags.ReDeploy() && util.PathExists(marker) {
 		c.log(true, "marked deployed: %s\n", marker)

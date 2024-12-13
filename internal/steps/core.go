@@ -23,7 +23,7 @@ type (
 	Directories struct {
 		Root    string
 		Working string
-		Markers map[string]string
+		Files   map[string]string
 	}
 	// Context are step settings/context
 	Context struct {
@@ -41,7 +41,7 @@ func (v Variables) Clone() Variables {
 	n.URL = v.URL
 	n.File = v.File
 	n.Archive = v.Archive
-	n.Directories.Markers = v.Directories.Markers
+	n.Directories.Files = v.Directories.Files
 	return n
 }
 
@@ -64,12 +64,9 @@ func (d Directories) Installed() string {
 }
 
 // NewFile will create a 'blap'-based file path and add it to the markers for further use
-func (d *Directories) NewFile(name string) string {
+func (d Directories) NewFile(name string) string {
 	path := d.newMarker(name, "data_")
-	if d.Markers == nil {
-		d.Markers = make(map[string]string)
-	}
-	d.Markers[name] = path
+	d.Files[name] = path
 	return path
 }
 

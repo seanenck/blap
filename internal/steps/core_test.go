@@ -26,32 +26,23 @@ func TestClone(t *testing.T) {
 	v.Archive = "id"
 	v.Tag = "v1.2.3"
 	v.Directories.Working = "work"
-	v.Directories.Markers = map[string]string{
+	v.Directories.Files = map[string]string{
 		"xyz": "111",
 	}
 	n := v.Clone()
-	if n.Directories.Root != "xyz" || n.Directories.Working != "work" || n.File != "a" || n.URL != "xy" || n.Archive != "id" || n.Tag != "v1.2.3" || n.Version().Full() != "1.2.3" || fmt.Sprintf("%v", n.Directories.Markers) != "map[xyz:111]" {
-		t.Errorf("invalid clone: %v (%s, %v)", n, n.Version(), n.Directories.Markers)
+	if n.Directories.Root != "xyz" || n.Directories.Working != "work" || n.File != "a" || n.URL != "xy" || n.Archive != "id" || n.Tag != "v1.2.3" || n.Version().Full() != "1.2.3" || fmt.Sprintf("%v", n.Directories.Files) != "map[xyz:111]" {
+		t.Errorf("invalid clone: %v (%s, %v)", n, n.Version(), n.Directories.Files)
 	}
 }
 
-func TestMarkers(t *testing.T) {
+func TestFiles(t *testing.T) {
 	v := steps.Variables{}
 	v.Directories.Root = "xyz"
-	v.Directories.Markers = map[string]string{}
+	v.Directories.Files = map[string]string{}
 	if p := v.Directories.NewFile("vars"); p != "xyz/.blap_data_vars" {
 		t.Error("invalid marker")
 	}
-	if v.Directories.Installed() != "xyz/.blap_installed" || v.Directories.Markers["vars"] != "xyz/.blap_data_vars" {
-		t.Error("invalid markers")
-	}
-	v = steps.Variables{}
-	v.Directories.Root = "xyz"
-	v.Directories.Markers = nil
-	if p := v.Directories.NewFile("vars"); p != "xyz/.blap_data_vars" {
-		t.Error("invalid marker")
-	}
-	if v.Directories.Installed() != "xyz/.blap_installed" || v.Directories.Markers["vars"] != "xyz/.blap_data_vars" {
+	if v.Directories.Installed() != "xyz/.blap_installed" || v.Directories.Files["vars"] != "xyz/.blap_data_vars" {
 		t.Error("invalid markers")
 	}
 }
