@@ -317,6 +317,7 @@ func (c Configuration) Process(executor Executor, fetcher fetch.Retriever, runne
 	slices.Reverse(priorities)
 	environ := c.Variables.Set()
 	defer environ.Unset()
+	var pErrors []error
 	for _, p := range priorities {
 		apps := prioritySet[p]
 		appErrors := make(chan error, len(apps))
@@ -339,14 +340,10 @@ func (c Configuration) Process(executor Executor, fetcher fetch.Retriever, runne
 			}
 		}
 		wg.Wait()
-		var pErrors []error
 		for len(appErrors) > 0 {
 			if err := <-appErrors; err != nil {
 				pErrors = append(pErrors, err)
 			}
-		}
-		if len(pErrors) > 0 {
-			return errors.Join(pErrors...)
 		}
 	}
 	changed := executor.Changed()
@@ -388,6 +385,9 @@ func (c Configuration) Process(executor Executor, fetcher fetch.Retriever, runne
 				newIndex.Names = append(newIndex.Names, change.Name)
 			}
 		}
+	}
+	if len(pErrors) > 0 {
+		return errors.Join(pErrors...)
 	}
 	if c.Indexing.Enabled {
 		removeIndex := util.PathExists(indexFile)
