@@ -22,7 +22,6 @@ import (
 var processLock = &sync.Mutex{}
 
 type (
-	errorList []error
 	// Change are update/purge change sets
 	Change struct {
 		Name    string
@@ -51,15 +50,6 @@ type (
 		Dirs  []string `json:"dirs,omitempty"`
 	}
 )
-
-func (e errorList) add(errs []chan error) errorList {
-	for _, r := range errs {
-		if err := <-r; err != nil {
-			e = append(e, err)
-		}
-	}
-	return e
-}
 
 // Do will perform processing of configuration components
 func (c Configuration) Do(ctx Context) error {
@@ -328,26 +318,35 @@ func (c Configuration) Process(executor Executor, fetcher fetch.Retriever, runne
 	environ := c.Variables.Set()
 	defer environ.Unset()
 	for _, p := range priorities {
-		var errs []chan error
-		var errorSet errorList
-		for _, a := range prioritySet[p] {
-			for len(errs) > c.Parallelization {
-				errorSet = errorSet.add(errs)
-				errs = []chan error{}
-			}
-			chn := make(chan error)
-			go func(ctx Context, e chan error) {
+		apps := prioritySet[p]
+		appErrors := make(chan error, len(apps))
+		var wg sync.WaitGroup
+		count := 0
+		for _, a := range apps {
+			wg.Add(1)
+			go func(ctx Context) {
+				defer wg.Done()
 				var cErr error
 				if err := executor.Do(ctx); err != nil {
 					cErr = fmt.Errorf("application '%s' error: %v", ctx.Name, err)
 				}
-				e <- cErr
-			}(a, chn)
-			errs = append(errs, chn)
+				appErrors <- cErr
+			}(a)
+			count++
+			if c.Parallelization == 0 || count > c.Parallelization {
+				wg.Wait()
+				count = 0
+			}
 		}
-		errorSet = errorSet.add(errs)
-		if len(errorSet) > 0 {
-			return errors.Join(errorSet...)
+		wg.Wait()
+		var pErrors []error
+		for len(appErrors) > 0 {
+			if err := <-appErrors; err != nil {
+				pErrors = append(pErrors, err)
+			}
+		}
+		if len(pErrors) > 0 {
+			return errors.Join(pErrors...)
 		}
 	}
 	changed := executor.Changed()
