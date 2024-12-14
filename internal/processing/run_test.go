@@ -371,7 +371,7 @@ func TestConfigurationDo(t *testing.T) {
 	cfg, _ = processing.Load(filepath.Join("examples", "config.toml"), s)
 	f.rsrc = &core.Resource{File: "xyz.tar.xz", URL: "xxx", Tag: "123"}
 	app := core.Application{}
-	app.Commands.Steps = append(app.Commands.Steps, core.Step{})
+	app.Setup = append(app.Setup, core.Step{})
 	app.Extract.Skip = true
 	if err := cfg.Do(processing.Context{Application: app, Fetcher: f, Name: "abc", Runner: &mockExecutor{}, Executor: &mockExecutor{}}); err != nil {
 		t.Errorf("invalid error: %v", err)

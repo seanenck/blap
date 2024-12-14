@@ -82,19 +82,17 @@ type (
 	}
 	// Application defines how an application is downloaded, unpacked, and deployed
 	Application struct {
-		Priority int
-		Flags    FlagSet
-		GitHub   *GitHubMode
-		Git      *GitMode
-		Web      *WebMode
-		Exec     *RunMode
-		Static   *StaticMode
-		Extract  Extraction
-		Commands struct {
-			Variables Variables
-			ClearEnv  bool
-			Steps     []Step
-		}
+		Priority  int
+		Flags     FlagSet
+		GitHub    *GitHubMode
+		Git       *GitMode
+		Web       *WebMode
+		Exec      *RunMode
+		Static    *StaticMode
+		Extract   Extraction
+		Variables Variables
+		ClearEnv  bool
+		Setup     []Step
 		Platforms []struct {
 			Disable bool
 			Value   Resolved
@@ -147,7 +145,7 @@ type (
 
 // CommandEnv creates a command environment from an application
 func (a Application) CommandEnv() CommandEnv {
-	return CommandEnv{Clear: a.Commands.ClearEnv, Variables: a.Commands.Variables}
+	return CommandEnv{Clear: a.ClearEnv, Variables: a.Variables}
 }
 
 // CommandEnv creates a command environment from a step

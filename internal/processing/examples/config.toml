@@ -65,31 +65,30 @@ priority = -100
 project = "neovim/neovim"
 # select the necessary asset
 release = { asset = "nvim-linux64.tar.gz$" }
-[[applications.nvim.commands.steps]]
+[[applications.nvim.setup]]
 command = ["ln", "-sf", "bin/nvim", "~/bin"]
 
 [applications.blap]
-[applications.blap.github]
-# github release mode
-project = "seanenck/blap"
-# instead of selecting a _binary_ asset, get the tarball of a release
-# can perform a source build
-release = { asset = "tarball" }
-[applications.blap.commands]
 # setup build environment settings for ALL application build steps
 clearenv = true
 variables = [
   { key = "GOOS", value = "linux" },
   { key = "GOARCH", value = "arm64" },
 ]
-[[applications.blap.commands.steps]]
+[applications.blap.github]
+# github release mode
+project = "seanenck/blap"
+# instead of selecting a _binary_ asset, get the tarball of a release
+# can perform a source build
+release = { asset = "tarball" }
+[[applications.blap.setup]]
 # run specific commands
 command = ["make", "VERSION={{ $.Vars.Tag }}"]
 variables = [
   { key = "GOOS", value = "1" },
   { key = "X", value = "1" },
 ]
-[[applications.blap.commands.steps]]
+[[applications.blap.setup]]
 clearenv = true
 command = ["ln", "-sf", "target/blap", "~/.local/bin"]
 
@@ -103,5 +102,5 @@ platforms = [
 [applications.nvim2.github]
 project = "neovim/neovim"
 release = { asset = "nvim-linux64.tar.gz$" }
-[[applications.nvim2.commands.steps]]
+[[applications.nvim2.setup]]
 command = ["ln", "-sf", "bin/nvim", "~/bin"]

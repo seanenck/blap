@@ -124,8 +124,8 @@ func (c Configuration) Do(ctx Context) error {
 
 	if ctx.Application.Extract.Skip {
 		c.context.LogDebug(logging.ExtractCategory, "no extraction, done: %s\n", rsrc.File)
-		if len(ctx.Application.Commands.Steps) > 0 {
-			c.context.LogCore(logging.ExtractCategory, "steps set for %s, but extraction disabled\n", ctx.Name)
+		if len(ctx.Application.Setup) > 0 {
+			c.context.LogCore(logging.ExtractCategory, "setup steps set for %s, but extraction disabled\n", ctx.Name)
 		}
 		return nil
 	}
@@ -165,7 +165,7 @@ func (c Configuration) Do(ctx Context) error {
 	if err := func() error {
 		processLock.Lock()
 		defer processLock.Unlock()
-		return steps.Do(ctx.Application.Commands.Steps, ctx.Runner, step, ctx.Application.CommandEnv())
+		return steps.Do(ctx.Application.Setup, ctx.Runner, step, ctx.Application.CommandEnv())
 	}(); err != nil {
 		return err
 	}

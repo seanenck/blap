@@ -103,8 +103,8 @@ func TestVarSetUnset(t *testing.T) {
 
 func TestCommandEnv(t *testing.T) {
 	a := core.Application{}
-	a.Commands.ClearEnv = true
-	a.Commands.Variables = append(a.Commands.Variables, struct {
+	a.ClearEnv = true
+	a.Variables = append(a.Variables, struct {
 		Key   string
 		Value core.Resolved
 	}{})
@@ -113,12 +113,12 @@ func TestCommandEnv(t *testing.T) {
 		t.Error("invalid conversion")
 	}
 	s := core.Application{}
-	s.Commands.ClearEnv = true
-	s.Commands.Variables = append(s.Commands.Variables, struct {
+	s.ClearEnv = true
+	s.Variables = append(s.Variables, struct {
 		Key   string
 		Value core.Resolved
 	}{})
-	s.Commands.Variables = append(s.Commands.Variables, struct {
+	s.Variables = append(s.Variables, struct {
 		Key   string
 		Value core.Resolved
 	}{})

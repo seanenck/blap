@@ -16,7 +16,7 @@ tagged.filters = [
   "refs/tags/release",
   "[0-9]rc[0-9]",
 ]
-[[applications.go.commands.steps]]
+[[applications.go.setup]]
 # run some commands upon source download/extraction
 command = ["ln", "-sf", "bin/go", "~/bin"]
 
@@ -28,6 +28,6 @@ project = "BurntSushi/ripgrep"
 # need to select the asset, can use $.Arch/$.OS (tag and name) to find the asset
 # only one asset can match
 release = { asset = '{{ if eq $.Arch "amd64" }}x86_64{{ end }}-unknown-{{ $.OS }}-(.+?).tar.gz$' }
-[[applications.rg.commands.steps]]
+[[applications.rg.setup]]
 # again, deploy files appropriately
 command = ["ln", "-sf", "rg", "~/bin"]
