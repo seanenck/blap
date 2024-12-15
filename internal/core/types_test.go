@@ -3,6 +3,7 @@ package core_test
 import (
 	"fmt"
 	"os"
+	"slices"
 	"testing"
 
 	"github.com/seanenck/blap/internal/core"
@@ -278,15 +279,18 @@ func TestWebURL(t *testing.T) {
 
 func TestCommandsFromStep(t *testing.T) {
 	s := core.Step{}
-	if len(s.Commands()) > 0 {
+	c := slices.Collect(s.Commands())
+	if len(c) > 0 {
 		t.Errorf("invalid command")
 	}
-	s.Command = []core.Resolved{"x", "y", "z"}
-	if len(s.Commands()) != 1 {
+	s.Command = []string{"x", "y", "z"}
+	c = slices.Collect(s.Commands())
+	if len(c) != 1 {
 		t.Errorf("invalid command")
 	}
-	s.Command = [][]core.Resolved{{"x"}, {"y"}, {"z"}}
-	if len(s.Commands()) != 3 {
+	s.Command = [][]string{{"x"}, {"y"}, {"z"}}
+	c = slices.Collect(s.Commands())
+	if len(c) != 3 {
 		t.Errorf("invalid command")
 	}
 }

@@ -361,14 +361,28 @@ func (w WebURL) CanTemplate() bool {
 }
 
 // Commands will get the step commands
-func (s Step) Commands() [][]Resolved {
-	arr, ok := s.Command.([]Resolved)
-	if ok {
-		return [][]Resolved{arr}
+func (s Step) Commands() iter.Seq[[]Resolved] {
+	conv := func(a []string) []Resolved {
+		var res []Resolved
+		for _, item := range a {
+			res = append(res, Resolved(item))
+		}
+		return res
 	}
-	i, ok := s.Command.([][]Resolved)
-	if !ok {
-		return nil
+	return func(yield func(r []Resolved) bool) {
+		obj, ok := s.Command.([]string)
+		if ok {
+			yield(conv(obj))
+			return
+		}
+		wrapper, ok := s.Command.([][]string)
+		if !ok {
+			return
+		}
+		for _, s := range wrapper {
+			if !yield(conv(s)) {
+				return
+			}
+		}
 	}
-	return i
 }
