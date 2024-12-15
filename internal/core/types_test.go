@@ -283,12 +283,12 @@ func TestCommandsFromStep(t *testing.T) {
 	if len(c) > 0 {
 		t.Errorf("invalid command")
 	}
-	s.Command = []string{"x", "y", "z"}
+	s.Command = []interface{}{"x", "y", "z"}
 	c = slices.Collect(s.Commands())
 	if len(c) != 1 {
 		t.Errorf("invalid command")
 	}
-	s.Command = [][]string{{"x"}, {"y"}, {"z"}}
+	s.Command = []interface{}{[]interface{}{"x"}, []interface{}{"y"}, []interface{}{"z"}}
 	c = slices.Collect(s.Commands())
 	if len(c) != 3 {
 		t.Errorf("invalid command")
