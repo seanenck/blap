@@ -21,45 +21,46 @@ func Do(steps []core.Step, builder util.Runner, ctx Context, e core.CommandEnv) 
 	environ := e.Variables.Set()
 	defer environ.Unset()
 	for _, step := range steps {
-		cmd := step.Command
-		if len(cmd) == 0 {
-			continue
-		}
-		to := ctx.Variables.Vars.Directories.Root
-		if step.Directory != "" {
-			sub, err := ctx.Variables.Template(step.Directory.String())
-			if err != nil {
-				return err
-			}
-			to = filepath.Join(to, sub)
-		}
-		clone := ctx.Variables.Vars.Clone()
-		clone.Directories.Working = to
-		v, err := core.NewValues(ctx.Variables.Name, clone)
-		if err != nil {
-			return err
-		}
-		template := func(in string) (string, error) {
-			return v.Template(in)
-		}
-		exe, err := template(cmd[0].String())
-		if err != nil {
-			return err
-		}
-		var args []string
-		for idx, a := range cmd {
-			if idx == 0 {
+		for _, cmd := range step.Commands() {
+			if len(cmd) == 0 {
 				continue
 			}
-			res := a.String()
-			t, err := template(res)
+			to := ctx.Variables.Vars.Directories.Root
+			if step.Directory != "" {
+				sub, err := ctx.Variables.Template(step.Directory.String())
+				if err != nil {
+					return err
+				}
+				to = filepath.Join(to, sub)
+			}
+			clone := ctx.Variables.Vars.Clone()
+			clone.Directories.Working = to
+			v, err := core.NewValues(ctx.Variables.Name, clone)
 			if err != nil {
 				return err
 			}
-			args = append(args, t)
-		}
-		if err := runStep(ctx, builder, to, exe, args, step.CommandEnv(), step.ClearEnv || e.Clear); err != nil {
-			return err
+			template := func(in string) (string, error) {
+				return v.Template(in)
+			}
+			exe, err := template(cmd[0].String())
+			if err != nil {
+				return err
+			}
+			var args []string
+			for idx, a := range cmd {
+				if idx == 0 {
+					continue
+				}
+				res := a.String()
+				t, err := template(res)
+				if err != nil {
+					return err
+				}
+				args = append(args, t)
+			}
+			if err := runStep(ctx, builder, to, exe, args, step.CommandEnv(), step.ClearEnv || e.Clear); err != nil {
+				return err
+			}
 		}
 	}
 	return nil

@@ -275,3 +275,18 @@ func TestWebURL(t *testing.T) {
 		t.Errorf("invalid web url: %s", s)
 	}
 }
+
+func TestCommandsFromStep(t *testing.T) {
+	s := core.Step{}
+	if len(s.Commands()) > 0 {
+		t.Errorf("invalid command")
+	}
+	s.Command = []core.Resolved{"x", "y", "z"}
+	if len(s.Commands()) != 1 {
+		t.Errorf("invalid command")
+	}
+	s.Command = [][]core.Resolved{{"x"}, {"y"}, {"z"}}
+	if len(s.Commands()) != 3 {
+		t.Errorf("invalid command")
+	}
+}

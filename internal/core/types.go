@@ -102,7 +102,7 @@ type (
 	// Step is a build process step
 	Step struct {
 		Directory Resolved
-		Command   []Resolved
+		Command   interface{}
 		Variables Variables
 		ClearEnv  bool
 	}
@@ -358,4 +358,17 @@ func (w WebURL) String() string {
 // CanTemplate indicates that this type can be templated (as it can)
 func (w WebURL) CanTemplate() bool {
 	return true
+}
+
+// Commands will get the step commands
+func (s Step) Commands() [][]Resolved {
+	arr, ok := s.Command.([]Resolved)
+	if ok {
+		return [][]Resolved{arr}
+	}
+	i, ok := s.Command.([][]Resolved)
+	if !ok {
+		return nil
+	}
+	return i
 }
