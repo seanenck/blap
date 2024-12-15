@@ -71,10 +71,6 @@ func GenerateCompletions(w io.Writer) error {
 	if w == nil {
 		return nil
 	}
-	exe, err := baseExe()
-	if err != nil {
-		return err
-	}
 	comp := Completion{}
 	comp.Executable = exe
 	comp.Command.List = ListCommand

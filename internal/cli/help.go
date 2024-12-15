@@ -5,12 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/seanenck/blap/internal/core"
 )
+
+const exe = "blap"
 
 func helpLine(w io.Writer, sub bool, flag, text string) {
 	spacing := ""
@@ -29,21 +30,9 @@ func Usage(w io.Writer) error {
 	return help(w)
 }
 
-func baseExe() (string, error) {
-	exe, err := os.Executable()
-	if err != nil {
-		return "", err
-	}
-	return filepath.Base(exe), nil
-}
-
 func help(w io.Writer) error {
 	if w == nil {
 		return errors.New("nil writer")
-	}
-	exe, err := baseExe()
-	if err != nil {
-		return err
 	}
 	fmt.Fprintf(w, "%s\n", exe)
 	helpLine(w, false, VersionCommand, "display version information")
