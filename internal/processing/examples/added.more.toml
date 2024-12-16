@@ -30,7 +30,7 @@ project = "BurntSushi/ripgrep"
 release = { asset = '{{ if eq $.Arch "amd64" }}x86_64{{ end }}-unknown-{{ $.OS }}-(.+?).tar.gz$' }
 [[applications.rg.setup]]
 # again, deploy files appropriately
-command = [
+commands = [
     ["ln", "-sf", "rg", "~/bin"],
     ["ln", "-sf", "rg", "~/other/bin"]
 ]

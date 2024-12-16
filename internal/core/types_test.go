@@ -3,7 +3,6 @@ package core_test
 import (
 	"fmt"
 	"os"
-	"slices"
 	"testing"
 
 	"github.com/seanenck/blap/internal/core"
@@ -279,18 +278,22 @@ func TestWebURL(t *testing.T) {
 
 func TestCommandsFromStep(t *testing.T) {
 	s := core.Step{}
-	c := slices.Collect(s.Commands())
-	if len(c) > 0 {
-		t.Errorf("invalid command")
+	a, err := s.Steps()
+	if len(a) > 0 || err != nil {
+		t.Errorf("invalid command: %v", err)
 	}
-	s.Command = []interface{}{"x", "y", "z"}
-	c = slices.Collect(s.Commands())
-	if len(c) != 1 {
-		t.Errorf("invalid command")
+	s.Command = []core.Resolved{"x", "y", "z"}
+	a, err = s.Steps()
+	if len(a) != 1 || err != nil {
+		t.Errorf("invalid command: %v", err)
 	}
-	s.Command = []interface{}{[]interface{}{"x"}, []interface{}{"y"}, []interface{}{"z"}}
-	c = slices.Collect(s.Commands())
-	if len(c) != 3 {
-		t.Errorf("invalid command")
+	s.Commands = [][]core.Resolved{{"x"}, {"y"}, {"z"}}
+	if _, err := s.Steps(); err == nil || err.Error() != "command/commands can not be used in one definition" {
+		t.Errorf("invalid command: %v", err)
+	}
+	s.Command = nil
+	a, err = s.Steps()
+	if len(a) != 3 || err != nil {
+		t.Errorf("invalid command: %v", err)
 	}
 }
