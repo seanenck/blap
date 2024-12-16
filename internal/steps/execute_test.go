@@ -50,7 +50,7 @@ func TestDo(t *testing.T) {
 	vars.File = "A"
 	e, _ := core.NewValues("xyz", vars)
 	step.Variables = e
-	if err := steps.Do([]core.Step{{}, {Directory: "{{ $.Name }}", Command: []core.Resolved{"~/exe/{{ $.Vars.Directories.Working }}", `~/{{ if eq $.Arch "fakearch" }}{{else}}{{ $.Vars.File }}{{end}}`}}}, m, step, core.CommandEnv{}); err != nil {
+	if err := steps.Do([]core.Step{{}, {Directory: "{{ $.Name }}", Command: []interface{}{"~/exe/{{ $.Vars.Directories.Working }}", `~/{{ if eq $.Arch "fakearch" }}{{else}}{{ $.Vars.File }}{{end}}`}}}, m, step, core.CommandEnv{}); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	if fmt.Sprintf("%v", m) != "&{a/xyz xyz/exe/a/xyz [xyz/A] [HOME=xyz] false}" {
@@ -59,7 +59,7 @@ func TestDo(t *testing.T) {
 	vars.File = "A"
 	e, _ = core.NewValues("A", vars)
 	step.Variables = e
-	if err := steps.Do([]core.Step{{}, {Command: []core.Resolved{"~/$HOME/exe", "~/{{ $.Name }}"}}}, m, step, core.CommandEnv{}); err != nil {
+	if err := steps.Do([]core.Step{{}, {Command: []interface{}{"~/$HOME/exe", "~/{{ $.Name }}"}}}, m, step, core.CommandEnv{}); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	if fmt.Sprintf("%v", m) != "&{a xyz/xyz/exe [xyz/A] [HOME=xyz] false}" {
@@ -77,25 +77,25 @@ func TestEnv(t *testing.T) {
 	step := steps.Context{}
 	step.Settings = cli.Settings{}
 	step.Variables = e
-	if err := steps.Do([]core.Step{{}, {Command: []core.Resolved{"~/exe", "~/{{ $.Name }}"}}}, m, step, core.CommandEnv{}); err != nil {
+	if err := steps.Do([]core.Step{{}, {Command: []interface{}{"~/exe", "~/{{ $.Name }}"}}}, m, step, core.CommandEnv{}); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	if m.lastClear || len(m.lastEnv) > 0 {
 		t.Errorf("invalid env: %v %v", m.lastClear, m.lastEnv)
 	}
-	if err := steps.Do([]core.Step{{}, {Commands: [][]core.Resolved{{"~/exe"}, {"~/{{ $.Name }}"}}}}, m, step, core.CommandEnv{Clear: true}); err != nil {
+	if err := steps.Do([]core.Step{{}, {Command: []interface{}{[]interface{}{"~/exe"}, []interface{}{"~/{{ $.Name }}"}}}}, m, step, core.CommandEnv{Clear: true}); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	if !m.lastClear || len(m.lastEnv) > 0 {
 		t.Errorf("invalid env: %v %v", m.lastClear, m.lastEnv)
 	}
-	if err := steps.Do([]core.Step{{}, {ClearEnv: true, Command: []core.Resolved{"~/exe", "~/{{ $.Name }}"}}}, m, step, core.CommandEnv{}); err != nil {
+	if err := steps.Do([]core.Step{{}, {ClearEnv: true, Command: []interface{}{"~/exe", "~/{{ $.Name }}"}}}, m, step, core.CommandEnv{}); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	if !m.lastClear || len(m.lastEnv) > 0 {
 		t.Errorf("invalid env: %v %v", m.lastClear, m.lastEnv)
 	}
-	if err := steps.Do([]core.Step{{ClearEnv: true}, {Command: []core.Resolved{"~/exe/{{ $.Name }}", "~/{{ $.Name }}"}}}, m, step, core.CommandEnv{Clear: true}); err != nil {
+	if err := steps.Do([]core.Step{{ClearEnv: true}, {Command: []interface{}{"~/exe/{{ $.Name }}", "~/{{ $.Name }}"}}}, m, step, core.CommandEnv{Clear: true}); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	if !m.lastClear || len(m.lastEnv) > 0 {
@@ -109,7 +109,7 @@ func TestEnv(t *testing.T) {
 		Key   string
 		Value core.Resolved
 	}{"HOME", "1"})
-	if err := steps.Do([]core.Step{{}, {Variables: v, Command: []core.Resolved{"~/exe", "~/{{ $.Name }}"}}}, m, step, core.CommandEnv{}); err != nil {
+	if err := steps.Do([]core.Step{{}, {Variables: v, Command: []interface{}{"~/exe", "~/{{ $.Name }}"}}}, m, step, core.CommandEnv{}); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	if m.lastClear || len(m.lastEnv) != 1 {
@@ -121,7 +121,7 @@ func TestEnv(t *testing.T) {
 		Key   string
 		Value core.Resolved
 	}{"HOME", "y"})
-	if err := steps.Do([]core.Step{{}, {Variables: v, Command: []core.Resolved{"~/exe", "~/{{ $.Name }}"}}}, m, step, s); err != nil {
+	if err := steps.Do([]core.Step{{}, {Variables: v, Command: []interface{}{"~/exe", "~/{{ $.Name }}"}}}, m, step, s); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	if m.lastClear || len(m.lastEnv) != 1 {
@@ -131,7 +131,7 @@ func TestEnv(t *testing.T) {
 		Key   string
 		Value core.Resolved
 	}{"XYZ", "aaa"})
-	if err := steps.Do([]core.Step{{}, {Variables: v, Command: []core.Resolved{"~/exe", "~/{{ $.Name }}"}}}, m, step, s); err != nil {
+	if err := steps.Do([]core.Step{{}, {Variables: v, Command: []interface{}{"~/exe", "~/{{ $.Name }}"}}}, m, step, s); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	if m.lastClear || len(m.lastEnv) != 2 {
@@ -141,7 +141,7 @@ func TestEnv(t *testing.T) {
 		Key   string
 		Value core.Resolved
 	}{"ZZZ", "aaz"})
-	if err := steps.Do([]core.Step{{}, {Variables: v, Command: []core.Resolved{"~/exe", "~/{{ $.Name }}"}}}, m, step, s); err != nil {
+	if err := steps.Do([]core.Step{{}, {Variables: v, Command: []interface{}{"~/exe", "~/{{ $.Name }}"}}}, m, step, s); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	if m.lastClear || len(m.lastEnv) != 3 {

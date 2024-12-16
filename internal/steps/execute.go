@@ -21,11 +21,7 @@ func Do(steps []core.Step, builder util.Runner, ctx Context, e core.CommandEnv) 
 	environ := e.Variables.Set()
 	defer environ.Unset()
 	for _, step := range steps {
-		cmds, err := step.Steps()
-		if err != nil {
-			return err
-		}
-		for _, cmd := range cmds {
+		for cmd := range step.Commands() {
 			if len(cmd) == 0 {
 				continue
 			}

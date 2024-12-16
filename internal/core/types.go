@@ -3,7 +3,6 @@ package core
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"iter"
 	"os"
@@ -103,8 +102,7 @@ type (
 	// Step is a build process step
 	Step struct {
 		Directory Resolved
-		Command   []Resolved
-		Commands  [][]Resolved
+		Command   interface{}
 		Variables Variables
 		ClearEnv  bool
 	}
@@ -362,24 +360,36 @@ func (w WebURL) CanTemplate() bool {
 	return true
 }
 
-// Steps will get the step commands
-func (s Step) Steps() ([][]Resolved, error) {
-	var res [][]Resolved
-	has := len(s.Command) > 0
-	if has {
-		res = append(res, s.Command)
+// Commands will get the step commands
+func (s Step) Commands() iter.Seq[[]Resolved] {
+	conv := func(a []interface{}) []Resolved {
+		var res []Resolved
+		for _, obj := range a {
+			if item, ok := obj.(string); ok {
+				res = append(res, Resolved(item))
+			}
+		}
+		return res
 	}
-	if len(s.Commands) > 0 {
-		for _, item := range s.Commands {
-			if len(item) == 0 {
+	return func(yield func(r []Resolved) bool) {
+		obj, ok := s.Command.([]interface{})
+		if !ok {
+			return
+		}
+		for idx, item := range obj {
+			if idx == 0 {
+				if _, ok := item.(string); ok {
+					yield(conv(obj))
+					return
+				}
+			}
+			arr, ok := item.([]interface{})
+			if !ok {
 				continue
 			}
-			if has {
-				return nil, errors.New("command/commands can not be used in one definition")
+			if !yield(conv(arr)) {
+				return
 			}
-			res = append(res, item)
 		}
 	}
-
-	return res, nil
 }
