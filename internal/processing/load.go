@@ -40,7 +40,7 @@ func Load(input string, context cli.Settings) (Configuration, error) {
 	c := Configuration{}
 	c.handler = &processHandler{}
 	c.context = context
-	c.Applications = make(map[string]core.Application)
+	c.Apps = make(map[string]core.Application)
 	if err := doDecode(input, &c); err != nil {
 		return c, err
 	}
@@ -83,9 +83,9 @@ func Load(input string, context cli.Settings) (Configuration, error) {
 				}
 			}
 			type included struct {
-				Applications core.AppSet
-				Flags        core.FlagSet
-				Pinned       core.Pinned
+				Apps   core.AppSet
+				Flags  core.FlagSet
+				Pinned core.Pinned
 			}
 			var apps included
 			if err := doDecode(include, &apps); err != nil {
@@ -96,14 +96,14 @@ func Load(input string, context cli.Settings) (Configuration, error) {
 			}
 			if apps.Flags.Skipped() {
 				if apps.Flags.Pin() {
-					for k := range apps.Applications {
+					for k := range apps.Apps {
 						c.Pinned = append(c.Pinned, k)
 					}
 				}
 				continue
 			}
 			c.Pinned = append(c.Pinned, apps.Pinned...)
-			for k, v := range apps.Applications {
+			for k, v := range apps.Apps {
 				ok, err := checkAddApp(k, v)
 				if err != nil {
 					return Configuration{}, err
@@ -111,16 +111,16 @@ func Load(input string, context cli.Settings) (Configuration, error) {
 				if !ok {
 					continue
 				}
-				if _, ok := c.Applications[k]; ok {
+				if _, ok := c.Apps[k]; ok {
 					return c, fmt.Errorf("%s is overwritten by config: %s", k, include)
 				}
-				c.Applications[k] = v
+				c.Apps[k] = v
 			}
 		}
 	}
 	canFilter := context.FilterApplications()
 	sub := make(map[string]core.Application)
-	for n, a := range c.Applications {
+	for n, a := range c.Apps {
 		ok, err := checkAddApp(n, a)
 		if err != nil {
 			return Configuration{}, err
@@ -151,15 +151,15 @@ func Load(input string, context cli.Settings) (Configuration, error) {
 	}
 	c.Pinned = knownPins
 	c.pinnedMatchers = re
-	c.Applications = sub
+	c.Apps = sub
 	return c, nil
 }
 
 // List will simply list information
 func (c Configuration) List(w io.Writer) error {
-	if c.Applications != nil {
+	if c.Apps != nil {
 		var keys []string
-		for k := range c.Applications {
+		for k := range c.Apps {
 			keys = append(keys, k)
 		}
 		if err := list(w, "app", keys); err != nil {

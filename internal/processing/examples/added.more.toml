@@ -2,7 +2,7 @@ pinned = [
   "another2"
 ]
 # along with more applications
-[applications.go.git]
+[apps.go.git]
 # git mode
 # any git repository that 'git' can reach
 repository = "https://github.com/golang/go"
@@ -16,11 +16,11 @@ tagged.filters = [
   "refs/tags/release",
   "[0-9]rc[0-9]",
 ]
-[[applications.go.setup]]
+[[apps.go.setup]]
 # run some commands upon source download/extraction
 commands = ["ln", "-sf", "bin/go", "~/bin"]
 
-[applications.rg.github]
+[apps.rg.github]
 # github mode
 # provide the project on github
 project = "BurntSushi/ripgrep"
@@ -28,7 +28,7 @@ project = "BurntSushi/ripgrep"
 # need to select the asset, can use $.Arch/$.OS (tag and name) to find the asset
 # only one asset can match
 release = { asset = '{{ if eq $.Arch "amd64" }}x86_64{{ end }}-unknown-{{ $.OS }}-(.+?).tar.gz$' }
-[[applications.rg.setup]]
+[[apps.rg.setup]]
 # again, deploy files appropriately
 commands = [
     ["ln", "-sf", "rg", "~/bin"],

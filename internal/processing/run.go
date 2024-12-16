@@ -192,7 +192,7 @@ func (c Configuration) cleanDirectories(restrict []string) ([]string, error) {
 			continue
 		}
 		name := d.Name()
-		if _, ok := c.Applications[name]; ok {
+		if _, ok := c.Apps[name]; ok {
 			continue
 		}
 		if restricted {
@@ -244,7 +244,7 @@ func (c Configuration) Lock(file string) error {
 
 // Process will process application definitions
 func (c Configuration) Process(executor Executor, fetcher fetch.Retriever, runner util.Runner) error {
-	if c.Applications == nil {
+	if c.Apps == nil {
 		return nil
 	}
 	if c.handler == nil {
@@ -295,7 +295,7 @@ func (c Configuration) Process(executor Executor, fetcher fetch.Retriever, runne
 	fetcher.SetConnections(c.Connections)
 	var priorities []int
 	prioritySet := make(map[int][]Context)
-	for name, app := range c.Applications {
+	for name, app := range c.Apps {
 		if hasIndex {
 			if !slices.Contains(idx.Names, name) {
 				continue

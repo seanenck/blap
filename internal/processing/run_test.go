@@ -127,8 +127,8 @@ func TestProcessUpdate(t *testing.T) {
 	if err := m.noCount(); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
-	cfg.Applications = make(map[string]core.Application)
-	cfg.Applications["go"] = core.Application{}
+	cfg.Apps = make(map[string]core.Application)
+	cfg.Apps["go"] = core.Application{}
 	if err := cfg.Process(m, m, m); err == nil || err.Error() != "configuration not ready" {
 		t.Errorf("invalid error: %v", err)
 	}

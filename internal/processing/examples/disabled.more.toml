@@ -7,13 +7,13 @@ pinned = [
   "123"
 ]
 
-[applications.go]
+[apps.go]
 # if this application was allowed by the config, it would be disabled
 # AND directories would be pruned unless pinned in the array structures
 flags = ["disabled"]
-[applications.go.git]
+[apps.go.git]
 repository = "https://github.com/golang/go"
-[applications.go.git.tagged]
+[apps.go.git.tagged]
 download = "https://go.dev/dl/{{ $.Vars.Tag }}.linux-amd64.tar.gz"
 filters = [
   "refs/tags/weekly",
@@ -21,13 +21,13 @@ filters = [
   "[0-9]rc[0-9]",
 ]
 
-[applications.rg]
+[apps.rg]
 # an application can be disabled itself as well
 # this will result in pruning of directories
 flags= ["disabled"]
-[applications.rg.github]
+[apps.rg.github]
 project = "BurntSushi/ripgrep"
 release = { asset = "x86_64-unknown-linux-(.+?).tar.gz$" }
-[applications.rg.extract]
+[apps.rg.extract]
 # extraction can be skipped
 skip = true

@@ -22,7 +22,7 @@ type (
 		}
 		Directory       core.Resolved
 		Include         []core.Resolved
-		Applications    core.AppSet
+		Apps            core.AppSet
 		Parallelization int
 		Pinned          core.Pinned
 		Connections     core.Connections

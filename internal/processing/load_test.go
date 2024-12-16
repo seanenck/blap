@@ -39,8 +39,8 @@ func TestLoad(t *testing.T) {
 	if err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
-	if len(c.Applications) != 8 {
-		t.Errorf("invalid apps: %d", len(c.Applications))
+	if len(c.Apps) != 8 {
+		t.Errorf("invalid apps: %d", len(c.Apps))
 	}
 	if len(c.Pinned) != 5 {
 		t.Errorf("invalid pins: %d", len(c.Pinned))
@@ -56,16 +56,16 @@ func TestLoadFilter(t *testing.T) {
 	if err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
-	if len(c.Applications) != 5 {
-		t.Errorf("invalid apps: %d", len(c.Applications))
+	if len(c.Apps) != 5 {
+		t.Errorf("invalid apps: %d", len(c.Apps))
 	}
 	s.CompileApplicationFilter("l", false)
 	c, err = processing.Load(example, s)
 	if err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
-	if len(c.Applications) != 3 {
-		t.Errorf("invalid apps: %d", len(c.Applications))
+	if len(c.Apps) != 3 {
+		t.Errorf("invalid apps: %d", len(c.Apps))
 	}
 }
 
@@ -79,8 +79,8 @@ func TestLoadInclude(t *testing.T) {
 	if err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
-	if len(c.Applications) != 3 {
-		t.Errorf("invalid apps: %d", len(c.Applications))
+	if len(c.Apps) != 3 {
+		t.Errorf("invalid apps: %d", len(c.Apps))
 	}
 }
 
