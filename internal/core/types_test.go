@@ -53,23 +53,26 @@ func TestGitHubToken(t *testing.T) {
 	if fmt.Sprintf("%v", token.Env()) != "[BLAP_GITHUB_TOKEN GITHUB_TOKEN]" {
 		t.Errorf("invalid token: %v", token.Env())
 	}
-	if token.Value() != nil {
-		t.Errorf("invalid value: %s", token.Value())
+	val, c := token.Value()
+	if val != "" || len(c) != 0 {
+		t.Errorf("invalid token: %s %v", val, c)
 	}
 	token = core.GitHubSettings{Token: "xyz"}
 	if fmt.Sprintf("%v", token.Env()) != "[BLAP_GITHUB_TOKEN GITHUB_TOKEN]" {
 		t.Errorf("invalid token: %v", token.Env())
 	}
-	if fmt.Sprintf("%v", token.Value()) != "[xyz]" {
-		t.Errorf("invalid value: %s", token.Value())
+	val, c = token.Value()
+	if val != "xyz" || len(c) != 0 {
+		t.Errorf("invalid token: %s %v", val, c)
 	}
 	t.Setenv("HOME", "zzz")
-	token = core.GitHubSettings{Token: []interface{}{"$HOME/xyz", "$HOME/111"}}
+	token = core.GitHubSettings{Token: "$HOME/xyz", Command: []core.Resolved{"$HOME", "$HOME/zzz"}}
 	if fmt.Sprintf("%v", token.Env()) != "[BLAP_GITHUB_TOKEN GITHUB_TOKEN]" {
 		t.Errorf("invalid token: %v", token.Env())
 	}
-	if fmt.Sprintf("%v", token.Value()) != "[zzz/xyz zzz/111]" {
-		t.Errorf("invalid value: %s", token.Value())
+	val, c = token.Value()
+	if val != "$HOME/xyz" || fmt.Sprintf("%v", c) != "[zzz zzz/zzz]" {
+		t.Errorf("invalid token: %s %v", val, c)
 	}
 }
 

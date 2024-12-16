@@ -31,7 +31,10 @@ file = ""
 #size = 10
 
 [connections.github]
+# provide a token
 token = "agithubpersonalaccesstoken"
+# or set a command to get the token
+command = []
 # timeouts control connections that may need to be timed out
 [connections.timeouts]
 # get handles all get request timeouts (0 is default behavior, > 0 is seconds for timeout)

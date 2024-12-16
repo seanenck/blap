@@ -11,8 +11,6 @@ import (
 	"slices"
 	"strings"
 	"text/template"
-
-	"github.com/seanenck/blap/internal/util"
 )
 
 const (
@@ -123,7 +121,8 @@ type (
 	AppSet map[string]Application
 	// GitHubSettings are overall github settings
 	GitHubSettings struct {
-		Token interface{}
+		Token   string
+		Command []Resolved
 	}
 	// Connections are various endpoint settings
 	Connections struct {
@@ -135,7 +134,7 @@ type (
 	// Token defines an interface for setting API/auth tokens
 	Token interface {
 		Env() []string
-		Value() []string
+		Value() (string, []string)
 	}
 	// SourceType indicates if an application field contains a source
 	SourceType interface {
@@ -180,23 +179,12 @@ func (g GitHubSettings) Env() []string {
 }
 
 // Value will get the configured token value
-func (g GitHubSettings) Value() []string {
-	if util.IsNil(g.Token) {
-		return nil
-	}
-	var vals []Resolved
-	if s, ok := g.Token.(string); ok {
-		vals = append(vals, Resolved(s))
-	} else {
-		for _, v := range g.Token.([]interface{}) {
-			vals = append(vals, Resolved(v.(string)))
-		}
-	}
+func (g GitHubSettings) Value() (string, []string) {
 	var res []string
-	for _, v := range vals {
+	for _, v := range g.Command {
 		res = append(res, v.String())
 	}
-	return res
+	return g.Token, res
 }
 
 // Items will iterate over the available source itmes

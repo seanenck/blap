@@ -12,7 +12,6 @@ import (
 
 	"github.com/seanenck/blap/internal/core"
 	"github.com/seanenck/blap/internal/logging"
-	"github.com/seanenck/blap/internal/util"
 )
 
 // InfoVerbosity is the default info level for outputs
@@ -66,33 +65,20 @@ func (s Settings) ParseToken(t core.Token) (string, error) {
 		}
 	}
 	token, err := func() (string, error) {
-		raw := t.Value()
+		token, command := t.Value()
+		if token != "" {
+			return token, nil
+		}
 		var cmd string
 		var args []string
-		switch len(raw) {
+		switch len(command) {
 		case 0:
 			return "", nil
 		case 1:
-			p := raw[0]
-			if !util.PathExists(p) {
-				return p, nil
-			}
-			info, err := os.Stat(p)
-			if err != nil {
-				return "", err
-			}
-			if info.Mode()&0o111 != 0 {
-				cmd = p
-				break
-			}
-			b, err := os.ReadFile(p)
-			if err != nil {
-				return "", err
-			}
-			return string(b), err
+			cmd = command[0]
 		default:
-			cmd = raw[0]
-			args = raw[1:]
+			cmd = command[0]
+			args = command[1:]
 		}
 		b, err := exec.Command(cmd, args...).Output()
 		if err != nil {

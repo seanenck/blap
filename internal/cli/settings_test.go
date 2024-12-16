@@ -108,20 +108,23 @@ func TestParseToken(t *testing.T) {
 	if r != "abc" || err != nil {
 		t.Errorf("invalid result: %s %v", r, err)
 	}
-	r, err = s.ParseToken(core.GitHubSettings{Token: "settings_test.go"})
-	if r == "" || !strings.Contains(r, "package cli_test") || err != nil {
-		t.Errorf("invalid result: %s %v", r, err)
-	}
 	os.Mkdir("testdata", 0o755)
 	test := filepath.Join("testdata", "test.sh")
 	os.WriteFile(test, []byte("#!/bin/sh\necho 123 $1"), 0o755)
-	r, err = s.ParseToken(core.GitHubSettings{Token: test})
+	r, err = s.ParseToken(core.GitHubSettings{Command: []core.Resolved{core.Resolved(test)}})
 	if r != "123" || err != nil {
 		t.Errorf("invalid result: %s %v", r, err)
 	}
-	r, err = s.ParseToken(core.GitHubSettings{Token: []interface{}{test, "111"}})
-	if r != "123 111" || err != nil {
+	r, err = s.ParseToken(core.GitHubSettings{Token: "111"})
+	if r != "111" || err != nil {
 		t.Errorf("invalid result: %s %v", r, err)
+	}
+	r, err = s.ParseToken(core.GitHubSettings{Token: "111", Command: []core.Resolved{"x"}})
+	if r != "111" || err != nil {
+		t.Errorf("invalid result: %s %v", r, err)
+	}
+	if _, err := s.ParseToken(core.GitHubSettings{Command: []core.Resolved{"x"}}); err == nil || !strings.Contains(err.Error(), "executable file not") {
+		t.Errorf("invalid result: %v", err)
 	}
 	t.Setenv("GITHUB_TOKEN", "xyz")
 	r, err = s.ParseToken(core.GitHubSettings{Token: "abc"})
