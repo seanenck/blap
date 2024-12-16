@@ -97,11 +97,7 @@ func (c Configuration) Do(ctx Context) error {
 		c.log(true, "transaction: %s (%s, dryrun: %v)\n", ctx.Name, detail, c.context.DryRun)
 		obj := Change{Name: ctx.Name, Details: detail}
 		processLock.Lock()
-		if !slices.ContainsFunc(c.handler.changed, func(c Change) bool {
-			return obj.Name == c.Name
-		}) {
-			c.handler.changed = append(c.handler.changed, obj)
-		}
+		c.handler.changed = append(c.handler.changed, obj)
 		processLock.Unlock()
 		return !c.context.DryRun
 	}
