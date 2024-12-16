@@ -102,7 +102,7 @@ type (
 	// Step is a build process step
 	Step struct {
 		Directory Resolved
-		Command   interface{}
+		Commands  interface{}
 		Variables Variables
 		ClearEnv  bool
 	}
@@ -360,8 +360,8 @@ func (w WebURL) CanTemplate() bool {
 	return true
 }
 
-// Commands will get the step commands
-func (s Step) Commands() iter.Seq[[]Resolved] {
+// Steps will get the step commands
+func (s Step) Steps() iter.Seq[[]Resolved] {
 	conv := func(a []interface{}) []Resolved {
 		var res []Resolved
 		for _, obj := range a {
@@ -372,7 +372,7 @@ func (s Step) Commands() iter.Seq[[]Resolved] {
 		return res
 	}
 	return func(yield func(r []Resolved) bool) {
-		obj, ok := s.Command.([]interface{})
+		obj, ok := s.Commands.([]interface{})
 		if !ok {
 			return
 		}

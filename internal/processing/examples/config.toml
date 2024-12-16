@@ -66,7 +66,7 @@ project = "neovim/neovim"
 # select the necessary asset
 release = { asset = "nvim-linux64.tar.gz$" }
 [[applications.nvim.setup]]
-command = ["ln", "-sf", "bin/nvim", "~/bin"]
+commands = ["ln", "-sf", "bin/nvim", "~/bin"]
 
 [applications.blap]
 # setup build environment settings for ALL application build steps
@@ -83,14 +83,14 @@ project = "seanenck/blap"
 release = { asset = "tarball" }
 [[applications.blap.setup]]
 # run specific commands
-command = ["make", "VERSION={{ $.Vars.Tag }}"]
+commands = ["make", "VERSION={{ $.Vars.Tag }}"]
 variables = [
   { key = "GOOS", value = "1" },
   { key = "X", value = "1" },
 ]
 [[applications.blap.setup]]
 clearenv = true
-command = ["ln", "-sf", "target/blap", "~/.local/bin"]
+commands = ["ln", "-sf", "target/blap", "~/.local/bin"]
 
 [applications.nvim2]
 # this app, specifically, is disabled but any directories are kept/pinned
@@ -103,4 +103,4 @@ platforms = [
 project = "neovim/neovim"
 release = { asset = "nvim-linux64.tar.gz$" }
 [[applications.nvim2.setup]]
-command = ["ln", "-sf", "bin/nvim", "~/bin"]
+commands = ["ln", "-sf", "bin/nvim", "~/bin"]

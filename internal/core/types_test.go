@@ -279,17 +279,17 @@ func TestWebURL(t *testing.T) {
 
 func TestCommandsFromStep(t *testing.T) {
 	s := core.Step{}
-	c := slices.Collect(s.Commands())
+	c := slices.Collect(s.Steps())
 	if len(c) > 0 {
 		t.Errorf("invalid command")
 	}
-	s.Command = []interface{}{"x", "y", "z"}
-	c = slices.Collect(s.Commands())
+	s.Commands = []interface{}{"x", "y", "z"}
+	c = slices.Collect(s.Steps())
 	if len(c) != 1 {
 		t.Errorf("invalid command")
 	}
-	s.Command = []interface{}{[]interface{}{"x"}, []interface{}{"y"}, []interface{}{"z"}}
-	c = slices.Collect(s.Commands())
+	s.Commands = []interface{}{[]interface{}{"x"}, []interface{}{"y"}, []interface{}{"z"}}
+	c = slices.Collect(s.Steps())
 	if len(c) != 3 {
 		t.Errorf("invalid command")
 	}
