@@ -8,7 +8,7 @@ import (
 )
 
 func TestParseDefaults(t *testing.T) {
-	c, err := cli.Parse(nil, true, []string{})
+	c, err := cli.Parse(nil, cli.PurgeCommand, []string{})
 	if err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
@@ -24,7 +24,7 @@ func TestParseDefaults(t *testing.T) {
 	if c.FilterApplications() {
 		t.Error("filters should be off")
 	}
-	c, err = cli.Parse(nil, false, []string{})
+	c, err = cli.Parse(nil, cli.UpgradeCommand, []string{})
 	if err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
@@ -34,53 +34,68 @@ func TestParseDefaults(t *testing.T) {
 }
 
 func TestParseErrors(t *testing.T) {
-	if _, err := cli.Parse(nil, true, []string{"-verbosity", "-1"}); err == nil || err.Error() != "verbosity must be >= 0 (-1)" {
+	if _, err := cli.Parse(nil, cli.PurgeCommand, []string{"-verbosity", "-1"}); err == nil || err.Error() != "verbosity must be >= 0 (-1)" {
 		t.Errorf("invalid error: %v", err)
 	}
-	if _, err := cli.Parse(nil, false, []string{"-applications", "1", "-disable", "2", "-verbosity", "1"}); err == nil || err.Error() != "can not limit applications and disable at the same time" {
+	if _, err := cli.Parse(nil, cli.UpgradeCommand, []string{"-negate-filter"}); err == nil || err.Error() != "negate used without filters" {
 		t.Errorf("invalid error: %v", err)
 	}
-	if _, err := cli.Parse(nil, false, []string{"-applications", "-1"}); err != nil {
-		t.Errorf("invalid error: %v", err)
-	}
-	if _, err := cli.Parse(nil, true, []string{"-applications", "-1"}); err == nil || !strings.Contains(err.Error(), "flag provided but not defined:") {
-		t.Errorf("invalid error: %v", err)
-	}
-	if _, err := cli.Parse(nil, false, []string{"-force-redeploy"}); err == nil || !strings.Contains(err.Error(), "not redeploy and dry-run") {
+	if _, err := cli.Parse(nil, cli.UpgradeCommand, []string{"-force-redeploy"}); err == nil || !strings.Contains(err.Error(), "not redeploy and dry-run") {
 		t.Errorf("invalid error: %v", err)
 	}
 }
 
 func TestParse(t *testing.T) {
-	c, err := cli.Parse(nil, false, []string{"-verbosity", "5", "-commit"})
+	c, err := cli.Parse(nil, cli.UpgradeCommand, []string{"-verbosity", "5", "-commit"})
 	if err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	if c.Verbosity != 5 || c.DryRun {
 		t.Errorf("invalid result: %v", c)
 	}
-	c, err = cli.Parse(nil, false, []string{"-verbosity", "5", "-commit", "-applications=nvim"})
-	if err != nil {
-		t.Errorf("invalid error: %v", err)
-	}
-	if c.Verbosity != 5 || c.DryRun || !c.FilterApplications() || !c.AllowApplication("nvim") {
-		t.Errorf("invalid result: %v", c)
-	}
-	c, err = cli.Parse(nil, false, []string{"-verbosity", "5", "-commit", "-disable=nvim"})
+	c, err = cli.Parse(nil, cli.UpgradeCommand, []string{"-verbosity", "5", "-commit", "-filter-applications=nvim", "--negate-filter"})
 	if err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	if c.Verbosity != 5 || c.DryRun || !c.FilterApplications() || c.AllowApplication("nvim") {
 		t.Errorf("invalid result: %v", c)
 	}
+	c, err = cli.Parse(nil, cli.UpgradeCommand, []string{"-verbosity", "5", "-commit", "-filter-applications=nvim"})
+	if err != nil {
+		t.Errorf("invalid error: %v", err)
+	}
+	if c.Verbosity != 5 || c.DryRun || !c.FilterApplications() || !c.AllowApplication("nvim") {
+		t.Errorf("invalid result: %v", c)
+	}
+	c, err = cli.Parse(nil, cli.UpgradeCommand, []string{"-verbosity", "5", "-commit", "-filter-applications=nvim"})
+	if err != nil {
+		t.Errorf("invalid error: %v", err)
+	}
+	if c.Verbosity != 5 || c.DryRun || !c.FilterApplications() || !c.AllowApplication("nvim") {
+		t.Errorf("invalid result: %v", c)
+	}
 	if c.CleanDirs {
 		t.Error("invalid, cleandirs should be set")
 	}
-	c, err = cli.Parse(nil, true, []string{"-directories"})
+	c, err = cli.Parse(nil, cli.PurgeCommand, []string{"-directories", "-commit"})
 	if err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	if !c.CleanDirs {
 		t.Error("invalid, cleandirs should be set")
+	}
+	c, err = cli.Parse(nil, cli.ListCommand, []string{"-verbosity", "15", "-filter-applications=nvim", "--negate-filter"})
+	if err != nil {
+		t.Errorf("invalid error: %v", err)
+	}
+	if c.Verbosity != 15 || !c.DryRun || !c.FilterApplications() || c.AllowApplication("nvim") {
+		t.Errorf("invalid result: %v", c)
+	}
+	c, err = cli.Parse(nil, cli.ListCommand, []string{"-verbosity", "15", "-filter-applications=nvim"})
+	if err != nil {
+		t.Errorf("invalid error: %v", err)
+	}
+	if c.Verbosity != 15 || !c.DryRun || !c.FilterApplications() || !c.AllowApplication("nvim") {
+		t.Errorf("invalid result: %v", c)
 	}
 }

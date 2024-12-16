@@ -18,7 +18,7 @@ func helpLine(w io.Writer, sub bool, flag, text string) {
 	if sub {
 		spacing = "  "
 	}
-	fmt.Fprintf(w, "  %-15s %s\n", fmt.Sprintf("%s%s", spacing, flag), text)
+	fmt.Fprintf(w, "  %-25s %s\n", fmt.Sprintf("%s%s", spacing, flag), text)
 }
 
 func configPath(root string) string {
@@ -34,18 +34,25 @@ func help(w io.Writer) error {
 	if w == nil {
 		return errors.New("nil writer")
 	}
+	filterFlags := func() {
+		helpLine(w, true, displayApplicationsFlag, "filter packages to process (regex)")
+		helpLine(w, true, displayNegateFlag, "negate the filtered packages")
+	}
+	commitFlag := func() {
+		helpLine(w, true, displayCommitFlag, "confirm and commit changes for actions")
+	}
 	fmt.Fprintf(w, "%s\n", exe)
 	helpLine(w, false, VersionCommand, "display version information")
-	helpLine(w, false, ListCommand, "list managed package set")
-	helpLine(w, false, UpgradeCommand, "upgrade packages")
-	helpLine(w, true, displayApplicationsFlag, "specify a subset of packages (regex)")
-	helpLine(w, true, displayDisableFlag, "disable applications (regex)")
-	helpLine(w, true, displayIncludeFlag, "include specified files only (regex)")
+	helpLine(w, false, string(ListCommand), "list managed package set")
+	filterFlags()
+	helpLine(w, false, string(UpgradeCommand), "upgrade packages")
+	filterFlags()
 	helpLine(w, true, displayReDeployFlag, "redeploy all packages (ignoring application flags)")
-	helpLine(w, false, PurgeCommand, "purge old versions")
+	commitFlag()
+	helpLine(w, false, string(PurgeCommand), "purge old versions")
 	helpLine(w, true, displayCleanDirFlag, "cleanup orphan directories during purge")
+	commitFlag()
 	helpLine(w, false, displayVerbosityFlag, "increase/decrease output verbosity")
-	helpLine(w, false, displayCommitFlag, "confirm and commit changes for actions")
 	fmt.Fprintln(w)
 	fmt.Fprintln(w, "configuration file locations:")
 	for _, c := range DefaultConfigs() {

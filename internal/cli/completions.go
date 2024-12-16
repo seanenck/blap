@@ -2,7 +2,6 @@
 package cli
 
 import (
-	"bytes"
 	"embed"
 	"fmt"
 	"io"
@@ -24,22 +23,17 @@ type (
 			List    string
 		}
 		Params struct {
-			Upgrade CompletionCommand
-			Purge   CompletionCommand
+			Upgrade string
+			Purge   string
+			List    string
 		}
 		Arg struct {
 			Applications string
+			ForceDeploy  string
+			Negate       string
 			Confirm      string
-			Disable      string
-			Include      string
 			CleanDirs    string
 		}
-	}
-
-	// CompletionCommand are specifics for completing a command
-	CompletionCommand struct {
-		Main string
-		Sub  string
 	}
 )
 
@@ -50,22 +44,6 @@ func readFile(file string) ([]byte, error) {
 	return files.ReadFile(filepath.Join(completionsDir, file))
 }
 
-func (c Completion) newParam(command string) (string, error) {
-	b, err := readFile(fmt.Sprintf("params.%s.sh", strings.ToLower(command)))
-	if err != nil {
-		return "", err
-	}
-	t, err := template.New("t").Parse(string(b))
-	if err != nil {
-		return "", err
-	}
-	var buf bytes.Buffer
-	if err := t.Execute(&buf, c); err != nil {
-		return "", err
-	}
-	return buf.String(), nil
-}
-
 // GenerateCompletions will generate shell completions
 func GenerateCompletions(w io.Writer) error {
 	if w == nil {
@@ -73,14 +51,14 @@ func GenerateCompletions(w io.Writer) error {
 	}
 	comp := Completion{}
 	comp.Executable = exe
-	comp.Command.List = ListCommand
-	comp.Command.Purge = PurgeCommand
-	comp.Command.Upgrade = UpgradeCommand
+	comp.Command.List = string(ListCommand)
+	comp.Command.Purge = string(PurgeCommand)
+	comp.Command.Upgrade = string(UpgradeCommand)
 	comp.Arg.Confirm = displayCommitFlag
 	comp.Arg.Applications = displayApplicationsFlag
-	comp.Arg.Disable = displayDisableFlag
-	comp.Arg.Include = displayIncludeFlag
 	comp.Arg.CleanDirs = displayCleanDirFlag
+	comp.Arg.ForceDeploy = displayReDeployFlag
+	comp.Arg.Negate = displayNegateFlag
 
 	file := filepath.Base(os.Getenv("SHELL"))
 	switch file {
@@ -93,18 +71,9 @@ func GenerateCompletions(w io.Writer) error {
 	if err != nil {
 		return err
 	}
-	up, err := comp.newParam(UpgradeCommand)
-	if err != nil {
-		return err
-	}
-	purge, err := comp.newParam(PurgeCommand)
-	if err != nil {
-		return err
-	}
-	comp.Params.Purge.Main = strings.Join([]string{comp.Arg.Confirm, comp.Arg.CleanDirs}, " ")
-	comp.Params.Purge.Sub = purge
-	comp.Params.Upgrade.Main = strings.Join([]string{comp.Arg.Confirm, comp.Arg.Applications, comp.Arg.Disable, comp.Arg.Include}, " ")
-	comp.Params.Upgrade.Sub = up
+	comp.Params.Purge = strings.Join([]string{comp.Arg.Confirm, comp.Arg.CleanDirs}, " ")
+	comp.Params.Upgrade = strings.Join([]string{comp.Arg.Confirm, comp.Arg.Applications, comp.Arg.Negate, comp.Arg.ForceDeploy}, " ")
+	comp.Params.List = strings.Join([]string{comp.Arg.Applications, comp.Arg.Negate}, " ")
 	t, err := template.New("sh").Parse(string(text))
 	if err != nil {
 		return err

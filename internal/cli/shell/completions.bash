@@ -1,39 +1,35 @@
 _{{ $.Executable }}() {
-  local cur opts chosen sub
+  local cur opts chosen sub subset matched
   cur=${COMP_WORDS[COMP_CWORD]}
   if [ "$COMP_CWORD" -eq 1 ]; then
     opts="{{ $.Command.Upgrade }} {{ $.Command.Purge }} {{ $.Command.List }}"
   else
     chosen=${COMP_WORDS[1]}
-    case "$COMP_CWORD" in
-      2)
-        case "$chosen" in
-          "{{ $.Command.Upgrade }}")
-            opts="{{ $.Params.Upgrade.Main }}"
-            ;;
-          "{{ $.Command.Purge }}")
-            opts="{{ $.Params.Purge.Main }}"
-            ;;
-        esac
-      ;;
-      3 | 4)
-        case "$chosen" in
-          "{{ $.Command.Purge }}")
-            if [ "$COMP_CWORD" -eq 3 ]; then
-              chosen=${COMP_WORDS[2]}
-              {{ $.Params.Purge.Sub }}
-            fi
-            ;;
-          "{{ $.Command.Upgrade }}") 
-            chosen=${COMP_WORDS[2]}
-            if [ "$COMP_CWORD" -eq 4 ]; then
-              sub=${COMP_WORDS[3]}
-            fi
-            {{ $.Params.Upgrade.Sub }}
-            ;;
-        esac
-      ;;
+    subset=""
+    case "$chosen" in
+      "{{ $.Command.Purge }}")
+        opts="{{ $.Params.Purge }}"
+        ;;
+      "{{ $.Command.Upgrade }}") 
+        opts="{{ $.Params.Upgrade }}"
+        ;;
+      "{{ $.Command.List }}") 
+        opts="{{ $.Params.List }}"
+        ;;
     esac
+    for sub in $opts; do
+      matched=0 
+      for chosen in "${COMP_WORDS[@]}"; do
+        if [ "$chosen" = "$sub" ]; then
+          matched=1
+          break
+        fi
+      done
+      if [ "$matched" -eq 0 ]; then
+        subset="$subset $sub"
+      fi
+    done
+    opts="$subset"
   fi
   if [ -n "$opts" ]; then
     # shellcheck disable=SC2207

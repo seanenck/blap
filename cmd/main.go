@@ -26,25 +26,22 @@ func run() error {
 	if len(args) < 2 {
 		return errors.New("invalid arguments, missing command")
 	}
-	isList := false
-	purging := false
+	var commandType cli.CommandType
 	cmd := args[1]
 	switch cmd {
 	case cli.CompletionsCommand:
 		return cli.GenerateCompletions(os.Stdout)
 	case "help":
 		return cli.Usage(os.Stdout)
-	case cli.PurgeCommand:
-		purging = true
-	case cli.ListCommand:
-		isList = true
-		if len(args) > 2 {
-			return fmt.Errorf("command %s does not take arguments", cmd)
-		}
+	case string(cli.PurgeCommand):
+		commandType = cli.PurgeCommand
+	case string(cli.ListCommand):
+		commandType = cli.ListCommand
 	case cli.VersionCommand:
 		fmt.Println(version)
 		return nil
-	case cli.UpgradeCommand:
+	case string(cli.UpgradeCommand):
+		commandType = cli.UpgradeCommand
 	default:
 		return fmt.Errorf("unknown argument: %s", cmd)
 	}
@@ -53,7 +50,7 @@ func run() error {
 	if len(args) > 1 {
 		sub = args[2:]
 	}
-	ctx, err := cli.Parse(os.Stdout, purging, sub)
+	ctx, err := cli.Parse(os.Stdout, commandType, sub)
 	if err != nil {
 		return err
 	}
@@ -72,7 +69,7 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	if isList {
+	if commandType == cli.ListCommand {
 		return cfg.List(os.Stdout)
 	}
 	return cfg.Process(cfg, &retriever.ResourceFetcher{Context: *ctx}, util.CommandRunner{})

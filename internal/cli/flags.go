@@ -6,16 +6,15 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"regexp"
 )
 
 const (
 	// ListCommand will list the active applications
-	ListCommand = "list"
+	ListCommand CommandType = "list"
 	// PurgeCommand is used to delete old artifacts/dirs/etc.
-	PurgeCommand = "purge"
+	PurgeCommand CommandType = "purge"
 	// UpgradeCommand is used to update packages
-	UpgradeCommand = "upgrade"
+	UpgradeCommand CommandType = "upgrade"
 	// VersionCommand displays version information
 	VersionCommand = "version"
 	// CompletionsCommand generates completions
@@ -25,51 +24,55 @@ const (
 	// VerbosityFlag changes logging output
 	VerbosityFlag = "verbosity"
 	// ApplicationsFlag enables selected applications
-	ApplicationsFlag = "applications"
-	// DisableFlag disables selected applications
-	DisableFlag = "disable"
-	// IncludeFlag allows for filtering included files
-	IncludeFlag = "include"
+	ApplicationsFlag = "filter-applications"
 	// CleanDirFlag indicates directory cleanup should occur
 	CleanDirFlag = "directories"
 	// ReDeployFlag will indicate all apps should ignore the redeployment rules and force redeploy
-	ReDeployFlag            = "force-redeploy"
+	ReDeployFlag = "force-redeploy"
+	// NegateFilter means to IGNORE filter applications
+	NegateFilter            = "negate-filter"
 	isFlag                  = "--"
-	displayIncludeFlag      = isFlag + IncludeFlag
 	displayApplicationsFlag = isFlag + ApplicationsFlag
-	displayDisableFlag      = isFlag + DisableFlag
 	displayVerbosityFlag    = isFlag + VerbosityFlag
 	displayCommitFlag       = isFlag + CommitFlag
 	displayCleanDirFlag     = isFlag + CleanDirFlag
 	displayReDeployFlag     = isFlag + ReDeployFlag
+	displayNegateFlag       = isFlag + NegateFilter
 )
 
+// CommandType are top-level commands
+type CommandType string
+
 // Parse will parse arguments to settings
-func Parse(w io.Writer, purging bool, args []string) (*Settings, error) {
+func Parse(w io.Writer, t CommandType, args []string) (*Settings, error) {
 	var appFilter string
 	var negateFilter bool
-	var includeFilter string
 	var cleanDirs bool
 	var isReDeploy bool
 	dryRun := true
 	verbosity := InfoVerbosity
 	if len(args) > 0 {
 		set := flag.NewFlagSet("app", flag.ContinueOnError)
+		verbose := set.Int(VerbosityFlag, InfoVerbosity, "set verbosity level")
 		var apps *string
-		var disable *string
-		var include *string
 		var reDeploy *bool
 		var dirs *bool
-		if purging {
+		var negate *bool
+		var commit *bool
+		switch t {
+		case PurgeCommand:
 			dirs = set.Bool(CleanDirFlag, false, "cleanup orphaned directories")
-		} else {
-			apps = set.String(ApplicationsFlag, "", "limit application checks")
-			disable = set.String(DisableFlag, "", "disable applications")
-			include = set.String(IncludeFlag, "", "include only matched files")
-			reDeploy = set.Bool(ReDeployFlag, false, "redeploy all applications")
+		case ListCommand, UpgradeCommand:
+			apps = set.String(ApplicationsFlag, "", "filter processed applications")
+			negate = set.Bool(NegateFilter, false, "negate application filter")
+			if t == UpgradeCommand {
+				reDeploy = set.Bool(ReDeployFlag, false, "redeploy all applications")
+			}
 		}
-		verbose := set.Int(VerbosityFlag, InfoVerbosity, "set verbosity level")
-		commit := set.Bool(CommitFlag, false, "confirm and commit changes")
+		needCommit := t == PurgeCommand || t == UpgradeCommand
+		if needCommit {
+			commit = set.Bool(CommitFlag, false, "confirm and commit changes")
+		}
 		if err := set.Parse(args); err != nil {
 			return nil, err
 		}
@@ -77,49 +80,32 @@ func Parse(w io.Writer, purging bool, args []string) (*Settings, error) {
 		if verbosity < 0 {
 			return nil, fmt.Errorf("verbosity must be >= 0 (%d)", verbosity)
 		}
-		if purging {
+		switch t {
+		case PurgeCommand:
 			cleanDirs = *dirs
-		} else {
-			a := *apps
-			d := *disable
-			includeFilter = *include
-			lengthApps := len(a)
-			lengthDis := len(d)
-			if lengthApps > 0 || lengthDis > 0 {
-				if len(a) > 0 && len(d) > 0 {
-					return nil, errors.New("can not limit applications and disable at the same time")
-				}
-				if lengthApps > 0 {
-					appFilter = a
-				} else {
-					negateFilter = true
-					appFilter = d
-				}
-			}
+		case ListCommand, UpgradeCommand:
+			appFilter = *apps
+			negateFilter = *negate
 			if reDeploy != nil {
 				isReDeploy = *reDeploy
 			}
+			if negateFilter && len(appFilter) == 0 {
+				return nil, errors.New("negate used without filters")
+			}
 		}
-		dryRun = !*commit
-		if dryRun && isReDeploy {
-			return nil, errors.New("can not redeploy and dry-run")
+		if needCommit {
+			dryRun = !*commit
+			if dryRun && isReDeploy {
+				return nil, errors.New("can not redeploy and dry-run")
+			}
 		}
-	}
-	var includeReg *regexp.Regexp
-	if includeFilter != "" {
-		re, err := regexp.Compile(includeFilter)
-		if err != nil {
-			return nil, err
-		}
-		includeReg = re
 	}
 	ctx := &Settings{
 		CleanDirs: cleanDirs,
 		DryRun:    dryRun,
 		Verbosity: verbosity,
-		Purge:     purging,
+		Purge:     t == PurgeCommand,
 		Writer:    w,
-		Include:   includeReg,
 		ReDeploy:  isReDeploy,
 	}
 	if err := ctx.CompileApplicationFilter(appFilter, negateFilter); err != nil {

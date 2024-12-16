@@ -1,7 +1,7 @@
 #compdef _{{ $.Executable }} {{ $.Executable }}
 
 _{{ $.Executable }}() {
-  local curcontext="$curcontext" state len chosen args sub opts
+  local curcontext="$curcontext" state len chosen args sub opts subset matched
   typeset -A opt_args
 
   _arguments \
@@ -22,36 +22,29 @@ _{{ $.Executable }}() {
       chosen=$words[2]
       case "$chosen" in
         "{{ $.Command.Upgrade }}")
-          case "$len" in
-            3)
-            opts="{{ $.Params.Upgrade.Main }}"
+            opts=({{ $.Params.Upgrade }})
             ;;
-            4 | 5)
-            chosen=$words[3]
-            if [ "$len" -eq 5 ]; then
-              sub=$words[4]
-              if [ "$sub" = "--" ]; then
-                sub=""
-              fi
-            fi
-            {{ $.Params.Upgrade.Sub }}
-          esac
-          ;;
         "{{ $.Command.Purge }}")
-          case "$len" in
-            3)
-            opts="{{ $.Params.Purge.Main }}"
+            opts=({{ $.Params.Purge }})
             ;;
-            4)
-            chosen=$words[3]
-            {{ $.Params.Purge.Sub }}
+        "{{ $.Command.List }}")
+            opts=({{ $.Params.List }})
             ;;
-          esac
-          ;;
-        *)
-          return
-          ;;
       esac
+      subset=""
+      for sub in "${opts[@]}"; do
+        matched=0
+        for chosen in "${words[@]}"; do
+          if [ "$chosen" = "$sub" ]; then
+            matched=1
+            break
+          fi
+        done
+        if [ "$matched" -eq 0 ]; then
+          subset="$subset $sub"
+        fi
+      done
+      opts="$subset"
   esac
   if [ -n "$opts" ]; then
     for item in $(echo "$opts" | tr ' ' '\n'); do

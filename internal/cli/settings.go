@@ -21,11 +21,10 @@ var settingsLock = &sync.Mutex{}
 
 // Settings are the core settings
 type Settings struct {
-	DryRun  bool
-	Purge   bool
-	Writer  io.Writer
-	Include *regexp.Regexp
-	filter  struct {
+	DryRun bool
+	Purge  bool
+	Writer io.Writer
+	filter struct {
 		has    bool
 		negate bool
 		regex  *regexp.Regexp

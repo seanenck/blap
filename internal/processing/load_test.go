@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"testing"
 
@@ -61,21 +60,6 @@ func TestLoadFilter(t *testing.T) {
 	}
 	s.CompileApplicationFilter("l", false)
 	c, err = processing.Load(example, s)
-	if err != nil {
-		t.Errorf("invalid error: %v", err)
-	}
-	if len(c.Apps) != 3 {
-		t.Errorf("invalid apps: %d", len(c.Apps))
-	}
-}
-
-func TestLoadInclude(t *testing.T) {
-	makeTestFile("disabled.more.toml")
-	example := filepath.Join("examples", "config.toml")
-	s := cli.Settings{}
-	re, _ := regexp.Compile("other")
-	s.Include = re
-	c, err := processing.Load(example, s)
 	if err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
