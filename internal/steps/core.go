@@ -73,19 +73,15 @@ func (d Directories) Installed() string {
 	return d.newMarker("installed", "")
 }
 
-// GetFile will get a NewFile set file
+// GetFile will get (or initialize) a file
 func (v Variables) GetFile(name string) string {
 	if v.Directories.files != nil {
+		if _, ok := v.Directories.files[name]; !ok {
+			v.Directories.files[name] = v.Directories.newMarker(name, "data_")
+		}
 		return v.Directories.files[name]
 	}
 	return ""
-}
-
-// NewFile will create a 'blap'-based file path and add it to the markers for further use
-func (v Variables) NewFile(name string) string {
-	path := v.Directories.newMarker(name, "data_")
-	v.Directories.files[name] = path
-	return path
 }
 
 func (d Directories) newMarker(name, sub string) string {
