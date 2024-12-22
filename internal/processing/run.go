@@ -62,7 +62,14 @@ func (c Configuration) Do(ctx Context) error {
 	if c.handler == nil {
 		return errors.New("configuration not setup")
 	}
-	c.log(true, "processing: %s\n", ctx.Name)
+	logger := func(action, detail string) {
+		msg := ""
+		if detail != "" {
+			msg = fmt.Sprintf(" (%s)", detail)
+		}
+		c.log(true, "%s: %s%s\n", action, ctx.Name, msg)
+	}
+	logger("processing", "")
 	rsrc, err := ctx.Fetcher.Process(fetch.Context{Name: ctx.Name}, ctx.Application.Items())
 	if err != nil {
 		return err
@@ -94,7 +101,7 @@ func (c Configuration) Do(ctx Context) error {
 		knownAssets = append(knownAssets, filepath.Base(f))
 	}
 	onChange := func(detail string) bool {
-		c.log(true, "transaction: %s (%s, dryrun: %v)\n", ctx.Name, detail, c.context.DryRun)
+		logger("transaction", fmt.Sprintf("%s, dryrun: %v", detail, c.context.DryRun))
 		obj := Change{Name: ctx.Name, Details: detail}
 		processLock.Lock()
 		c.handler.changed = append(c.handler.changed, obj)
@@ -102,7 +109,7 @@ func (c Configuration) Do(ctx Context) error {
 		return !c.context.DryRun
 	}
 	if c.context.Purge {
-		c.log(true, "purge: %s\n", ctx.Name)
+		logger("purge", "")
 		return ctx.Executor.Purge(to, knownAssets, onChange)
 	}
 
@@ -114,7 +121,7 @@ func (c Configuration) Do(ctx Context) error {
 		onChange(rsrc.Tag)
 	}
 	if c.context.DryRun {
-		c.log(true, "dryrun: %s\n", ctx.Name)
+		logger("dryrun", "")
 		return nil
 	}
 
@@ -142,7 +149,7 @@ func (c Configuration) Do(ctx Context) error {
 	marker := vars.Directories.Installed()
 	if !c.context.ReDeploy {
 		if !ctx.Application.Flags.ReDeploy() && util.PathExists(marker) {
-			c.log(true, "marked deployed: %s (%s)\n", ctx.Name, rsrc.Tag)
+			logger("deployed", rsrc.Tag)
 			return nil
 		}
 	}
@@ -165,7 +172,7 @@ func (c Configuration) Do(ctx Context) error {
 	}(); err != nil {
 		return err
 	}
-	c.log(true, "commit: %s\n", ctx.Name)
+	logger("commit", "")
 	return os.WriteFile(marker, []byte(vars.Tag), 0o644)
 }
 

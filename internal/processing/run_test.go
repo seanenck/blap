@@ -414,7 +414,7 @@ func TestReDeploy(t *testing.T) {
 	if len(cfg.Changed()) != 1 {
 		t.Error("unexpected updates")
 	}
-	if s := buf.String(); !strings.Contains(s, "marked deployed") {
+	if s := buf.String(); !strings.Contains(s, "deployed:") {
 		t.Errorf("invalid buffer: %s", s)
 	}
 	buf = bytes.Buffer{}
@@ -427,7 +427,7 @@ func TestReDeploy(t *testing.T) {
 	if len(cfg.Changed()) != 1 {
 		t.Error("unexpected updates")
 	}
-	if s := buf.String(); strings.Contains(s, "marked deployed") {
+	if s := buf.String(); strings.Contains(s, "deployed:") {
 		t.Errorf("invalid buffer: %s", s)
 	}
 	buf = bytes.Buffer{}
@@ -441,7 +441,7 @@ func TestReDeploy(t *testing.T) {
 	if len(cfg.Changed()) != 1 {
 		t.Error("unexpected updates")
 	}
-	if s := buf.String(); strings.Contains(s, "marked deployed") {
+	if s := buf.String(); strings.Contains(s, "deployed:") {
 		t.Errorf("invalid buffer: %s", s)
 	}
 }
