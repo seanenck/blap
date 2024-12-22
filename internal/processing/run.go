@@ -142,7 +142,7 @@ func (c Configuration) Do(ctx Context) error {
 	marker := vars.Directories.Installed()
 	if !c.context.ReDeploy {
 		if !ctx.Application.Flags.ReDeploy() && util.PathExists(marker) {
-			c.log(true, "marked deployed: %s\n", filepath.Base(vars.File))
+			c.log(true, "marked deployed: %s (%s)\n", ctx.Name, rsrc.Tag)
 			return nil
 		}
 	}
