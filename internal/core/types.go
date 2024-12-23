@@ -128,7 +128,9 @@ type (
 	Connections struct {
 		GitHub   GitHubSettings
 		Timeouts struct {
-			Get uint
+			Get     uint
+			All     uint
+			Command uint
 		}
 	}
 	// Token defines an interface for setting API/auth tokens

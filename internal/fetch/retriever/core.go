@@ -2,6 +2,7 @@
 package retriever
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -153,8 +154,8 @@ func (r ResourceFetcher) Get(url string) (*http.Response, error) {
 	return func() (*http.Response, error) {
 		if r.Backend == nil {
 			cli := &http.Client{}
-			if r.Connections.Timeouts.Get > 0 {
-				cli.Timeout = time.Duration(r.Connections.Timeouts.Get) * time.Second
+			if timeout := getTimeout(r.Connections.Timeouts.Get); timeout != nil {
+				cli.Timeout = *timeout
 			}
 			return cli.Do(req)
 		}
@@ -192,7 +193,13 @@ func (r *ResourceFetcher) SetConnections(conn core.Connections) {
 func (r *ResourceFetcher) ExecuteCommand(cmd string, args ...string) (string, error) {
 	out, err := func() ([]byte, error) {
 		if r.Backend == nil {
-			return exec.Command(cmd, args...).Output()
+			command := exec.Command(cmd, args...)
+			if timeout := getTimeout(r.Connections.Timeouts.Command); timeout != nil {
+				ctx, cancel := context.WithTimeout(context.Background(), *timeout)
+				defer cancel()
+				command = exec.CommandContext(ctx, cmd, args...)
+			}
+			return command.Output()
 		}
 		return r.Backend.Output(cmd, args...)
 	}()
@@ -200,4 +207,12 @@ func (r *ResourceFetcher) ExecuteCommand(cmd string, args ...string) (string, er
 		return "", err
 	}
 	return string(out), nil
+}
+
+func getTimeout(value uint) *time.Duration {
+	if value == 0 {
+		return nil
+	}
+	dur := time.Duration(value) * time.Second
+	return &dur
 }
