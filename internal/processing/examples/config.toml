@@ -39,6 +39,10 @@ command = []
 [connections.timeouts]
 # get handles all get request timeouts (0 is default behavior, > 0 is seconds for timeout)
 get = 0
+# commands (e.g. git) can also timeout (same behavior as above)
+command = 0
+# ALL operations can ALSO have a timeout (same rules, though it will make sure it is > get+command)
+all = 0
 
 # set configuration-wide environment variables for command steps
 [[variables]]

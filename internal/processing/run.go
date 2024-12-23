@@ -11,6 +11,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/seanenck/blap/internal/core"
 	"github.com/seanenck/blap/internal/fetch"
@@ -319,6 +320,15 @@ func (c Configuration) Process(executor Executor, fetcher fetch.Retriever, runne
 	sort.Ints(priorities)
 	slices.Reverse(priorities)
 	environ := c.Variables.Set()
+	var timeout *time.Duration
+	if c.Connections.Timeouts.All > 0 {
+		sum := c.Connections.Timeouts.Command + c.Connections.Timeouts.Get
+		if sum > c.Connections.Timeouts.All {
+			return fmt.Errorf("timeout exceed configured 'all' settings: %d > %d", sum, c.Connections.Timeouts.All)
+		}
+		wait := time.Duration(c.Connections.Timeouts.All) * time.Second
+		timeout = &wait
+	}
 	defer environ.Unset()
 	var pErrors []error
 	for _, p := range priorities {
@@ -338,11 +348,15 @@ func (c Configuration) Process(executor Executor, fetcher fetch.Retriever, runne
 			}(a)
 			count++
 			if c.Parallelization == 0 || count > c.Parallelization {
-				wg.Wait()
+				if err := isTimeout(&wg, timeout); err != nil {
+					return err
+				}
 				count = 0
 			}
 		}
-		wg.Wait()
+		if err := isTimeout(&wg, timeout); err != nil {
+			return err
+		}
 		for len(appErrors) > 0 {
 			if err := <-appErrors; err != nil {
 				pErrors = append(pErrors, err)
@@ -425,4 +439,23 @@ func (c Configuration) log(debug bool, msg string, parts ...any) error {
 	}
 	fxn(logging.ProcessCategory, msg, parts...)
 	return logging.Append(c.logFile, msg, parts...)
+}
+
+func isTimeout(wg *sync.WaitGroup, wait *time.Duration) error {
+	if wait == nil {
+		wg.Wait()
+		return nil
+	}
+	timeout := *wait
+	c := make(chan struct{})
+	go func() {
+		defer close(c)
+		wg.Wait()
+	}()
+	select {
+	case <-c:
+		return nil
+	case <-time.After(timeout):
+		return errors.New("timeout reached for application processing")
+	}
 }
