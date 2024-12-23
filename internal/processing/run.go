@@ -9,8 +9,10 @@ import (
 	"path/filepath"
 	"slices"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/seanenck/blap/internal/core"
@@ -233,9 +235,25 @@ func (c Configuration) cleanDirectories(restrict []string) ([]string, error) {
 // Lock will lock the configuration for an operation (set)
 func (c Configuration) Lock(file string) error {
 	if util.PathExists(file) {
-		return fmt.Errorf("instance already running, has lock: %s", file)
+		r, err := os.ReadFile(file)
+		if err != nil {
+			return err
+		}
+		i, err := strconv.Atoi(strings.TrimSpace(string(r)))
+		if err != nil {
+			return err
+		}
+		proc, err := os.FindProcess(i)
+		if err != nil {
+			return err
+		}
+		if proc != nil {
+			if err := proc.Signal(syscall.Signal(0)); err == nil {
+				return fmt.Errorf("instance already running, has lock: %s (pid: %d)", file, i)
+			}
+		}
 	}
-	pid := fmt.Sprintf("pid: %d", os.Getpid())
+	pid := fmt.Sprintf("%d", os.Getpid())
 	if err := os.WriteFile(file, []byte(pid), 0o644); err != nil {
 		return err
 	}

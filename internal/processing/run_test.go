@@ -847,10 +847,10 @@ func TestLogging(t *testing.T) {
 func TestLock(t *testing.T) {
 	defer genCleanup()()
 	f := filepath.Join("testdata", "lock")
-	os.WriteFile(f, []byte{}, 0o644)
+	os.WriteFile(f, []byte(fmt.Sprintf("%d", os.Getpid())), 0o644)
 	s := cli.Settings{}
 	cfg, _ := processing.Load(filepath.Join("examples", "config.toml"), s)
-	if err := cfg.Lock(f); err == nil || err.Error() != "instance already running, has lock: testdata/lock" {
+	if err := cfg.Lock(f); err == nil || !strings.HasPrefix(err.Error(), "instance already running, has lock: testdata/lock (pid: ") {
 		t.Errorf("invalid error: %v", err)
 	}
 	os.Remove(f)
