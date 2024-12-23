@@ -324,7 +324,7 @@ func (c Configuration) Process(executor Executor, fetcher fetch.Retriever, runne
 	if c.Connections.Timeouts.All > 0 {
 		sum := c.Connections.Timeouts.Command + c.Connections.Timeouts.Get
 		if sum > c.Connections.Timeouts.All {
-			return fmt.Errorf("timeout exceed configured 'all' settings: %d > %d", sum, c.Connections.Timeouts.All)
+			return fmt.Errorf("timeout exceeds configured 'all' settings: %d > %d", sum, c.Connections.Timeouts.All)
 		}
 		wait := time.Duration(c.Connections.Timeouts.All) * time.Second
 		timeout = &wait

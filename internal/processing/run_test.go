@@ -178,7 +178,7 @@ func TestProcessUpdate(t *testing.T) {
 	cfg, _ = processing.Load(filepath.Join("examples", "config.toml"), s)
 	cfg.Connections.Timeouts.Get = 100
 	cfg.Connections.Timeouts.All = 5
-	if err := cfg.Process(m, m, m); err == nil || err.Error() != "timeout exceed configured 'all' settings: 100 > 5" {
+	if err := cfg.Process(m, m, m); err == nil || err.Error() != "timeout exceeds configured 'all' settings: 100 > 5" {
 		t.Errorf("invalid error: %v", err)
 	}
 	buf = bytes.Buffer{}
