@@ -96,13 +96,6 @@ func (c Configuration) Do(ctx Context) error {
 	if err := rsrc.SetAppData(ctx.Name, to, ctx.Application.Extract); err != nil {
 		return err
 	}
-	knownAssets := []string{}
-	for _, f := range []string{rsrc.Paths.Unpack, rsrc.Paths.Archive} {
-		if f == "" {
-			continue
-		}
-		knownAssets = append(knownAssets, filepath.Base(f))
-	}
 	onChange := func(detail string) bool {
 		logger("transaction", fmt.Sprintf("%s, dryrun: %v", detail, c.context.DryRun))
 		obj := Change{Name: ctx.Name, Details: detail}
@@ -112,6 +105,16 @@ func (c Configuration) Do(ctx Context) error {
 		return !c.context.DryRun
 	}
 	if c.context.Purge {
+		knownAssets := []string{}
+		for _, f := range []string{rsrc.Paths.Unpack, rsrc.Paths.Archive} {
+			if f == "" {
+				continue
+			}
+			if !util.PathExists(f) {
+				return fmt.Errorf("unable to purge when current release assets are not deployed: %v", f)
+			}
+			knownAssets = append(knownAssets, filepath.Base(f))
+		}
 		logger("purge", "")
 		return ctx.Executor.Purge(to, knownAssets, onChange)
 	}

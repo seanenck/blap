@@ -229,6 +229,12 @@ func TestProcessPurge(t *testing.T) {
 		os.RemoveAll("testdata")
 	}()
 	cfg, _ := processing.Load(filepath.Join("examples", "config.toml"), s)
+	if err := cfg.Do(processing.Context{Executor: m, Name: "abc", Fetcher: m, Runner: m}); err == nil || err.Error() != "unable to purge when current release assets are not deployed: testdata/abc/9e6ff33.abc.tag" {
+		t.Errorf("invalid error: %v", err)
+	}
+	os.MkdirAll(filepath.Join("testdata", "abc", "9e6ff33.abc.tag"), 0o755)
+	os.MkdirAll(filepath.Join("testdata", "abc", "9e6ff33.xyz"), 0o755)
+	cfg, _ = processing.Load(filepath.Join("examples", "config.toml"), s)
 	if err := cfg.Do(processing.Context{Executor: m, Name: "abc", Fetcher: m, Runner: m}); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
@@ -271,15 +277,15 @@ func TestProcessPurge(t *testing.T) {
 	if fmt.Sprintf("%v", cfg.Changed()) != "[]" {
 		t.Errorf("invalid changed: %v", cfg.Changed())
 	}
-	os.Mkdir(filepath.Join("testdata", "sabc"), 0o755)
+	os.Mkdir(filepath.Join("testdata", "sabc", "9e6ff33.sabc.tag"), 0o755)
 	cfg, _ = processing.Load(filepath.Join("examples", "config.toml"), s)
-	if err := cfg.Do(processing.Context{Executor: m, Name: "sabc", Fetcher: m, Runner: m}); err != nil {
+	if err := cfg.Do(processing.Context{Executor: m, Name: "abc", Fetcher: m, Runner: m}); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
 	if err := m.expectCount(0, 3); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
-	if fmt.Sprintf("%v", cfg.Changed()) != "[{sabc }]" {
+	if fmt.Sprintf("%v", cfg.Changed()) != "[{abc }]" {
 		t.Errorf("invalid changed: %v", cfg.Changed())
 	}
 }
@@ -338,11 +344,11 @@ func TestConfigurationDo(t *testing.T) {
 	f := &mockExecutor{}
 	f.rsrc = &core.Resource{File: "xyz.tar.xz", URL: "xxx", Tag: "123"}
 	cfg, _ := processing.Load(filepath.Join("examples", "config.toml"), s)
-	os.Mkdir(filepath.Join("testdata", "abc"), 0o755)
+	os.Mkdir(filepath.Join("testdata", "abc", "2f6fd3b.abc.123"), 0o755)
 	if err := cfg.Do(processing.Context{Fetcher: f, Name: "abc", Runner: &mockExecutor{}, Executor: &mockExecutor{}}); err != nil {
 		t.Errorf("invalid error: %v", err)
 	}
-	if fmt.Sprintf("%v", cfg.Changed()) != "[{abc }]" {
+	if fmt.Sprintf("%v", cfg.Changed()) != "[]" {
 		t.Errorf("invalid changed: %v", cfg.Changed())
 	}
 	s.Purge = false
