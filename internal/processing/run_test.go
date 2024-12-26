@@ -229,7 +229,7 @@ func TestProcessPurge(t *testing.T) {
 		os.RemoveAll("testdata")
 	}()
 	cfg, _ := processing.Load(filepath.Join("examples", "config.toml"), s)
-	if err := cfg.Do(processing.Context{Executor: m, Name: "abc", Fetcher: m, Runner: m}); err == nil || err.Error() != "unable to purge when current release assets are not deployed: testdata/abc/9e6ff33.abc.tag" {
+	if err := cfg.Do(processing.Context{Executor: m, Name: "abc", Fetcher: m, Runner: m}); err == nil || err.Error() != "unable to purge when current release assets are not deployed: testdata/abc/9e6ff33.xyz" {
 		t.Errorf("invalid error: %v", err)
 	}
 	os.MkdirAll(filepath.Join("testdata", "abc", "9e6ff33.abc.tag"), 0o755)

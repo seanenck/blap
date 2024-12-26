@@ -105,8 +105,12 @@ func (c Configuration) Do(ctx Context) error {
 		return !c.context.DryRun
 	}
 	if c.context.Purge {
+		assetsSet := []string{rsrc.Paths.Archive}
+		if !ctx.Application.Extract.Skip {
+			assetsSet = append(assetsSet, rsrc.Paths.Unpack)
+		}
 		knownAssets := []string{}
-		for _, f := range []string{rsrc.Paths.Unpack, rsrc.Paths.Archive} {
+		for _, f := range assetsSet {
 			if f == "" {
 				continue
 			}
