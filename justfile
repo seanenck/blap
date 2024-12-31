@@ -12,7 +12,7 @@ build:
 
 [no-cd]
 check: build
-  go test ./...
+  BLAP_CONFIG_FILE="" go test ./...
 
 clean:
   rm -f "{{object}}"
