@@ -511,8 +511,8 @@ func runTestIndex(do int, purging bool, afterDone, afterDryRun func(bool) error)
 	if strings.Contains(str, "DRYRUN") {
 		return fmt.Errorf("invalid buffer: %s", str)
 	}
-	messageOne := "purging: abc (directory -> 1 details)"
-	messageTwo := "purging: xyz (directory -> other)"
+	messageOne := "purging: abc (filesystem -> 1 details)"
+	messageTwo := "purging: xyz (filesystem -> other)"
 	if !purging {
 		messageOne = "updating: abc (tag -> 1 details)"
 		messageTwo = "updating: xyz (tag -> other)"

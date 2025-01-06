@@ -412,7 +412,7 @@ func (c Configuration) Process(executor Executor, fetcher fetch.Retriever, runne
 		t := "tag"
 		if c.context.Purge {
 			msg = "purging"
-			t = "directory"
+			t = "filesystem"
 		}
 		doIndex := false
 		if c.context.DryRun {
