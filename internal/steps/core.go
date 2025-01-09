@@ -11,6 +11,10 @@ import (
 )
 
 type (
+	// Fetcher allows for wrapping calls
+	Fetcher interface {
+		Download(bool, string, string) (bool, error)
+	}
 	// Variables define step variables for command templating
 	Variables struct {
 		URL         string
@@ -18,6 +22,7 @@ type (
 		File        string
 		Archive     string
 		Directories Directories
+		fetcher     Fetcher
 	}
 	// Directories contain information about where the unpacked/working copy is stored
 	Directories struct {
@@ -42,13 +47,15 @@ func (v Variables) Clone() Variables {
 	n.File = v.File
 	n.Archive = v.Archive
 	n.Directories.files = v.Directories.files
+	n.fetcher = v.fetcher
 	return n
 }
 
 // NewVariables will initialize the new variable for steps
-func NewVariables() Variables {
+func NewVariables(f Fetcher) Variables {
 	v := Variables{}
 	v.Directories.files = make(map[string]string)
+	v.fetcher = f
 	return v
 }
 
@@ -86,4 +93,12 @@ func (v Variables) GetFile(name string) string {
 
 func (d Directories) newMarker(name, sub string) string {
 	return filepath.Join(d.Root, fmt.Sprintf(".blap_%s%s", sub, name))
+}
+
+// Download allows downloading and returning an error/exit code
+func (v Variables) Download(from, to string) (int, error) {
+	if _, err := v.fetcher.Download(false, from, to); err != nil {
+		return 1, err
+	}
+	return 0, nil
 }

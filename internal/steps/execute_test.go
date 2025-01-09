@@ -45,7 +45,7 @@ func TestDo(t *testing.T) {
 	}
 	os.Clearenv()
 	t.Setenv("HOME", "xyz")
-	vars := steps.NewVariables()
+	vars := steps.NewVariables(nil)
 	vars.Directories.Root = "a"
 	vars.File = "A"
 	e, _ := core.NewValues("xyz", vars)
@@ -70,7 +70,7 @@ func TestDo(t *testing.T) {
 func TestEnv(t *testing.T) {
 	m := &mockRun{}
 	os.Clearenv()
-	vars := steps.NewVariables()
+	vars := steps.NewVariables(nil)
 	vars.Directories.Root = "a"
 	vars.File = "A"
 	e, _ := core.NewValues("a", vars)

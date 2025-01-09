@@ -150,7 +150,7 @@ func (c Configuration) Do(ctx Context) error {
 			return err
 		}
 	}
-	vars := steps.NewVariables()
+	vars := steps.NewVariables(ctx.Fetcher)
 	vars.Archive = rsrc.Paths.Archive
 	vars.File = rsrc.File
 	vars.Tag = rsrc.Tag
