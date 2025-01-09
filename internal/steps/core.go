@@ -102,3 +102,11 @@ func (v Variables) Download(from, to string) (int, error) {
 	}
 	return 0, nil
 }
+
+func (v Variables) DownloadHashFile(from string) (int, error) {
+	return v.Download(from, v.GetHashFile())
+}
+
+func (v Variables) GetHashFile() string {
+	return v.GetFile("hash")
+}
