@@ -62,7 +62,11 @@ func Release(caller fetch.Retriever, ctx fetch.Context, a core.GitHubMode) (*cor
 	}
 
 	if rsrc == nil {
-		return nil, fmt.Errorf("unable to find asset, choices: %v", options)
+		var selectable []string
+		for _, choice := range options {
+			selectable = append(selectable, fmt.Sprintf("  -> %s", filepath.Base(choice)))
+		}
+		return nil, fmt.Errorf("unable to find asset, choices:\n%s", strings.Join(selectable, "\n"))
 	}
 	return rsrc, nil
 }

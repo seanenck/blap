@@ -31,7 +31,7 @@ func TestGitHubErrors(t *testing.T) {
 		t.Errorf("invalid error: %v", err)
 	}
 	client.payload = []byte(`{"tag_name": "123", "assets": [{"browser_download_url": "111"}, {"browser_download_url": "222"}]}`)
-	if _, err := github.Release(r, fetch.Context{Name: "xyz"}, core.GitHubMode{Project: "xyz", Release: &core.GitHubReleaseMode{Asset: "zzz"}}); err == nil || err.Error() != "unable to find asset, choices: [111 222]" {
+	if _, err := github.Release(r, fetch.Context{Name: "xyz"}, core.GitHubMode{Project: "xyz", Release: &core.GitHubReleaseMode{Asset: "zzz"}}); err == nil || err.Error() != "unable to find asset, choices:\n  -> 111\n  -> 222" {
 		t.Errorf("invalid error: %v", err)
 	}
 	client.payload = []byte(`{"tag_name": "123", "assets": [{"browser_download_url": "111"}, {"browser_download_url": "1222"}]}`)
